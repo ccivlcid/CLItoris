@@ -54,53 +54,11 @@
 
 ## DB Schema
 
-```sql
--- 001_create_users.sql
-CREATE TABLE users (
-  id          TEXT PRIMARY KEY,
-  username    TEXT UNIQUE NOT NULL,
-  domain      TEXT,
-  display_name TEXT,
-  bio         TEXT,
-  avatar_url  TEXT,
-  created_at  TEXT DEFAULT (datetime('now'))
-);
+> Full database documentation — schema, ERD, queries, migrations, indexes — is in [`docs/DATABASE.md`](./DATABASE.md).
 
--- 002_create_posts.sql
-CREATE TABLE posts (
-  id            TEXT PRIMARY KEY,
-  user_id       TEXT NOT NULL REFERENCES users(id),
-  message_raw   TEXT NOT NULL,
-  message_cli   TEXT NOT NULL,
-  lang          TEXT DEFAULT 'en',
-  tags          TEXT DEFAULT '[]',    -- JSON array
-  mentions      TEXT DEFAULT '[]',    -- JSON array
-  visibility    TEXT DEFAULT 'public',
-  llm_model     TEXT NOT NULL,
-  parent_id     TEXT REFERENCES posts(id),    -- reply
-  forked_from_id TEXT REFERENCES posts(id),   -- fork
-  created_at    TEXT DEFAULT (datetime('now'))
-);
-
-CREATE INDEX idx_posts_user_id ON posts(user_id);
-CREATE INDEX idx_posts_created_at ON posts(created_at DESC);
-CREATE INDEX idx_posts_llm_model ON posts(llm_model);
-
--- 003_create_social.sql
-CREATE TABLE follows (
-  follower_id  TEXT NOT NULL REFERENCES users(id),
-  following_id TEXT NOT NULL REFERENCES users(id),
-  created_at   TEXT DEFAULT (datetime('now')),
-  PRIMARY KEY (follower_id, following_id)
-);
-
-CREATE TABLE stars (
-  user_id    TEXT NOT NULL REFERENCES users(id),
-  post_id    TEXT NOT NULL REFERENCES posts(id),
-  created_at TEXT DEFAULT (datetime('now')),
-  PRIMARY KEY (user_id, post_id)
-);
-```
+**Tables**: `users`, `posts`, `follows`, `stars`
+**Engine**: SQLite 3 via `better-sqlite3` (synchronous API)
+**Migrations**: Sequential `.sql` files in `packages/server/src/db/migrations/`
 
 ## Frontend State Management
 

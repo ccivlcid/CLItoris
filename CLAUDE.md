@@ -87,6 +87,12 @@ This project is built through AI-driven development. Humans set direction, AI im
 1. `CLAUDE.md` — Project summary (this file)
 2. `CONVENTIONS.md` — Coding rules, naming, prohibitions
 3. `docs/DESIGN_GUIDE.md` — Visual system, component specs, colors/typography/layout
-4. `docs/ARCHITECTURE.md` — System architecture, DB schema, data flows
-5. `docs/PRD.md` — Full product requirements
-6. `docs/PROMPTS.md` — Vibe coding prompt templates
+4. `docs/ARCHITECTURE.md` — System architecture, data flows, LLM integration
+5. `docs/DATABASE.md` — DB schema, queries, migrations, ERD
+6. `docs/PRD.md` — Full product requirements
+7. `docs/PROMPTS.md` — Vibe coding prompt templates
+
+**Reference documents:**
+- `README.md` — Public-facing project readme
+- `docs/OVERVIEW.md` — Project overview and core concepts
+- `docs/PROGRESS.md` — Current development status and decision log
