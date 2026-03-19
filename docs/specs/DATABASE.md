@@ -316,6 +316,71 @@ function runMigrations(db: Database.Database): void {
 }
 ```
 
+### Migration File Examples
+
+The following are the actual migration files used to bootstrap the database. Each file is idempotent (`IF NOT EXISTS`) and handles one logical concern.
+
+```sql
+-- 001_create_users.sql
+CREATE TABLE IF NOT EXISTS users (
+  id            TEXT PRIMARY KEY,
+  username      TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL,
+  domain        TEXT,
+  display_name  TEXT,
+  bio           TEXT,
+  avatar_url    TEXT,
+  created_at    TEXT DEFAULT (datetime('now'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);
+```
+
+```sql
+-- 002_create_posts.sql
+CREATE TABLE IF NOT EXISTS posts (
+  id              TEXT PRIMARY KEY,
+  user_id         TEXT NOT NULL REFERENCES users(id),
+  message_raw     TEXT NOT NULL,
+  message_cli     TEXT NOT NULL,
+  lang            TEXT DEFAULT 'en',
+  tags            TEXT DEFAULT '[]',
+  mentions        TEXT DEFAULT '[]',
+  visibility      TEXT DEFAULT 'public',
+  llm_model       TEXT NOT NULL,
+  parent_id       TEXT REFERENCES posts(id),
+  forked_from_id  TEXT REFERENCES posts(id),
+  created_at      TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_posts_user_id ON posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_posts_llm_model ON posts(llm_model);
+CREATE INDEX IF NOT EXISTS idx_posts_parent_id ON posts(parent_id);
+CREATE INDEX IF NOT EXISTS idx_posts_visibility ON posts(visibility);
+```
+
+```sql
+-- 003_create_social.sql
+CREATE TABLE IF NOT EXISTS follows (
+  follower_id   TEXT NOT NULL REFERENCES users(id),
+  following_id  TEXT NOT NULL REFERENCES users(id),
+  created_at    TEXT DEFAULT (datetime('now')),
+  PRIMARY KEY (follower_id, following_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_follows_following ON follows(following_id);
+
+CREATE TABLE IF NOT EXISTS stars (
+  user_id     TEXT NOT NULL REFERENCES users(id),
+  post_id     TEXT NOT NULL REFERENCES posts(id),
+  created_at  TEXT DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, post_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_stars_post_id ON stars(post_id);
+```
+
 ---
 
 ## 7. Access Patterns

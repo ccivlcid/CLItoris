@@ -1,0 +1,512 @@
+# PATTERNS.md — Implementation Patterns Reference
+
+> **Source of truth** for implementation patterns used throughout the CLItoris codebase.
+> AI agents and developers must follow these patterns when writing new features or modifying existing code.
+
+---
+
+## 1. Optimistic Updates (Star/Fork)
+
+Update the UI immediately for a responsive feel, then revert if the API call fails.
+
+```typescript
+// Pattern: Update UI immediately, revert on error
+async function toggleStar(postId: string): Promise<void> {
+  // 1. Save current state
+  const prevPosts = get().posts;
+
+  // 2. Optimistic update
+  set({
+    posts: prevPosts.map((p) =>
+      p.id === postId
+        ? { ...p, isStarred: !p.isStarred, starCount: p.starCount + (p.isStarred ? -1 : 1) }
+        : p
+    ),
+  });
+
+  // 3. API call
+  try {
+    const res = await fetch(`/api/posts/${postId}/star`, { method: 'POST' });
+    if (!res.ok) throw new Error('Failed to star');
+    const { data } = await res.json();
+    // 4. Sync with server state
+    set({
+      posts: get().posts.map((p) =>
+        p.id === postId ? { ...p, isStarred: data.starred, starCount: data.starCount } : p
+      ),
+    });
+  } catch {
+    // 5. Revert on error
+    set({ posts: prevPosts });
+  }
+}
+```
+
+**When to use:** Any toggle action (star, follow, fork) where immediate feedback matters.
+
+**Key rules:**
+- Always snapshot state before the optimistic update
+- Always sync with server response on success (server is the source of truth)
+- Always revert to the snapshot on error
+
+---
+
+## 2. Cursor-Based Pagination
+
+Full infinite scroll pattern using cursor-based pagination. Never use OFFSET-based pagination.
+
+```typescript
+interface PaginatedState<T> {
+  items: T[];
+  cursor: string | null;
+  hasMore: boolean;
+  isLoading: boolean;
+}
+
+async function loadMore(
+  endpoint: string,
+  cursor: string | null,
+  limit: number = 20,
+): Promise<{ data: unknown[]; meta: { cursor: string | null; hasMore: boolean } }> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.set('cursor', cursor);
+
+  const res = await fetch(`/api/${endpoint}?${params}`);
+  if (!res.ok) throw new Error(`Failed to load ${endpoint}`);
+  return res.json();
+}
+
+// Usage in a Zustand store action:
+async function fetchNextPage(): Promise<void> {
+  const { cursor, hasMore, isLoading } = get();
+  if (!hasMore || isLoading) return;
+
+  set({ isLoading: true });
+
+  try {
+    const { data, meta } = await loadMore('posts/feed/global', cursor);
+    set({
+      items: [...get().items, ...data],
+      cursor: meta.cursor,
+      hasMore: meta.hasMore,
+    });
+  } catch (err) {
+    console.error('Pagination error:', err);
+  } finally {
+    set({ isLoading: false });
+  }
+}
+```
+
+**Key rules:**
+- First request: omit `cursor` to get the latest items
+- Append new items to the existing list (do not replace)
+- Guard against duplicate calls with `isLoading` check
+- Stop fetching when `hasMore` is `false`
+
+---
+
+## 3. API Call Pattern (with Error Handling)
+
+Standard fetch wrapper that handles common HTTP error codes consistently.
+
+```typescript
+interface ApiError {
+  code: string;
+  message: string;
+  retryAfter?: number;
+}
+
+interface ApiResponse<T> {
+  data: T;
+  meta?: { cursor?: string; hasMore?: boolean };
+}
+
+async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<ApiResponse<T>> {
+  const res = await fetch(`/api${path}`, {
+    headers: { 'Content-Type': 'application/json', ...options.headers },
+    credentials: 'include',
+    ...options,
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    const error: ApiError = body?.error ?? { code: 'UNKNOWN', message: res.statusText };
+
+    switch (res.status) {
+      case 401:
+        // Redirect to login page
+        window.location.href = '/login';
+        throw error;
+      case 403:
+        throw error;
+      case 429:
+        // Rate limited — expose retryAfter for caller
+        error.retryAfter = error.retryAfter ?? Number(res.headers.get('Retry-After')) || 60;
+        throw error;
+      case 500:
+        console.error('Server error:', error.message);
+        throw error;
+      default:
+        throw error;
+    }
+  }
+
+  return res.json();
+}
+
+// Usage examples:
+// const { data } = await apiFetch<Post[]>('/posts/feed/global');
+// const { data } = await apiFetch<Post>('/posts', { method: 'POST', body: JSON.stringify(payload) });
+```
+
+**Key rules:**
+- Always set `credentials: 'include'` for session cookies
+- Always parse the error envelope on non-2xx responses
+- 401 triggers a redirect to `/login`
+- 429 extracts `retryAfter` from the response body or header
+- 500 logs to console before re-throwing
+
+---
+
+## 4. Zustand Store Pattern
+
+Complete template for a typical feature store with loading, error, data, and actions.
+
+```typescript
+import { create } from 'zustand';
+
+interface Post {
+  id: string;
+  messageRaw: string;
+  messageCli: string;
+  starCount: number;
+  isStarred: boolean;
+  // ... other fields
+}
+
+interface FeedState {
+  // Data
+  posts: Post[];
+  cursor: string | null;
+  hasMore: boolean;
+
+  // UI state
+  isLoading: boolean;
+  error: string | null;
+
+  // Actions
+  fetchFeed: () => Promise<void>;
+  fetchNextPage: () => Promise<void>;
+  toggleStar: (postId: string) => Promise<void>;
+  reset: () => void;
+}
+
+const initialState = {
+  posts: [],
+  cursor: null,
+  hasMore: true,
+  isLoading: false,
+  error: null,
+};
+
+export const useFeedStore = create<FeedState>((set, get) => ({
+  ...initialState,
+
+  fetchFeed: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const { data, meta } = await apiFetch<Post[]>('/posts/feed/global');
+      set({ posts: data, cursor: meta?.cursor ?? null, hasMore: meta?.hasMore ?? false });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load feed';
+      set({ error: message });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  fetchNextPage: async () => {
+    const { cursor, hasMore, isLoading } = get();
+    if (!hasMore || isLoading) return;
+
+    set({ isLoading: true });
+    try {
+      const { data, meta } = await apiFetch<Post[]>(
+        `/posts/feed/global?cursor=${cursor}&limit=20`,
+      );
+      set({
+        posts: [...get().posts, ...data],
+        cursor: meta?.cursor ?? null,
+        hasMore: meta?.hasMore ?? false,
+      });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load more';
+      set({ error: message });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  toggleStar: async (postId: string) => {
+    const prevPosts = get().posts;
+    set({
+      posts: prevPosts.map((p) =>
+        p.id === postId
+          ? { ...p, isStarred: !p.isStarred, starCount: p.starCount + (p.isStarred ? -1 : 1) }
+          : p
+      ),
+    });
+
+    try {
+      const { data } = await apiFetch<{ starred: boolean; starCount: number }>(
+        `/posts/${postId}/star`,
+        { method: 'POST' },
+      );
+      set({
+        posts: get().posts.map((p) =>
+          p.id === postId ? { ...p, isStarred: data.starred, starCount: data.starCount } : p
+        ),
+      });
+    } catch {
+      set({ posts: prevPosts });
+    }
+  },
+
+  reset: () => set(initialState),
+}));
+```
+
+**Key rules:**
+- Separate initial state into a const for easy `reset()`
+- Always clear `error` at the start of an action
+- Always set `isLoading: false` in `finally`
+- Use `get()` inside async callbacks (not stale closure values)
+
+---
+
+## 5. Form Submission Pattern
+
+Terminal-style form flow: validate, submit, handle error/success, show toast.
+
+```typescript
+import { z } from 'zod';
+
+const postSchema = z.object({
+  messageRaw: z.string().min(1, 'Message is required').max(2000),
+  lang: z.string().length(2, 'Language must be ISO 639-1'),
+  tags: z.array(z.string().max(50)).max(10),
+  mentions: z.array(z.string()).max(20),
+  visibility: z.enum(['public', 'private', 'unlisted']),
+  llmModel: z.enum(['claude-sonnet', 'gpt-4o', 'llama-3', 'cursor', 'cli', 'api', 'custom']),
+});
+
+async function handleSubmitPost(formData: unknown): Promise<void> {
+  // 1. Validate
+  const parsed = postSchema.safeParse(formData);
+  if (!parsed.success) {
+    const firstError = parsed.error.errors[0];
+    showToast({ type: 'error', message: `${firstError.path.join('.')}: ${firstError.message}` });
+    return;
+  }
+
+  // 2. Submit
+  set({ isSubmitting: true });
+  try {
+    const { data } = await apiFetch<Post>('/posts', {
+      method: 'POST',
+      body: JSON.stringify(parsed.data),
+    });
+
+    // 3. Success
+    showToast({ type: 'success', message: 'Post published' });
+    resetForm();
+    addPostToFeed(data);
+  } catch (err: unknown) {
+    // 4. Error handling
+    const apiError = err as ApiError;
+    if (apiError.code === 'RATE_LIMIT_EXCEEDED') {
+      showToast({
+        type: 'error',
+        message: `Too many requests. Try again in ${apiError.retryAfter}s.`,
+      });
+    } else {
+      showToast({ type: 'error', message: apiError.message ?? 'Failed to create post' });
+    }
+  } finally {
+    set({ isSubmitting: false });
+  }
+}
+```
+
+**Key rules:**
+- Always validate with zod before sending to the API
+- Show the first validation error in the toast (not all at once)
+- Handle rate-limit errors specially (show retry countdown)
+- Reset form only on success
+- Guard against double-submit with `isSubmitting`
+
+---
+
+## 6. Auth Guard Pattern
+
+Hook that redirects unauthenticated users to `/login`.
+
+```typescript
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../stores/authStore';
+
+/**
+ * Hook: redirect to /login if not authenticated.
+ * Use at the top of any page component that requires auth.
+ */
+export function useAuthGuard(): { user: User | null; isLoading: boolean } {
+  const navigate = useNavigate();
+  const { user, isLoading, checkAuth } = useAuthStore();
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  useEffect(() => {
+    if (!isLoading && !user) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, isLoading, navigate]);
+
+  return { user, isLoading };
+}
+
+// Usage in a page component:
+function LocalFeedPage(): JSX.Element | null {
+  const { user, isLoading } = useAuthGuard();
+
+  if (isLoading || !user) return null;
+
+  return <Feed endpoint="posts/feed/local" />;
+}
+```
+
+**As an HOC (alternative):**
+
+```typescript
+import { ComponentType } from 'react';
+
+function withAuth<P extends object>(WrappedComponent: ComponentType<P>): ComponentType<P> {
+  return function AuthenticatedComponent(props: P) {
+    const { user, isLoading } = useAuthGuard();
+
+    if (isLoading || !user) return null;
+
+    return <WrappedComponent {...props} />;
+  };
+}
+
+// Usage:
+const ProtectedLocalFeed = withAuth(LocalFeedPage);
+```
+
+**Key rules:**
+- Call `checkAuth()` (which hits `GET /auth/me`) on mount
+- Redirect only after loading is complete and user is null
+- Return `null` while loading to prevent flash of unauthenticated content
+- Use `replace: true` so the login page replaces the guarded page in history
+
+---
+
+## 7. Error Recovery Pattern
+
+Toast notification on API error with a retry button.
+
+```typescript
+interface Toast {
+  id: string;
+  type: 'success' | 'error' | 'info';
+  message: string;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+  duration?: number;
+}
+
+function showErrorWithRetry(message: string, retryFn: () => void): void {
+  showToast({
+    type: 'error',
+    message,
+    action: {
+      label: 'Retry',
+      onClick: retryFn,
+    },
+    duration: 8000,
+  });
+}
+
+// Usage in a store action:
+async function fetchFeedWithRecovery(): Promise<void> {
+  set({ isLoading: true, error: null });
+
+  try {
+    const { data, meta } = await apiFetch<Post[]>('/posts/feed/global');
+    set({ posts: data, cursor: meta?.cursor ?? null, hasMore: meta?.hasMore ?? false });
+  } catch (err: unknown) {
+    const apiError = err as ApiError;
+
+    if (apiError.retryAfter) {
+      // Rate limited: auto-retry after delay
+      showToast({
+        type: 'error',
+        message: `Rate limited. Retrying in ${apiError.retryAfter}s...`,
+        duration: apiError.retryAfter * 1000,
+      });
+      setTimeout(() => get().fetchFeed(), apiError.retryAfter! * 1000);
+    } else {
+      // General error: manual retry
+      showErrorWithRetry(
+        apiError.message ?? 'Failed to load feed',
+        () => get().fetchFeed(),
+      );
+    }
+
+    set({ error: apiError.message ?? 'Unknown error' });
+  } finally {
+    set({ isLoading: false });
+  }
+}
+```
+
+**Retry strategy summary:**
+| Error | Behavior |
+|-------|----------|
+| `429` Rate Limited | Read `retryAfter`, wait, retry once automatically |
+| `500` Server Error | Show toast with manual "Retry" button |
+| Network Error | Show toast with manual "Retry" button |
+| `401` Unauthorized | Redirect to `/login` (no retry) |
+| `403` Forbidden | Show error toast (no retry) |
+
+**Key rules:**
+- Never retry 401 or 403 errors
+- For 429: retry once automatically after the specified delay
+- For 500 / network errors: let the user decide when to retry
+- Always show a toast so the user knows what happened
+- Set `error` state in the store for components that render error UI
+
+---
+
+## Ownership
+
+This document is maintained alongside the CLItoris codebase. All implementation code must conform to these patterns. When adding a new pattern, include a full TypeScript example, a "When to use" note, and a "Key rules" checklist.
+
+---
+
+## See Also
+
+- [CONVENTIONS.md](./CONVENTIONS.md) — Code style and naming conventions
+- [TESTING.md](./TESTING.md) — Test patterns and utilities
+- [API.md](../specs/API.md) — REST API specification
+- [DATABASE.md](../specs/DATABASE.md) — Database schema and queries
+- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — System architecture overview

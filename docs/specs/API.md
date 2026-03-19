@@ -594,6 +594,61 @@ X-RateLimit-Remaining: 28
 X-RateLimit-Reset: 1710849600
 ```
 
+### Rate Limit Response Format
+
+When rate limits are exceeded, the API returns a `429` response with a structured error body:
+
+```json
+// 429 Too Many Requests response:
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "Too many requests. Try again in 45 seconds.",
+    "retryAfter": 45
+  }
+}
+```
+
+The `Retry-After` HTTP header is also set (in seconds).
+
+### Retry Logic Pattern
+
+Client-side retry strategy for handling rate limits and server errors:
+
+```
+Client retry strategy:
+1. On 429: read Retry-After header or error.retryAfter field
+2. Wait the specified seconds
+3. Retry once
+4. On second 429: show error toast, do not retry
+
+On 500/network error:
+1. Wait 2 seconds
+2. Retry once
+3. On second failure: show error toast
+```
+
+### Error Response Examples
+
+Standard error responses for each HTTP error code:
+
+```json
+// 400 Bad Request
+{ "error": { "code": "VALIDATION_ERROR", "message": "message: String must contain at least 1 character(s)" } }
+
+// 401 Unauthorized
+{ "error": { "code": "UNAUTHORIZED", "message": "Login required" } }
+
+// 403 Forbidden
+{ "error": { "code": "FORBIDDEN", "message": "Not the author of this post" } }
+
+// 404 Not Found
+{ "error": { "code": "NOT_FOUND", "message": "Post not found" } }
+
+// 409 Conflict
+{ "error": { "code": "CONFLICT", "message": "Already starred this post" } }
+```
+
 ---
 
 ## 7. Pagination

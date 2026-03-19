@@ -93,9 +93,12 @@ All documentation lives under `docs/` organized by category.
 docs/
 ├── OVERVIEW.md                        # Project overview, core concepts, glossary
 ├── PROGRESS.md                        # Development status and decision log
+├── setup/                             # Project bootstrapping
+│   └── CONFIGS.md                     # All config files (package.json, tsconfig, vite, tailwind)
 ├── guides/                            # Development guides
 │   ├── CONVENTIONS.md                 # Strict coding rules, naming, prohibitions
 │   ├── DESIGN_GUIDE.md                # Visual system, component specs, UI states
+│   ├── PATTERNS.md                    # Implementation patterns (optimistic updates, pagination, auth)
 │   ├── TESTING.md                     # Testing patterns (Vitest + Playwright)
 │   ├── ENV.md                         # Environment variables reference
 │   └── PROMPTS.md                     # Vibe coding prompt templates
@@ -110,8 +113,9 @@ docs/
 │   └── SETTINGS.md                    # /settings — User settings
 ├── specs/                             # Technical specifications
 │   ├── PRD.md                         # Product requirements document
-│   ├── DATABASE.md                    # DB schema, queries, migrations, ERD
-│   ├── API.md                         # REST API documentation (18 endpoints)
+│   ├── DATABASE.md                    # DB schema, queries, migrations, migration files
+│   ├── API.md                         # REST API documentation (18 endpoints, error formats)
+│   ├── LLM_INTEGRATION.md            # LLM transformation logic, prompts, provider code
 │   └── api-schema.json                # OpenAPI 3.1 schema (machine-readable)
 └── architecture/                      # Architecture diagrams
     ├── ARCHITECTURE.md                # System architecture, data flows, auth, errors
@@ -124,12 +128,14 @@ docs/
 
 **Required reading (priority order):**
 1. `CLAUDE.md` — Project summary (this file)
-2. `docs/guides/CONVENTIONS.md` — Coding rules, naming, prohibitions
-3. `docs/guides/DESIGN_GUIDE.md` — Visual system, component specs, UI states
-4. `docs/screens/*` — Page-by-page UI screen specifications
-5. `docs/architecture/ARCHITECTURE.md` — System architecture, auth, error flows
-6. `docs/specs/DATABASE.md` — DB schema, queries, migrations
-7. `docs/specs/API.md` — REST API documentation
-8. `docs/specs/PRD.md` — Full product requirements
-9. `docs/guides/TESTING.md` — Testing patterns and examples
-10. `docs/guides/ENV.md` — Environment variables reference
+2. `docs/setup/CONFIGS.md` — Config files to bootstrap the project
+3. `docs/guides/CONVENTIONS.md` — Coding rules, naming, prohibitions
+4. `docs/guides/DESIGN_GUIDE.md` — Visual system, component specs, UI states
+5. `docs/guides/PATTERNS.md` — Implementation patterns (optimistic updates, pagination, auth)
+6. `docs/screens/*` — Page-by-page UI screen specifications
+7. `docs/specs/LLM_INTEGRATION.md` — LLM transformation logic and provider code
+8. `docs/architecture/ARCHITECTURE.md` — System architecture, auth, error flows
+9. `docs/specs/DATABASE.md` — DB schema, queries, migrations
+10. `docs/specs/API.md` — REST API documentation with error formats
+11. `docs/guides/TESTING.md` — Testing patterns and examples
+12. `docs/guides/ENV.md` — Environment variables reference
