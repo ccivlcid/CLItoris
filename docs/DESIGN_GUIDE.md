@@ -1,0 +1,470 @@
+# DESIGN GUIDE — CLItoris Visual System
+
+> Every pixel must feel like a terminal. If it looks like a generic web app, it's wrong.
+
+---
+
+## 1. Design Philosophy
+
+- **Terminal-first**: The entire UI mimics a CLI environment — dark backgrounds, monospace fonts, green glowing text
+- **Dual-format**: Every post shows natural language (left) and CLI command (right) side by side
+- **Minimal chrome**: No rounded cards, no gradients, no shadows. Borders are thin. Content is king
+- **Information density**: Show more, decorate less. Inspired by `htop`, not Instagram
+
+---
+
+## 2. Color System
+
+### Base Palette
+
+| Token | Hex | Tailwind | Usage |
+|-------|-----|----------|-------|
+| `--bg-primary` | `#1a1a2e` | `bg-[#1a1a2e]` | Main background |
+| `--bg-secondary` | `#16213e` | `bg-[#16213e]` | Sidebar, cards |
+| `--bg-surface` | `#0f3460` | `bg-[#0f3460]` | Elevated surfaces, modals |
+| `--bg-input` | `#0d1117` | `bg-[#0d1117]` | Input fields, code blocks |
+| `--bg-hover` | `#1e293b` | `bg-[#1e293b]` | Hover state for interactive elements |
+
+### Text Colors
+
+| Token | Hex | Tailwind | Usage |
+|-------|-----|----------|-------|
+| `--text-primary` | `#e2e8f0` | `text-gray-200` | Body text, natural language |
+| `--text-secondary` | `#94a3b8` | `text-gray-400` | Timestamps, metadata |
+| `--text-muted` | `#64748b` | `text-gray-500` | Placeholder, disabled |
+| `--text-inverse` | `#0f172a` | `text-gray-900` | Text on bright backgrounds |
+
+### Semantic Colors
+
+| Token | Hex | Tailwind | Usage |
+|-------|-----|----------|-------|
+| `--cli-keyword` | `#4ade80` | `text-green-400` | CLI commands, flags (`post`, `--user`) |
+| `--cli-string` | `#fbbf24` | `text-amber-400` | CLI string values, usernames |
+| `--cli-flag` | `#38bdf8` | `text-sky-400` | CLI flag names (`--lang`, `--tags`) |
+| `--hashtag` | `#22d3ee` | `text-cyan-400` | Hashtags (`#vibe-coding`) |
+| `--mention` | `#60a5fa` | `text-blue-400` | Mentions (`@username`) |
+| `--lang-tag` | `#a78bfa` | `text-purple-400` | Language badges (`--lang=ko`) |
+| `--prompt` | `#fb923c` | `text-orange-400` | Prompt symbol (`$`, `>`) |
+| `--error` | `#f87171` | `text-red-400` | Error messages |
+| `--success` | `#34d399` | `text-emerald-400` | Success indicators |
+| `--star` | `#facc15` | `text-yellow-400` | Star/favorite active |
+
+### Border Colors
+
+| Token | Hex | Tailwind | Usage |
+|-------|-----|----------|-------|
+| `--border-default` | `#334155` | `border-gray-700` | Card borders, dividers |
+| `--border-hover` | `#475569` | `border-gray-600` | Hover state borders |
+| `--border-active` | `#4ade80` | `border-green-400` | Active/focused borders |
+
+---
+
+## 3. Typography
+
+### Font Stack
+
+```css
+/* CLI / code — primary font */
+--font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+
+/* Natural language text */
+--font-sans: 'Inter', 'system-ui', '-apple-system', sans-serif;
+```
+
+### Type Scale
+
+| Level | Size | Weight | Line Height | Usage |
+|-------|------|--------|-------------|-------|
+| `display` | 24px / `text-2xl` | 700 | 1.2 | Page titles |
+| `heading` | 18px / `text-lg` | 600 | 1.3 | Section headers |
+| `body` | 14px / `text-sm` | 400 | 1.6 | Natural language posts |
+| `code` | 13px / `text-[13px]` | 400 | 1.5 | CLI commands |
+| `caption` | 12px / `text-xs` | 400 | 1.4 | Timestamps, counters |
+| `badge` | 11px / `text-[11px]` | 500 | 1.0 | Tags, labels |
+
+### Rules
+
+- CLI panel: always `font-mono`
+- Natural language panel: `font-sans` for readability
+- Sidebar navigation: `font-mono`
+- Never use font sizes below 11px
+- Never use font weight above 700
+
+---
+
+## 4. Layout System
+
+### Page Structure
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ Header Bar (h-10)                                            │
+│ terminal.social / breadcrumb path                            │
+├────────────┬─────────────────────────────────────────────────┤
+│            │                                                 │
+│ Sidebar    │  Main Content Area                              │
+│ (w-56)     │  (flex-1)                                       │
+│            │                                                 │
+│ fixed      │  ┌─ Composer Bar ─────────────────────────┐     │
+│ left       │  │ Input + LLM selector + Submit          │     │
+│            │  └────────────────────────────────────────┘     │
+│            │                                                 │
+│            │  ┌─ Post Card ────────────────────────────┐     │
+│            │  │ ┌─ Natural ──┐  ┌─ CLI ──────────────┐ │     │
+│            │  │ │            │  │                     │ │     │
+│            │  │ └────────────┘  └─────────────────────┘ │     │
+│            │  │ actions: reply · fork · star             │     │
+│            │  └────────────────────────────────────────┘     │
+│            │                                                 │
+│            │  ┌─ Post Card ────────────────────────────┐     │
+│            │  │ ...                                     │     │
+│            │  └────────────────────────────────────────┘     │
+│            │                                                 │
+└────────────┴─────────────────────────────────────────────────┘
+```
+
+### Grid & Spacing
+
+| Token | Value | Tailwind | Usage |
+|-------|-------|----------|-------|
+| `--spacing-xs` | 4px | `p-1`, `gap-1` | Inline spacing |
+| `--spacing-sm` | 8px | `p-2`, `gap-2` | Between small elements |
+| `--spacing-md` | 16px | `p-4`, `gap-4` | Card padding, section gaps |
+| `--spacing-lg` | 24px | `p-6`, `gap-6` | Between cards |
+| `--spacing-xl` | 32px | `p-8`, `gap-8` | Page margins |
+
+### Breakpoints
+
+| Name | Width | Behavior |
+|------|-------|----------|
+| `mobile` | < 640px | Sidebar hidden, dual panel stacks vertically |
+| `tablet` | 640–1024px | Sidebar collapsible, dual panel side by side |
+| `desktop` | > 1024px | Full layout |
+
+---
+
+## 5. Component Specifications
+
+### 5.1 Post Card (Dual Format)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ @username  domain.dev · 3m ago                    --lang=en │
+├────────────────────────────┬────────────────────────────────┤
+│                            │ CLI — open source        copy  │
+│  Natural language text     │                                │
+│  here. Multiple lines      │  post --user=name \           │
+│  supported.                │    --lang=en \                 │
+│                            │    --message="text" \          │
+│  #hashtag #another         │    --tags=hashtag,another \    │
+│                            │    --visibility=public         │
+│                            │                                │
+├────────────────────────────┴────────────────────────────────┤
+│  ↩ reply 5    ◇ fork 3    ★ star 42                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Specifications:**
+
+| Property | Value |
+|----------|-------|
+| Border | `border border-gray-700 rounded-none` |
+| Background | `bg-[#16213e]` |
+| Padding | `p-0` (inner panels handle padding) |
+| Natural panel bg | `bg-[#16213e]` |
+| CLI panel bg | `bg-[#0d1117]` |
+| Panel split | `grid grid-cols-2` (desktop), `grid grid-cols-1` (mobile) |
+| Username | `text-amber-400 font-mono font-semibold` |
+| Timestamp | `text-gray-500 text-xs` |
+| Lang badge | `text-purple-400 text-[11px] border border-purple-400/30 px-1.5 py-0.5` |
+| Hashtags | `text-cyan-400` |
+| Action bar | `border-t border-gray-700 px-4 py-2 text-gray-500 text-xs` |
+| Action hover | `hover:text-green-400` (reply), `hover:text-blue-400` (fork), `hover:text-yellow-400` (star) |
+| Copy button | `text-gray-600 hover:text-gray-300 text-xs` |
+
+### 5.2 Sidebar Navigation
+
+```
+┌────────────────┐
+│ // navigate    │  ← section label (text-gray-600, text-xs)
+│ $ feed --global│  ← active item (text-green-400, bg-[#0f3460])
+│   feed --local │  ← inactive item (text-gray-400)
+│   following    │
+│   explore      │
+│                │
+│ // by LLM      │
+│ ● claude-sonnet│  ← dot indicator (green = active)
+│ ○ gpt-4o       │  ← dot indicator (gray = inactive)
+│ ○ llama-3      │
+│ ○ connect LLM  │
+│                │
+│ // me          │
+│ → @you.local   │
+│   my posts     │
+│   my posts --raw│
+│   starred      │
+└────────────────┘
+```
+
+**Specifications:**
+
+| Property | Value |
+|----------|-------|
+| Width | `w-56` fixed |
+| Background | `bg-[#1a1a2e]` |
+| Border right | `border-r border-gray-700` |
+| Section label | `text-gray-600 text-xs font-mono uppercase tracking-wider` |
+| Section prefix | `//` in `text-gray-700` |
+| Active item | `text-green-400 bg-[#0f3460] pl-3 border-l-2 border-green-400` |
+| Inactive item | `text-gray-400 hover:text-gray-200 pl-3` |
+| Prompt symbol | `$` in `text-orange-400` (active), `text-gray-600` (inactive) |
+| Item padding | `py-1.5 px-3` |
+| Section gap | `mt-6` |
+
+### 5.3 Composer Bar
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ > Write in any language. LLM translates to CLI.             │
+│                                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Type your post here...                              │   │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ Cmd+Enter · save as CLI    [claude-sonnet ▾]   [LLM → CLI ↗]│
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Specifications:**
+
+| Property | Value |
+|----------|-------|
+| Background | `bg-[#16213e]` |
+| Border | `border border-gray-700` |
+| Textarea bg | `bg-[#0d1117]` |
+| Textarea text | `text-gray-200 font-sans text-sm` |
+| Placeholder | `text-gray-600` |
+| Hint text | `text-gray-500 text-xs font-mono` |
+| Model selector | `bg-[#0d1117] border border-gray-700 text-gray-300 text-xs px-3 py-1.5` |
+| Submit button | `bg-green-400/10 text-green-400 border border-green-400/30 px-4 py-1.5 font-mono text-sm hover:bg-green-400/20` |
+
+### 5.4 Header Bar
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ terminal.social / feed · CLI · LLM posts   ·  all posts    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+| Property | Value |
+|----------|-------|
+| Height | `h-10` |
+| Background | `bg-[#1a1a2e]` |
+| Border bottom | `border-b border-gray-700` |
+| Logo | `text-gray-200 font-mono font-bold` |
+| Breadcrumb separator | `/` in `text-gray-600` |
+| Breadcrumb item | `text-gray-400 hover:text-gray-200 text-sm font-mono` |
+
+### 5.5 Action Counters
+
+```
+↩ reply 5    ◇ fork 3    ★ star 42
+```
+
+| Property | Default | Hover | Active |
+|----------|---------|-------|--------|
+| Reply | `text-gray-500` | `text-green-400` | `text-green-400` |
+| Fork | `text-gray-500` | `text-blue-400` | `text-blue-400` |
+| Star | `text-gray-500` | `text-yellow-400` | `text-yellow-400` |
+| Font | `text-xs font-mono` | — | — |
+| Spacing | `gap-6` between actions | — | — |
+| Icon | Unicode characters only (no icon library) | — | — |
+
+### 5.6 Language Badge
+
+```
+--lang=ko    --lang=en    --lang=hi
+```
+
+| Property | Value |
+|----------|-------|
+| Font | `text-[11px] font-mono` |
+| Color | `text-purple-400` |
+| Border | `border border-purple-400/30 rounded-sm` |
+| Padding | `px-1.5 py-0.5` |
+| Position | Top-right corner of post card |
+
+### 5.7 CLI Syntax Highlighting
+
+Inside the CLI panel, apply these colors to different token types:
+
+| Token | Example | Color |
+|-------|---------|-------|
+| Command | `post`, `star`, `fork` | `text-green-400 font-bold` |
+| Flag name | `--user`, `--lang`, `--tags` | `text-sky-400` |
+| Flag value (string) | `"hello world"` | `text-amber-400` |
+| Flag value (enum) | `public`, `true` | `text-purple-400` |
+| Operator | `=`, `\` | `text-gray-500` |
+| Comment | `#` | `text-gray-600 italic` |
+| Line continuation | `\` | `text-gray-600` |
+
+---
+
+## 6. Interaction States
+
+### Buttons & Interactive Elements
+
+| State | Style |
+|-------|-------|
+| Default | `border border-gray-700 text-gray-400` |
+| Hover | `border-gray-500 text-gray-200 bg-[#1e293b]` |
+| Active/Pressed | `border-green-400 text-green-400` |
+| Focused | `ring-1 ring-green-400/50 outline-none` |
+| Disabled | `opacity-40 cursor-not-allowed` |
+
+### Transitions
+
+```
+All interactive elements: transition-colors duration-150
+No transform animations (scale, rotate, translate)
+No bouncing, sliding, or fade-in effects
+Opacity transitions allowed for loading states only
+```
+
+---
+
+## 7. Iconography
+
+**No icon libraries** (Lucide, Heroicons, FontAwesome — all banned).
+
+Use Unicode characters only:
+
+| Action | Symbol | Code |
+|--------|--------|------|
+| Reply | `↩` | `\u21A9` |
+| Fork | `◇` | `\u25C7` |
+| Star (empty) | `☆` | `\u2606` |
+| Star (filled) | `★` | `\u2605` |
+| Prompt | `$` | literal |
+| Arrow right | `→` | `\u2192` |
+| Bullet (active) | `●` | `\u25CF` |
+| Bullet (inactive) | `○` | `\u25CB` |
+| Section prefix | `//` | literal |
+| Copy | `⎘` | `\u2398` |
+| Close | `×` | `\u00D7` |
+| Menu | `≡` | `\u2261` |
+| Expand | `▸` | `\u25B8` |
+| Collapse | `▾` | `\u25BE` |
+
+---
+
+## 8. Responsive Rules
+
+### Mobile (< 640px)
+
+- Sidebar: hidden, accessible via hamburger menu (`≡`)
+- Dual panel: stacks vertically (natural language on top, CLI below)
+- Composer: full width, model selector below textarea
+- Header: logo only, breadcrumbs hidden
+- Post actions: icon-only (no count text)
+
+### Tablet (640–1024px)
+
+- Sidebar: collapsible (icon-only mode, `w-14`)
+- Dual panel: side by side
+- Composer: full width
+
+### Desktop (> 1024px)
+
+- Full layout as specified
+
+---
+
+## 9. Animation Rules
+
+> Less is more. This is a terminal, not a magazine.
+
+### Allowed
+
+- `transition-colors duration-150` on hover states
+- `opacity` transition for loading/skeleton states
+- Cursor blink animation on the composer (terminal cursor feel)
+
+### Banned
+
+- `transform` animations (scale, rotate, translateX/Y)
+- `slide-in`, `fade-in`, `bounce`, `spring` effects
+- Page transition animations
+- Scroll-triggered animations
+- Parallax
+- Confetti / particle effects
+- Skeleton shimmer (use simple opacity pulse)
+
+### Cursor Blink (Composer Only)
+
+```css
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+/* Apply to composer cursor indicator only */
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+```
+
+---
+
+## 10. Dark Mode
+
+There is **no light mode**. Dark theme is the only theme.
+
+Do not implement:
+- Theme toggle
+- `prefers-color-scheme` media query
+- Light mode variants
+- `dark:` Tailwind prefix (unnecessary since always dark)
+
+---
+
+## 11. Accessibility
+
+### Keyboard Navigation
+
+| Key | Action |
+|-----|--------|
+| `Tab` | Move between interactive elements |
+| `Enter` | Activate buttons, submit forms |
+| `Escape` | Close modals, cancel actions |
+| `j` / `k` | Navigate between posts (vim-style) |
+| `s` | Star current post |
+| `r` | Reply to current post |
+| `f` | Fork current post |
+| `/` | Focus composer |
+| `Cmd+Enter` | Submit post |
+
+### Requirements
+
+- All interactive elements must have `focus-visible` ring
+- All images must have `alt` text
+- All buttons must have `aria-label` if icon-only
+- Color is never the only indicator (always pair with text/icon)
+- Minimum contrast ratio: 4.5:1 (WCAG AA)
+- Tab order must follow visual layout
+
+---
+
+## 12. Do / Don't Quick Reference
+
+| Do | Don't |
+|----|-------|
+| Use monospace font for CLI elements | Use decorative fonts |
+| Use thin 1px borders | Use thick borders or shadows |
+| Use Unicode symbols for icons | Import icon libraries |
+| Stack panels vertically on mobile | Hide CLI panel on mobile |
+| Use `transition-colors` only | Add bounce/slide animations |
+| Keep surfaces flat | Add gradients or glassmorphism |
+| Use terminal green as accent | Use rainbow colors |
+| Show information densely | Add excessive whitespace |
+| Use `rounded-none` or `rounded-sm` | Use `rounded-lg` or `rounded-full` |
+| Keep backgrounds under 3 shades | Use many background variations |
