@@ -182,7 +182,127 @@ Star   { user_id, post_id }
 Fork   { user_id, original_post_id, forked_post_id }
 ```
 
-## 7. 기술 스택
+## 7. 모노레포 구조
+
+pnpm workspaces 기반 모노레포로 구성한다.
+
+```
+CLItoris/
+├── package.json              # 루트 — pnpm workspace 설정
+├── pnpm-workspace.yaml       # 워크스페이스 패키지 정의
+├── tsconfig.base.json        # 공유 TypeScript 설정
+├── .eslintrc.cjs             # 공유 ESLint 설정
+├── .prettierrc               # 공유 Prettier 설정
+├── CLAUDE.md
+├── docs/
+│   └── PRD.md
+│
+├── packages/
+│   ├── client/               # @clitoris/client — React 프론트엔드
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   ├── vite.config.ts
+│   │   ├── tailwind.config.ts
+│   │   ├── index.html
+│   │   └── src/
+│   │       ├── main.tsx       # 엔트리포인트
+│   │       ├── App.tsx
+│   │       ├── components/    # 재사용 UI 컴포넌트
+│   │       │   ├── feed/      # 피드 관련 (PostCard, FeedList)
+│   │       │   ├── post/      # 포스트 듀얼 패널
+│   │       │   ├── layout/    # Sidebar, Header, Shell
+│   │       │   └── common/    # 공통 (Button, Input, Tag)
+│   │       ├── pages/         # 라우트 페이지
+│   │       ├── stores/        # Zustand 스토어
+│   │       ├── hooks/         # 커스텀 React hooks
+│   │       ├── styles/        # 글로벌 스타일, 테마
+│   │       └── utils/         # 클라이언트 유틸리티
+│   │
+│   ├── server/               # @clitoris/server — Express 백엔드
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/
+│   │       ├── index.ts       # 서버 엔트리포인트
+│   │       ├── app.ts         # Express 앱 설정
+│   │       ├── routes/        # API 라우트 핸들러
+│   │       │   ├── posts.ts
+│   │       │   ├── users.ts
+│   │       │   └── llm.ts
+│   │       ├── db/
+│   │       │   ├── index.ts   # DB 연결 (better-sqlite3)
+│   │       │   ├── schema.ts  # 테이블 정의
+│   │       │   └── migrations/
+│   │       ├── middleware/     # 인증, 로깅, 에러 핸들링
+│   │       └── utils/
+│   │
+│   ├── shared/               # @clitoris/shared — 공유 코드
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/
+│   │       ├── types/         # 공유 TypeScript 타입
+│   │       │   ├── post.ts
+│   │       │   ├── user.ts
+│   │       │   └── api.ts
+│   │       └── constants/     # 공유 상수 (LLM 모델명, 색상 등)
+│   │
+│   └── llm/                  # @clitoris/llm — LLM 통합 모듈
+│       ├── package.json
+│       ├── tsconfig.json
+│       └── src/
+│           ├── index.ts       # 통합 LLM 인터페이스
+│           ├── providers/
+│           │   ├── anthropic.ts  # Claude 연동
+│           │   ├── openai.ts     # GPT 연동
+│           │   └── ollama.ts     # Llama 로컬 연동
+│           └── transformer.ts    # 자연어 → CLI 변환 로직
+│
+├── tests/
+│   ├── unit/                 # Vitest 단위 테스트
+│   └── e2e/                  # Playwright E2E 테스트
+│       └── playwright.config.ts
+│
+└── scripts/                  # 빌드/배포/시드 스크립트
+```
+
+### 워크스페이스 패키지
+
+| 패키지 | 이름 | 설명 |
+|--------|------|------|
+| `packages/client` | `@clitoris/client` | React 프론트엔드 앱 |
+| `packages/server` | `@clitoris/server` | Express API 서버 |
+| `packages/shared` | `@clitoris/shared` | 공유 타입, 상수 |
+| `packages/llm` | `@clitoris/llm` | LLM 프로바이더 통합 |
+
+### 주요 스크립트 (루트 package.json)
+
+```json
+{
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "dev:client": "pnpm --filter @clitoris/client dev",
+    "dev:server": "pnpm --filter @clitoris/server dev",
+    "build": "pnpm -r run build",
+    "test": "vitest",
+    "test:e2e": "playwright test",
+    "lint": "eslint packages/",
+    "format": "prettier --write packages/"
+  }
+}
+```
+
+### 패키지 간 의존 관계
+
+```
+@clitoris/client ──→ @clitoris/shared
+                 ──→ @clitoris/llm (API 호출용 타입)
+
+@clitoris/server ──→ @clitoris/shared
+                 ──→ @clitoris/llm
+
+@clitoris/llm    ──→ @clitoris/shared
+```
+
+## 8. 기술 스택
 
 | 영역 | 기술 |
 |------|------|

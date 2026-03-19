@@ -24,31 +24,40 @@ This file provides guidance to AI assistants working with the CLItoris repositor
 | Package manager | pnpm |
 | LLM Integration | Anthropic SDK, OpenAI SDK, Ollama |
 
-## Project Structure
+## Monorepo Structure
+
+pnpm workspaces 기반 모노레포 구조.
 
 ```
-src/
-├── client/              # React frontend
-│   ├── components/      # 재사용 UI 컴포넌트
-│   ├── pages/           # 라우트 페이지
-│   ├── stores/          # Zustand 스토어
-│   ├── styles/          # Tailwind/CSS
-│   ├── hooks/           # 커스텀 React hooks
-│   └── utils/           # 클라이언트 유틸리티
-├── server/              # Express backend
-│   ├── routes/          # API 라우트
-│   ├── db/              # DB 설정
-│   │   └── migrations/  # 버전 마이그레이션
-│   ├── middleware/       # Express 미들웨어
-│   └── utils/           # 서버 유틸리티
-└── shared/              # 프론트/백 공유 코드
-    ├── types/           # TypeScript 타입 정의
-    └── constants/       # 공유 상수
-docs/                    # 프로젝트 문서 (PRD 등)
-tests/
-├── unit/                # Vitest 단위 테스트
-└── e2e/                 # Playwright E2E 테스트
-scripts/                 # 빌드/배포 스크립트
+packages/
+├── client/    # @clitoris/client — React 프론트엔드 (Vite + Tailwind)
+├── server/    # @clitoris/server — Express API 서버 (tsx)
+├── shared/    # @clitoris/shared — 공유 타입, 상수
+└── llm/       # @clitoris/llm — LLM 프로바이더 통합 (Anthropic, OpenAI, Ollama)
+docs/          # 프로젝트 문서 (PRD 등)
+tests/         # unit (Vitest), e2e (Playwright)
+scripts/       # 빌드/배포 스크립트
+```
+
+### 주요 명령어
+
+```bash
+pnpm dev              # 전체 개발 서버 실행
+pnpm dev:client       # 프론트엔드만
+pnpm dev:server       # 백엔드만
+pnpm build            # 전체 빌드
+pnpm test             # Vitest 단위 테스트
+pnpm test:e2e         # Playwright E2E
+pnpm lint             # ESLint
+pnpm format           # Prettier
+```
+
+### 패키지 의존 관계
+
+```
+client ──→ shared, llm(타입)
+server ──→ shared, llm
+llm    ──→ shared
 ```
 
 ## Design Conventions
