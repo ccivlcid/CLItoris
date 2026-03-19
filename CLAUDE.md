@@ -10,6 +10,19 @@ CLItoris is a new project repository currently in its initial setup phase. This 
 
 This repository is in early bootstrapping. No source code, build system, or tests have been added yet.
 
+## Tech Stack
+
+| Area | Technology |
+|------|-----------|
+| Frontend | React 19 + TypeScript + Vite + Tailwind CSS |
+| State management | Zustand |
+| Flow diagrams | `@xyflow/react` v12 |
+| Backend | Node.js + Express + tsx (TypeScript direct execution) |
+| DB | SQLite (`better-sqlite3`) + versioned migrations |
+| Logging | pino |
+| Testing | Vitest (frontend + server), Playwright (E2E) |
+| Package manager | pnpm |
+
 ## Development Workflow
 
 ### Branch Conventions
