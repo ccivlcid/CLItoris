@@ -78,6 +78,13 @@ llm    ──→ shared
 - Write clear, descriptive commit messages
 - Use conventional commit style when applicable (e.g., `feat:`, `fix:`, `docs:`, `chore:`)
 
-### Key Documents
+## Vibe Coding (바이브코딩)
 
-- `docs/PRD.md` — 전체 제품 요구사항 문서
+이 프로젝트는 AI 주도 개발로 진행한다. 사람은 방향을 제시하고, AI가 구현한다.
+
+**반드시 읽을 문서 (우선순위 순):**
+1. `CLAUDE.md` — 프로젝트 요약 (지금 이 파일)
+2. `CONVENTIONS.md` — 코딩 규칙, 네이밍, 금지사항
+3. `docs/ARCHITECTURE.md` — 시스템 구조, DB 스키마, 데이터 흐름
+4. `docs/PRD.md` — 전체 제품 요구사항
+5. `docs/PROMPTS.md` — 바이브코딩 프롬프트 템플릿
