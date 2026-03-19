@@ -96,6 +96,13 @@ This project is built through AI-driven development. Humans set direction, AI im
 - `specs/API.md` — Full REST API documentation (endpoints, request/response, errors)
 - `specs/api-schema.json` — OpenAPI 3.1 schema (machine-readable)
 
+**Architecture diagrams:**
+- `architecture/architecture.json` — Full system config (layers, packages, ports, security)
+- `architecture/backend-dependencies.mmd` — Server module dependency graph (Mermaid)
+- `architecture/frontend-imports.mmd` — Client component import graph (Mermaid)
+- `architecture/org-chart.mmd` — Monorepo folder hierarchy (Mermaid)
+- `architecture/schema-erd.md` — Database ERD with Mermaid + data flow examples
+
 **Reference documents:**
 - `README.md` — Public-facing project readme
 - `docs/OVERVIEW.md` — Project overview and core concepts

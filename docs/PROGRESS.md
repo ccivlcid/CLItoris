@@ -38,6 +38,11 @@ The project is in the **documentation and scaffolding** phase. No application co
 - [x] README.md — Public-facing readme
 - [x] specs/API.md — Full REST API documentation
 - [x] specs/api-schema.json — OpenAPI 3.1 schema
+- [x] architecture/architecture.json — Full system configuration
+- [x] architecture/backend-dependencies.mmd — Server dependency graph
+- [x] architecture/frontend-imports.mmd — Client import graph
+- [x] architecture/org-chart.mmd — Monorepo folder hierarchy
+- [x] architecture/schema-erd.md — Database ERD and data flows
 - [x] Monorepo folder structure (`packages/client`, `server`, `shared`, `llm`)
 
 ### Remaining
@@ -114,6 +119,11 @@ The project is in the **documentation and scaffolding** phase. No application co
 | `docs/PROGRESS.md` | Development status (this file) | Done |
 | `specs/API.md` | Full REST API documentation | Done |
 | `specs/api-schema.json` | OpenAPI 3.1 machine-readable schema | Done |
+| `architecture/architecture.json` | Full system configuration (JSON) | Done |
+| `architecture/backend-dependencies.mmd` | Server module dependency graph | Done |
+| `architecture/frontend-imports.mmd` | Client component import graph | Done |
+| `architecture/org-chart.mmd` | Monorepo folder hierarchy | Done |
+| `architecture/schema-erd.md` | Database ERD + data flow examples | Done |
 
 ---
 

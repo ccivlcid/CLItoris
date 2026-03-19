@@ -1,0 +1,139 @@
+%% Frontend Import Graph — @clitoris/client
+%% Shows how client modules import from each other
+
+graph TD
+    subgraph "@clitoris/client"
+        MAIN["main.tsx<br/>(entry point)"]
+        APP_C["App.tsx<br/>(router setup)"]
+
+        subgraph Pages
+            FEED_PAGE["pages/feed.tsx"]
+            PROFILE_PAGE["pages/profile.tsx"]
+            POST_PAGE["pages/post.tsx"]
+            EXPLORE_PAGE["pages/explore.tsx"]
+            LOGIN_PAGE["pages/login.tsx"]
+        end
+
+        subgraph "Components — Layout"
+            SHELL["layout/shell.tsx"]
+            SIDEBAR["layout/sidebar.tsx"]
+            HEADER["layout/header.tsx"]
+        end
+
+        subgraph "Components — Feed"
+            FEED_LIST["feed/feed-list.tsx"]
+            POST_CARD["feed/post-card.tsx"]
+        end
+
+        subgraph "Components — Post"
+            DUAL_PANEL["post/dual-panel.tsx"]
+            CLI_HIGHLIGHT["post/cli-highlight.tsx"]
+            COMPOSER["post/composer.tsx"]
+            ACTION_BAR["post/action-bar.tsx"]
+        end
+
+        subgraph "Components — Common"
+            BUTTON["common/button.tsx"]
+            INPUT["common/input.tsx"]
+            TAG["common/tag.tsx"]
+            SPINNER["common/spinner.tsx"]
+            LANG_BADGE["common/lang-badge.tsx"]
+            MODEL_SELECT["common/model-select.tsx"]
+        end
+
+        subgraph Stores
+            FEED_STORE["stores/feed-store.ts"]
+            AUTH_STORE["stores/auth-store.ts"]
+            POST_STORE["stores/post-store.ts"]
+        end
+
+        subgraph Hooks
+            USE_FEED["hooks/use-feed.ts"]
+            USE_AUTH["hooks/use-auth.ts"]
+            USE_POST["hooks/use-post.ts"]
+        end
+    end
+
+    subgraph "@clitoris/shared"
+        TYPES["types/<br/>user.ts, post.ts, api.ts"]
+        CONSTANTS["constants/<br/>models.ts, limits.ts"]
+    end
+
+    %% Entry flow
+    MAIN --> APP_C
+    APP_C --> SHELL
+    APP_C --> FEED_PAGE
+    APP_C --> PROFILE_PAGE
+    APP_C --> POST_PAGE
+    APP_C --> EXPLORE_PAGE
+    APP_C --> LOGIN_PAGE
+
+    %% Shell layout
+    SHELL --> SIDEBAR
+    SHELL --> HEADER
+
+    %% Pages use components
+    FEED_PAGE --> FEED_LIST
+    FEED_PAGE --> COMPOSER
+    PROFILE_PAGE --> FEED_LIST
+    POST_PAGE --> DUAL_PANEL
+    POST_PAGE --> ACTION_BAR
+
+    %% Feed components
+    FEED_LIST --> POST_CARD
+    POST_CARD --> DUAL_PANEL
+    POST_CARD --> ACTION_BAR
+    POST_CARD --> LANG_BADGE
+    POST_CARD --> TAG
+
+    %% Post components
+    DUAL_PANEL --> CLI_HIGHLIGHT
+    COMPOSER --> MODEL_SELECT
+    COMPOSER --> BUTTON
+    COMPOSER --> INPUT
+
+    %% Sidebar
+    SIDEBAR --> BUTTON
+    HEADER --> BUTTON
+
+    %% Stores used by hooks
+    USE_FEED --> FEED_STORE
+    USE_AUTH --> AUTH_STORE
+    USE_POST --> POST_STORE
+
+    %% Pages use hooks
+    FEED_PAGE --> USE_FEED
+    PROFILE_PAGE --> USE_FEED
+    POST_PAGE --> USE_POST
+    LOGIN_PAGE --> USE_AUTH
+    COMPOSER --> USE_POST
+    ACTION_BAR --> USE_POST
+    SIDEBAR --> USE_AUTH
+    HEADER --> USE_AUTH
+
+    %% Shared types
+    FEED_STORE --> TYPES
+    AUTH_STORE --> TYPES
+    POST_STORE --> TYPES
+    POST_CARD --> TYPES
+    DUAL_PANEL --> TYPES
+    MODEL_SELECT --> CONSTANTS
+
+    %% Styling
+    classDef page fill:#0f3460,stroke:#4ade80,color:#e2e8f0
+    classDef layout fill:#16213e,stroke:#fb923c,color:#e2e8f0
+    classDef feed fill:#16213e,stroke:#22d3ee,color:#e2e8f0
+    classDef post fill:#16213e,stroke:#fbbf24,color:#e2e8f0
+    classDef common fill:#1a1a2e,stroke:#64748b,color:#94a3b8
+    classDef store fill:#0f3460,stroke:#a78bfa,color:#e2e8f0
+    classDef hook fill:#1a1a2e,stroke:#a78bfa,color:#e2e8f0
+    classDef shared fill:#16213e,stroke:#a78bfa,color:#e2e8f0
+
+    class MAIN,APP_C,FEED_PAGE,PROFILE_PAGE,POST_PAGE,EXPLORE_PAGE,LOGIN_PAGE page
+    class SHELL,SIDEBAR,HEADER layout
+    class FEED_LIST,POST_CARD feed
+    class DUAL_PANEL,CLI_HIGHLIGHT,COMPOSER,ACTION_BAR post
+    class BUTTON,INPUT,TAG,SPINNER,LANG_BADGE,MODEL_SELECT common
+    class FEED_STORE,AUTH_STORE,POST_STORE store
+    class USE_FEED,USE_AUTH,USE_POST hook
+    class TYPES,CONSTANTS shared

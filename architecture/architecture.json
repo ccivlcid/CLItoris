@@ -1,0 +1,158 @@
+{
+  "project": "CLItoris",
+  "domain": "terminal.social",
+  "description": "Terminal-themed social network with dual-format posts (natural language + CLI)",
+  "architecture": {
+    "type": "monorepo",
+    "manager": "pnpm workspaces",
+    "runtime": "Node.js 20+",
+    "language": "TypeScript (strict mode)",
+    "target": "ES2022"
+  },
+  "layers": {
+    "client": {
+      "package": "@clitoris/client",
+      "path": "packages/client",
+      "type": "SPA",
+      "framework": "React 19",
+      "bundler": "Vite",
+      "styling": "Tailwind CSS",
+      "state": "Zustand",
+      "routing": "React Router v7",
+      "entryPoint": "src/main.tsx",
+      "port": 5173,
+      "dependencies": [
+        "@clitoris/shared",
+        "@clitoris/llm"
+      ],
+      "structure": {
+        "src/components/feed": "Feed list, post card components",
+        "src/components/post": "Dual panel, CLI syntax highlighter",
+        "src/components/layout": "Sidebar, Header, Shell, Footer",
+        "src/components/common": "Button, Input, Tag, Modal, Spinner",
+        "src/pages": "Route page components",
+        "src/stores": "Zustand stores (feed, auth, post)",
+        "src/hooks": "Custom React hooks",
+        "src/styles": "Global CSS, Tailwind theme config",
+        "src/utils": "Client-side utilities"
+      }
+    },
+    "server": {
+      "package": "@clitoris/server",
+      "path": "packages/server",
+      "type": "REST API",
+      "framework": "Express",
+      "runner": "tsx (TypeScript direct execution)",
+      "database": "SQLite (better-sqlite3)",
+      "logging": "pino",
+      "validation": "zod",
+      "auth": "express-session",
+      "entryPoint": "src/index.ts",
+      "port": 3000,
+      "dependencies": [
+        "@clitoris/shared",
+        "@clitoris/llm"
+      ],
+      "structure": {
+        "src/index.ts": "Server entry point",
+        "src/app.ts": "Express app configuration",
+        "src/routes/posts.ts": "Post CRUD and feed endpoints",
+        "src/routes/users.ts": "User profile and social endpoints",
+        "src/routes/llm.ts": "LLM transformation endpoint",
+        "src/routes/auth.ts": "Authentication endpoints",
+        "src/db/index.ts": "Database connection and migration runner",
+        "src/db/schema.ts": "Table definitions and queries",
+        "src/db/migrations": "Sequential SQL migration files",
+        "src/middleware/auth.ts": "Session authentication middleware",
+        "src/middleware/validate.ts": "Zod validation middleware",
+        "src/middleware/rate-limit.ts": "Rate limiting middleware",
+        "src/middleware/error.ts": "Global error handler"
+      }
+    },
+    "shared": {
+      "package": "@clitoris/shared",
+      "path": "packages/shared",
+      "type": "Library",
+      "entryPoint": "src/index.ts",
+      "dependencies": [],
+      "structure": {
+        "src/types/user.ts": "User, UserProfile, UserSummary interfaces",
+        "src/types/post.ts": "Post, PostDetail, CreatePostRequest interfaces",
+        "src/types/api.ts": "ApiResponse, ApiError, PaginationMeta interfaces",
+        "src/types/llm.ts": "LlmModel, TransformRequest, TransformResponse",
+        "src/constants/models.ts": "LLM model identifiers",
+        "src/constants/limits.ts": "Validation limits (max lengths, etc.)",
+        "src/constants/visibility.ts": "Visibility enum-like constants"
+      }
+    },
+    "llm": {
+      "package": "@clitoris/llm",
+      "path": "packages/llm",
+      "type": "Library",
+      "entryPoint": "src/index.ts",
+      "dependencies": [
+        "@clitoris/shared"
+      ],
+      "structure": {
+        "src/index.ts": "Unified LLM interface and provider factory",
+        "src/providers/anthropic.ts": "Claude integration (Anthropic SDK)",
+        "src/providers/openai.ts": "GPT integration (OpenAI SDK)",
+        "src/providers/ollama.ts": "Llama integration (Ollama REST API)",
+        "src/transformer.ts": "Natural language → CLI transformation logic and prompts"
+      }
+    }
+  },
+  "testing": {
+    "unit": {
+      "framework": "Vitest",
+      "location": "tests/unit/ and co-located *.test.ts",
+      "coverage": "TBD"
+    },
+    "e2e": {
+      "framework": "Playwright",
+      "location": "tests/e2e/",
+      "config": "tests/e2e/playwright.config.ts"
+    }
+  },
+  "api": {
+    "basePath": "/api",
+    "format": "JSON",
+    "auth": "Session cookie (connect.sid)",
+    "pagination": "Cursor-based (created_at timestamp)",
+    "validation": "zod schemas at API boundary",
+    "rateLimiting": {
+      "llmTransform": "30/min",
+      "authLogin": "10/min",
+      "authRegister": "5/min",
+      "default": "120/min"
+    },
+    "endpointGroups": {
+      "auth": ["/auth/register", "/auth/login", "/auth/logout", "/auth/me"],
+      "posts": ["/posts", "/posts/feed/global", "/posts/feed/local", "/posts/:id", "/posts/:id/reply", "/posts/:id/fork", "/posts/:id/star", "/posts/by-llm/:model"],
+      "users": ["/users/@:username", "/users/@:username/posts", "/users/@:username/starred", "/users/@:username/follow"],
+      "llm": ["/llm/transform"]
+    }
+  },
+  "database": {
+    "engine": "SQLite 3",
+    "driver": "better-sqlite3 (synchronous)",
+    "file": "clitoris.db",
+    "idStrategy": "UUID v7",
+    "timestamps": "ISO 8601 TEXT",
+    "migrations": "Sequential .sql files (append-only)",
+    "pragmas": ["journal_mode = WAL", "foreign_keys = ON"],
+    "tables": ["users", "posts", "follows", "stars"]
+  },
+  "security": {
+    "authentication": "express-session + SQLite session store",
+    "inputValidation": "zod (API boundary only)",
+    "sqlInjection": "Prepared statements (better-sqlite3)",
+    "xss": "React auto-escaping + DOMPurify",
+    "rateLimiting": "express-rate-limit",
+    "csrf": "SameSite cookie attribute"
+  },
+  "deployment": {
+    "status": "Not configured",
+    "target": "TBD"
+  }
+}
