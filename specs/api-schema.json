@@ -1,0 +1,639 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CLItoris API",
+    "description": "REST API for terminal.social — a CLI-themed social network",
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "/api",
+      "description": "API base path"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "required": ["id", "username", "createdAt"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "description": "UUID v7" },
+          "username": { "type": "string", "minLength": 2, "maxLength": 30, "pattern": "^[a-zA-Z0-9_]+$" },
+          "domain": { "type": "string", "nullable": true, "description": "Custom domain (e.g. jiyeon.kim)" },
+          "displayName": { "type": "string", "nullable": true, "maxLength": 50 },
+          "bio": { "type": "string", "nullable": true, "maxLength": 300 },
+          "avatarUrl": { "type": "string", "format": "uri", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "UserProfile": {
+        "allOf": [
+          { "$ref": "#/components/schemas/User" },
+          {
+            "type": "object",
+            "properties": {
+              "followerCount": { "type": "integer", "minimum": 0 },
+              "followingCount": { "type": "integer", "minimum": 0 },
+              "postCount": { "type": "integer", "minimum": 0 },
+              "isFollowing": { "type": "boolean" }
+            }
+          }
+        ]
+      },
+      "UserSummary": {
+        "type": "object",
+        "required": ["username"],
+        "properties": {
+          "username": { "type": "string" },
+          "domain": { "type": "string", "nullable": true },
+          "displayName": { "type": "string", "nullable": true },
+          "avatarUrl": { "type": "string", "format": "uri", "nullable": true }
+        }
+      },
+      "Post": {
+        "type": "object",
+        "required": ["id", "userId", "messageRaw", "messageCli", "lang", "tags", "mentions", "visibility", "llmModel", "createdAt"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "userId": { "type": "string", "format": "uuid" },
+          "messageRaw": { "type": "string", "minLength": 1, "maxLength": 2000, "description": "Natural language content" },
+          "messageCli": { "type": "string", "minLength": 1, "maxLength": 4000, "description": "CLI command representation" },
+          "lang": { "type": "string", "minLength": 2, "maxLength": 2, "description": "ISO 639-1 language code" },
+          "tags": { "type": "array", "items": { "type": "string", "maxLength": 50 }, "maxItems": 10 },
+          "mentions": { "type": "array", "items": { "type": "string" }, "maxItems": 20 },
+          "visibility": { "$ref": "#/components/schemas/Visibility" },
+          "llmModel": { "$ref": "#/components/schemas/LlmModel" },
+          "parentId": { "type": "string", "format": "uuid", "nullable": true, "description": "Reply parent post ID" },
+          "forkedFromId": { "type": "string", "format": "uuid", "nullable": true, "description": "Original post ID (if forked)" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "user": { "$ref": "#/components/schemas/UserSummary" },
+          "starCount": { "type": "integer", "minimum": 0 },
+          "replyCount": { "type": "integer", "minimum": 0 },
+          "forkCount": { "type": "integer", "minimum": 0 },
+          "isStarred": { "type": "boolean" }
+        }
+      },
+      "PostDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Post" },
+          {
+            "type": "object",
+            "properties": {
+              "forkedFrom": { "$ref": "#/components/schemas/Post", "nullable": true },
+              "replies": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/Post" }
+              }
+            }
+          }
+        ]
+      },
+      "Visibility": {
+        "type": "string",
+        "enum": ["public", "private", "unlisted"]
+      },
+      "LlmModel": {
+        "type": "string",
+        "enum": ["claude-sonnet", "gpt-4o", "llama-3", "custom"]
+      },
+      "ApiResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {},
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code", "message"],
+            "properties": {
+              "code": { "type": "string", "description": "Machine-readable error code" },
+              "message": { "type": "string", "description": "Human-readable error message" }
+            }
+          }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "properties": {
+          "cursor": { "type": "string", "format": "date-time", "nullable": true, "description": "Cursor for next page" },
+          "hasMore": { "type": "boolean" }
+        }
+      },
+      "CreatePostRequest": {
+        "type": "object",
+        "required": ["messageRaw", "messageCli", "lang", "tags", "mentions", "visibility", "llmModel"],
+        "properties": {
+          "messageRaw": { "type": "string", "minLength": 1, "maxLength": 2000 },
+          "messageCli": { "type": "string", "minLength": 1, "maxLength": 4000 },
+          "lang": { "type": "string", "minLength": 2, "maxLength": 2 },
+          "tags": { "type": "array", "items": { "type": "string", "maxLength": 50 }, "maxItems": 10 },
+          "mentions": { "type": "array", "items": { "type": "string" }, "maxItems": 20 },
+          "visibility": { "$ref": "#/components/schemas/Visibility" },
+          "llmModel": { "$ref": "#/components/schemas/LlmModel" }
+        }
+      },
+      "TransformRequest": {
+        "type": "object",
+        "required": ["message", "model", "lang"],
+        "properties": {
+          "message": { "type": "string", "minLength": 1, "maxLength": 2000 },
+          "model": { "$ref": "#/components/schemas/LlmModel" },
+          "lang": { "type": "string", "minLength": 2, "maxLength": 2 }
+        }
+      },
+      "TransformResponse": {
+        "type": "object",
+        "required": ["messageCli", "model", "tokensUsed"],
+        "properties": {
+          "messageCli": { "type": "string" },
+          "model": { "$ref": "#/components/schemas/LlmModel" },
+          "tokensUsed": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "StarToggleResponse": {
+        "type": "object",
+        "required": ["starred", "starCount"],
+        "properties": {
+          "starred": { "type": "boolean" },
+          "starCount": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "FollowToggleResponse": {
+        "type": "object",
+        "required": ["following", "followerCount"],
+        "properties": {
+          "following": { "type": "boolean" },
+          "followerCount": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["username", "password"],
+        "properties": {
+          "username": { "type": "string", "minLength": 2, "maxLength": 30, "pattern": "^[a-zA-Z0-9_]+$" },
+          "password": { "type": "string", "minLength": 8, "maxLength": 128 },
+          "displayName": { "type": "string", "maxLength": 50 }
+        }
+      },
+      "LoginRequest": {
+        "type": "object",
+        "required": ["username", "password"],
+        "properties": {
+          "username": { "type": "string" },
+          "password": { "type": "string" }
+        }
+      }
+    },
+    "parameters": {
+      "cursor": {
+        "name": "cursor",
+        "in": "query",
+        "description": "ISO timestamp cursor for pagination (created_at of last item)",
+        "required": false,
+        "schema": { "type": "string", "format": "date-time" }
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "Number of items per page",
+        "required": false,
+        "schema": { "type": "integer", "minimum": 1, "maximum": 50, "default": 20 }
+      },
+      "username": {
+        "name": "username",
+        "in": "path",
+        "description": "User handle (without @ prefix)",
+        "required": true,
+        "schema": { "type": "string" }
+      },
+      "postId": {
+        "name": "id",
+        "in": "path",
+        "description": "Post UUID",
+        "required": true,
+        "schema": { "type": "string", "format": "uuid" }
+      },
+      "llmModel": {
+        "name": "model",
+        "in": "path",
+        "description": "LLM model identifier",
+        "required": true,
+        "schema": { "$ref": "#/components/schemas/LlmModel" }
+      }
+    },
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "connect.sid",
+        "description": "Express session cookie"
+      }
+    }
+  },
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Validation error" },
+          "409": { "description": "Username already taken" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login and create session",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/UserSummary" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid credentials" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Logout and destroy session",
+        "tags": ["Auth"],
+        "security": [{ "session": [] }],
+        "responses": {
+          "200": { "description": "Logged out" }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Get current authenticated user",
+        "tags": ["Auth"],
+        "security": [{ "session": [] }],
+        "responses": {
+          "200": {
+            "description": "Current user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated" }
+        }
+      }
+    },
+    "/posts": {
+      "post": {
+        "summary": "Create a new post",
+        "tags": ["Posts"],
+        "security": [{ "session": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePostRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Post created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/Post" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Validation error" },
+          "401": { "description": "Not authenticated" }
+        }
+      }
+    },
+    "/posts/feed/global": {
+      "get": {
+        "summary": "Get global public feed",
+        "tags": ["Posts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Feed posts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Post" }
+                    },
+                    "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/feed/local": {
+      "get": {
+        "summary": "Get feed from followed users",
+        "tags": ["Posts"],
+        "security": [{ "session": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": { "description": "Feed posts" },
+          "401": { "description": "Not authenticated" }
+        }
+      }
+    },
+    "/posts/{id}": {
+      "get": {
+        "summary": "Get a single post with replies",
+        "tags": ["Posts"],
+        "parameters": [{ "$ref": "#/components/parameters/postId" }],
+        "responses": {
+          "200": {
+            "description": "Post detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/PostDetail" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "Post not found" }
+        }
+      },
+      "delete": {
+        "summary": "Delete a post",
+        "tags": ["Posts"],
+        "security": [{ "session": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/postId" }],
+        "responses": {
+          "200": { "description": "Post deleted" },
+          "401": { "description": "Not authenticated" },
+          "403": { "description": "Not the author" },
+          "404": { "description": "Post not found" }
+        }
+      }
+    },
+    "/posts/{id}/reply": {
+      "post": {
+        "summary": "Reply to a post",
+        "tags": ["Posts"],
+        "security": [{ "session": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/postId" }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreatePostRequest" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Reply created" },
+          "400": { "description": "Validation error" },
+          "401": { "description": "Not authenticated" },
+          "404": { "description": "Parent post not found" }
+        }
+      }
+    },
+    "/posts/{id}/fork": {
+      "post": {
+        "summary": "Fork a post to your timeline",
+        "tags": ["Posts"],
+        "security": [{ "session": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/postId" }],
+        "responses": {
+          "201": { "description": "Post forked" },
+          "401": { "description": "Not authenticated" },
+          "404": { "description": "Original post not found" },
+          "409": { "description": "Already forked" }
+        }
+      }
+    },
+    "/posts/{id}/star": {
+      "post": {
+        "summary": "Toggle star on a post",
+        "tags": ["Posts"],
+        "security": [{ "session": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/postId" }],
+        "responses": {
+          "200": {
+            "description": "Star toggled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/StarToggleResponse" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated" },
+          "404": { "description": "Post not found" }
+        }
+      }
+    },
+    "/posts/by-llm/{model}": {
+      "get": {
+        "summary": "Get posts filtered by LLM model",
+        "tags": ["Posts"],
+        "parameters": [
+          { "$ref": "#/components/parameters/llmModel" },
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": { "description": "Filtered posts" }
+        }
+      }
+    },
+    "/users/@{username}": {
+      "get": {
+        "summary": "Get user profile",
+        "tags": ["Users"],
+        "parameters": [{ "$ref": "#/components/parameters/username" }],
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/UserProfile" }
+                  }
+                }
+              }
+            }
+          },
+          "404": { "description": "User not found" }
+        }
+      }
+    },
+    "/users/@{username}/posts": {
+      "get": {
+        "summary": "Get user's posts",
+        "tags": ["Users"],
+        "parameters": [
+          { "$ref": "#/components/parameters/username" },
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": { "description": "User posts" },
+          "404": { "description": "User not found" }
+        }
+      }
+    },
+    "/users/@{username}/starred": {
+      "get": {
+        "summary": "Get posts starred by user",
+        "tags": ["Users"],
+        "parameters": [
+          { "$ref": "#/components/parameters/username" },
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": { "description": "Starred posts" }
+        }
+      }
+    },
+    "/users/@{username}/follow": {
+      "post": {
+        "summary": "Toggle follow on a user",
+        "tags": ["Users"],
+        "security": [{ "session": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/username" }],
+        "responses": {
+          "200": {
+            "description": "Follow toggled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/FollowToggleResponse" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Cannot follow yourself" },
+          "401": { "description": "Not authenticated" },
+          "404": { "description": "User not found" }
+        }
+      }
+    },
+    "/llm/transform": {
+      "post": {
+        "summary": "Transform natural language to CLI format",
+        "tags": ["LLM"],
+        "security": [{ "session": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TransformRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transformation result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/TransformResponse" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Validation error" },
+          "401": { "description": "Not authenticated" },
+          "429": { "description": "Rate limit exceeded" },
+          "500": { "description": "LLM API error" }
+        }
+      }
+    }
+  },
+  "tags": [
+    { "name": "Auth", "description": "Authentication endpoints" },
+    { "name": "Posts", "description": "Post CRUD and feed operations" },
+    { "name": "Users", "description": "User profiles and social operations" },
+    { "name": "LLM", "description": "LLM transformation endpoints" }
+  ]
+}

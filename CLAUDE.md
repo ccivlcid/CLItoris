@@ -92,6 +92,10 @@ This project is built through AI-driven development. Humans set direction, AI im
 6. `docs/PRD.md` — Full product requirements
 7. `docs/PROMPTS.md` — Vibe coding prompt templates
 
+**API specifications:**
+- `specs/API.md` — Full REST API documentation (endpoints, request/response, errors)
+- `specs/api-schema.json` — OpenAPI 3.1 schema (machine-readable)
+
 **Reference documents:**
 - `README.md` — Public-facing project readme
 - `docs/OVERVIEW.md` — Project overview and core concepts

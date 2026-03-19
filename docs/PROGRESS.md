@@ -36,6 +36,8 @@ The project is in the **documentation and scaffolding** phase. No application co
 - [x] docs/PROMPTS.md — Vibe coding prompt templates
 - [x] docs/PROGRESS.md — This file
 - [x] README.md — Public-facing readme
+- [x] specs/API.md — Full REST API documentation
+- [x] specs/api-schema.json — OpenAPI 3.1 schema
 - [x] Monorepo folder structure (`packages/client`, `server`, `shared`, `llm`)
 
 ### Remaining
@@ -110,6 +112,8 @@ The project is in the **documentation and scaffolding** phase. No application co
 | `docs/DESIGN_GUIDE.md` | Visual system & component specs | Done |
 | `docs/PROMPTS.md` | Vibe coding prompt templates | Done |
 | `docs/PROGRESS.md` | Development status (this file) | Done |
+| `specs/API.md` | Full REST API documentation | Done |
+| `specs/api-schema.json` | OpenAPI 3.1 machine-readable schema | Done |
 
 ---
 
