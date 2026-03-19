@@ -24,7 +24,12 @@
 |----------|------|---------|----------|-------------|
 | `ANTHROPIC_API_KEY` | string | — | **Yes*** | Anthropic API key for Claude |
 | `OPENAI_API_KEY` | string | — | No | OpenAI API key for GPT-4o |
-| `OLLAMA_URL` | string | `http://localhost:11434` | No | Ollama server URL for Llama |
+| `OLLAMA_URL` | string | `http://localhost:11434` | No | Ollama server URL for local LLM |
+| `CURSOR_API_KEY` | string | — | No | Cursor AI API key |
+| `CLI_LLM_COMMAND` | string | `claude` | No | CLI tool command (`claude`, `codex`, `gemini`, `opencode`) |
+| `API_CUSTOM_BASE_URL` | string | — | No | Generic API base URL (OpenAI-compatible) |
+| `API_CUSTOM_API_KEY` | string | — | No | Generic API authentication key |
+| `API_CUSTOM_MODEL` | string | — | No | Generic API model name |
 
 *Required for default LLM provider (claude-sonnet).
 
@@ -49,10 +54,15 @@ SESSION_SECRET=replace-with-random-string-at-least-32-chars
 LOG_LEVEL=info
 CORS_ORIGIN=http://localhost:5173
 
-# LLM API Keys
+# LLM Providers
 ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
 OPENAI_API_KEY=sk-your-openai-key-here
 OLLAMA_URL=http://localhost:11434
+CURSOR_API_KEY=your-cursor-key-here
+CLI_LLM_COMMAND=claude
+API_CUSTOM_BASE_URL=https://your-server.com/v1
+API_CUSTOM_API_KEY=sk-your-custom-key
+API_CUSTOM_MODEL=your-model-name
 
 # Client (prefix with VITE_)
 VITE_API_URL=/api

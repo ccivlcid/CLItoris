@@ -24,7 +24,7 @@ All social interactions (post, follow, fork, star) are expressed as CLI commands
 | Logging | pino |
 | Testing | Vitest (frontend + server), Playwright (E2E) |
 | Package manager | pnpm |
-| LLM Integration | Anthropic SDK, OpenAI SDK, Ollama |
+| LLM Integration | Anthropic SDK, OpenAI SDK, Ollama, Cursor, CLI adapter, Generic API |
 
 ## Monorepo Structure
 

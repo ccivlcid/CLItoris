@@ -197,6 +197,9 @@
 │ ● claude-sonnet│  ← dot indicator (green = active)
 │ ○ gpt-4o       │  ← dot indicator (gray = inactive)
 │ ○ llama-3      │
+│ ○ cursor       │
+│ ○ cli          │
+│ ○ api          │
 │ ○ custom       │
 │                │
 │ // me          │

@@ -339,7 +339,7 @@ function runMigrations(db: Database.Database): void {
 - `user_id` on posts must reference a valid user
 - `parent_id` and `forked_from_id` must reference valid posts or be NULL
 - `visibility` constrained to: `public`, `private`, `unlisted`
-- `llm_model` constrained to: `claude-sonnet`, `gpt-4o`, `llama-3`, `custom`
+- `llm_model` constrained to: `claude-sonnet`, `gpt-4o`, `llama-3`, `cursor`, `cli`, `api`, `custom`
 - Self-follow prevented at application level
 - Self-star prevented at application level
 - Duplicate follow/star prevented by composite primary keys

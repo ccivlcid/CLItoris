@@ -177,7 +177,7 @@ lang:        string, length 2 (ISO 639-1)
 tags:        string[], max 10 items, each max 50 chars
 mentions:    string[], max 20 items
 visibility:  enum ["public", "private", "unlisted"]
-llmModel:    enum ["claude-sonnet", "gpt-4o", "llama-3", "custom"]
+llmModel:    enum ["claude-sonnet", "gpt-4o", "llama-3", "cursor", "cli", "api", "custom"]
 ```
 
 **Response:** `201 Created`
@@ -444,7 +444,7 @@ Get posts filtered by LLM model.
 **Path Parameters:**
 | Param | Values |
 |-------|--------|
-| `model` | `claude-sonnet`, `gpt-4o`, `llama-3`, `custom` |
+| `model` | `claude-sonnet`, `gpt-4o`, `llama-3`, `cursor`, `cli`, `api`, `custom` |
 
 **Query Parameters:** Same as global feed (`cursor`, `limit`).
 
@@ -553,7 +553,7 @@ Rate limited: 30 requests per minute per user.
 **Validation (zod):**
 ```
 message:  string, min 1, max 2000
-model:    enum ["claude-sonnet", "gpt-4o", "llama-3", "custom"]
+model:    enum ["claude-sonnet", "gpt-4o", "llama-3", "cursor", "cli", "api", "custom"]
 lang:     string, length 2
 ```
 

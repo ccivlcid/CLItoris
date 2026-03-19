@@ -66,16 +66,29 @@ Each post is displayed in two formats simultaneously:
 
 ### 4.4 LLM Integration
 
-Users select an LLM model when composing posts to perform natural language → CLI transformation:
+Users select an LLM provider when composing posts to perform natural language → CLI transformation:
 
-- **claude-sonnet** (default)
-- **gpt-4o**
-- **llama-3**
-- **custom** (connect your own LLM via API key)
+| Provider | Type | Model Selection | Description |
+|----------|------|----------------|-------------|
+| **anthropic** | API | All Anthropic models (claude-sonnet, opus, haiku...) | Anthropic SDK |
+| **openai** | API | All OpenAI models (gpt-4o, gpt-4, o1, o3...) | OpenAI SDK |
+| **ollama** | Local | All installed local models | Ollama REST API |
+| **cursor** | API | Cursor-supported models | Cursor AI |
+| **cli** | CLI | Depends on CLI tool | Claude Code, Codex, Gemini CLI, OpenCode |
+| **api** | API | Any model on the endpoint | Generic OpenAI-compatible REST |
+| **custom** | Custom | User-configured | User-provided configuration |
+
+**Key principle: Every provider exposes a model selector.** Users pick both the provider AND the specific model within that provider. For example: Anthropic provider → claude-sonnet-4, or OpenAI provider → gpt-4o.
+
+**Connection types:**
+- **API providers**: Require API key, call external endpoints, fetch available model list
+- **Local LLM**: Run models locally via Ollama (no API key needed), list installed models
+- **CLI adapter**: Execute CLI coding tools (Claude Code, Codex, Gemini CLI, Cursor, OpenCode)
+- **Generic API**: Connect any OpenAI-compatible endpoint with custom base URL + model name
 
 **Transformation flow:**
 ```
-Natural language input → [Cmd+Enter] → Select LLM → CLI format conversion → Save as dual-format
+Natural language input → [Cmd+Enter] → Select provider → CLI format conversion → Save as dual-format
 ```
 
 ### 4.5 Multilingual Support

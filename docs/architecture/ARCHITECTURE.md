@@ -97,17 +97,86 @@ postStore: {
 // @clitoris/llm package — provider pattern
 
 interface LlmProvider {
+  name: string;
   transform(input: TransformRequest): Promise<TransformResponse>;
 }
 
-// Each provider implements the same interface
-// anthropic.ts → Anthropic SDK
-// openai.ts    → OpenAI SDK
-// ollama.ts    → Ollama REST API
+// 7 providers, all implementing the same interface:
+//
+// API-based:
+//   anthropic.ts → Anthropic SDK (Claude)
+//   openai.ts    → OpenAI SDK (GPT)
+//   cursor.ts    → Cursor AI API
+//   api.ts       → Generic OpenAI-compatible REST endpoint
+//
+// Local:
+//   ollama.ts    → Ollama REST API (local models)
+//
+// CLI:
+//   cli.ts       → Subprocess adapter (pipes to any CLI tool)
+//                  Supports: `claude`, `ollama run`, `llama.cpp`, etc.
+//
+// transformer.ts — shared prompt construction
+// System prompt + few-shot examples for natural language → CLI conversion
+```
 
-// transformer.ts — prompt construction
-// "Transform the following natural language message into a terminal.social CLI command"
-// System prompt + examples included (few-shot)
+### Provider Factory
+
+```typescript
+// src/index.ts
+// Provider = connection type, Model = specific model within that provider
+
+interface TransformRequest {
+  message: string;
+  provider: LlmProvider;   // 'anthropic' | 'openai' | 'ollama' | 'cursor' | 'cli' | 'api'
+  model: string;           // e.g. 'claude-sonnet-4', 'gpt-4o', 'llama3:8b'
+  lang: string;
+}
+
+function createProvider(provider: string): LlmProvider {
+  switch (provider) {
+    case 'anthropic': return new AnthropicProvider();   // supports all Claude models
+    case 'openai':    return new OpenAiProvider();       // supports all OpenAI models
+    case 'ollama':    return new OllamaProvider();       // lists locally installed models
+    case 'cursor':    return new CursorProvider();       // Cursor AI
+    case 'cli':       return new CliProvider();          // subprocess (Claude Code, Codex, Gemini, OpenCode)
+    case 'api':       return new GenericApiProvider();   // any OpenAI-compatible endpoint
+    case 'custom':    return new GenericApiProvider();   // user config
+  }
+}
+```
+
+### CLI Provider Architecture
+
+```
+User input → CliProvider.transform()
+               → spawn child process
+               → pipe prompt to stdin
+               → read stdout as CLI output
+               → parse and return TransformResponse
+
+Supported CLI tools:
+  $ claude          # Claude Code (Anthropic CLI)
+  $ codex           # OpenAI Codex CLI
+  $ gemini          # Google Gemini CLI
+  $ cursor          # Cursor CLI
+  $ opencode        # OpenCode CLI
+  $ ollama run      # Ollama local models
+  $ any-tool        # Any tool that reads stdin/args and outputs text
+```
+
+### Generic API Provider
+
+```
+User input → GenericApiProvider.transform()
+               → POST {baseUrl}/v1/chat/completions
+               → OpenAI-compatible request format
+               → Parse response → TransformResponse
+
+Config:
+  API_CUSTOM_BASE_URL=https://your-server.com
+  API_CUSTOM_API_KEY=sk-...
+  API_CUSTOM_MODEL=your-model-name
 ```
 
 ## Security Considerations
