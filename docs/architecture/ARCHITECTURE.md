@@ -93,57 +93,27 @@ postStore: {
 
 ## LLM Integration Architecture
 
+All providers implement a unified `LlmProvider` interface. Users select a provider AND a model within that provider.
+
+> Provider list and capabilities: see `docs/specs/PRD.md` section 4.4.
+> Provider file structure: see `docs/architecture/architecture.json` (llm package).
+
 ```typescript
-// @clitoris/llm package — provider pattern
+// @clitoris/llm — unified interface
 
 interface LlmProvider {
   name: string;
   transform(input: TransformRequest): Promise<TransformResponse>;
 }
 
-// 7 providers, all implementing the same interface:
-//
-// API-based:
-//   anthropic.ts → Anthropic SDK (Claude)
-//   openai.ts    → OpenAI SDK (GPT)
-//   cursor.ts    → Cursor AI API
-//   api.ts       → Generic OpenAI-compatible REST endpoint
-//
-// Local:
-//   ollama.ts    → Ollama REST API (local models)
-//
-// CLI:
-//   cli.ts       → Subprocess adapter (pipes to any CLI tool)
-//                  Supports: `claude`, `ollama run`, `llama.cpp`, etc.
-//
-// transformer.ts — shared prompt construction
-// System prompt + few-shot examples for natural language → CLI conversion
-```
-
-### Provider Factory
-
-```typescript
-// src/index.ts
-// Provider = connection type, Model = specific model within that provider
-
 interface TransformRequest {
   message: string;
-  provider: LlmProvider;   // 'anthropic' | 'openai' | 'ollama' | 'cursor' | 'cli' | 'api'
-  model: string;           // e.g. 'claude-sonnet-4', 'gpt-4o', 'llama3:8b'
+  provider: string;   // 'anthropic' | 'openai' | 'ollama' | 'cursor' | 'cli' | 'api'
+  model: string;      // e.g. 'claude-sonnet-4', 'gpt-4o', 'llama3:8b'
   lang: string;
 }
 
-function createProvider(provider: string): LlmProvider {
-  switch (provider) {
-    case 'anthropic': return new AnthropicProvider();   // supports all Claude models
-    case 'openai':    return new OpenAiProvider();       // supports all OpenAI models
-    case 'ollama':    return new OllamaProvider();       // lists locally installed models
-    case 'cursor':    return new CursorProvider();       // Cursor AI
-    case 'cli':       return new CliProvider();          // subprocess (Claude Code, Codex, Gemini, OpenCode)
-    case 'api':       return new GenericApiProvider();   // any OpenAI-compatible endpoint
-    case 'custom':    return new GenericApiProvider();   // user config
-  }
-}
+// createProvider(provider) → returns the correct LlmProvider implementation
 ```
 
 ### CLI Provider Architecture

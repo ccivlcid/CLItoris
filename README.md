@@ -63,32 +63,6 @@ Open `http://localhost:5173` and start posting.
 
 ---
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19 + TypeScript + Vite + Tailwind CSS |
-| State | Zustand |
-| Backend | Node.js + Express + tsx |
-| Database | SQLite (better-sqlite3) |
-| AI Models | Anthropic SDK, OpenAI SDK, Ollama |
-| Testing | Vitest + Playwright |
-| Monorepo | pnpm workspaces |
-
----
-
-## Project Structure
-
-```
-packages/
-├── client/    # React frontend (Vite + Tailwind)
-├── server/    # Express API server
-├── shared/    # Shared TypeScript types & constants
-└── llm/       # AI model integrations
-```
-
----
-
 ## Contributing
 
 This project is built with **vibe coding** — AI-driven development with strict conventions.
