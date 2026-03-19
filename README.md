@@ -88,6 +88,13 @@ See [PROGRESS.md](./docs/PROGRESS.md) for the full roadmap.
 
 ---
 
+## See Also
+
+- [CLAUDE.md](./CLAUDE.md) — Tech stack, monorepo structure, documentation map
+- [docs/](./docs/) — Complete documentation (guides, specs, architecture, screens)
+
+---
+
 ## License
 
 TBD
