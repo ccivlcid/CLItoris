@@ -27,6 +27,7 @@ interface PostDetailState {
   selectedModel: LlmModel;
   isTransforming: boolean;
   isSubmitting: boolean;
+  transformError: string | null;
 
   fetchPost: (id: string) => Promise<void>;
   addReply: (reply: Post) => void;
@@ -38,6 +39,7 @@ interface PostDetailState {
   transformReply: (parentId: string) => Promise<void>;
   submitReply: (parentId: string) => Promise<Post | null>;
   resetDraft: () => void;
+  clearTransformError: () => void;
 }
 
 export const usePostDetailStore = create<PostDetailState>((set, get) => ({
@@ -52,6 +54,7 @@ export const usePostDetailStore = create<PostDetailState>((set, get) => ({
   selectedModel: '',
   isTransforming: false,
   isSubmitting: false,
+  transformError: null,
 
   fetchPost: async (id) => {
     set({ isLoading: true, error: null });
@@ -101,9 +104,10 @@ export const usePostDetailStore = create<PostDetailState>((set, get) => ({
       selectedModel: '',
       isTransforming: false,
       isSubmitting: false,
+      transformError: null,
     }),
 
-  setDraft: (text) => set({ draft: text, cliPreview: null }),
+  setDraft: (text) => set({ draft: text, cliPreview: null, transformError: null }),
   setModel: (model) => set({ selectedModel: model }),
 
   transformReply: async (_parentId) => {
@@ -111,7 +115,7 @@ export const usePostDetailStore = create<PostDetailState>((set, get) => ({
     if (!draft.trim()) return;
     if (!selectedModel.trim()) return;
     const { selectedCliTool } = usePostStore.getState();
-    set({ isTransforming: true });
+    set({ isTransforming: true, transformError: null });
     try {
       const res = await api.post<ApiResponse<{ messageCli: string }>>('/llm/transform', {
         message: draft,
@@ -120,8 +124,9 @@ export const usePostDetailStore = create<PostDetailState>((set, get) => ({
         ...(selectedCliTool.trim() ? { cliTool: selectedCliTool } : {}),
       });
       set({ cliPreview: res.data.messageCli, isTransforming: false });
-    } catch {
-      set({ isTransforming: false });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Transform failed';
+      set({ isTransforming: false, transformError: message });
     }
   },
 
@@ -156,5 +161,6 @@ export const usePostDetailStore = create<PostDetailState>((set, get) => ({
     }
   },
 
-  resetDraft: () => set({ draft: '', cliPreview: null }),
+  clearTransformError: () => set({ transformError: null }),
+  resetDraft: () => set({ draft: '', cliPreview: null, transformError: null }),
 }));

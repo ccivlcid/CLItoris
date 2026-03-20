@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore.js';
 import { usePostStore } from '../../stores/postStore.js';
 import { api } from '../../api/client.js';
+import { toastError } from '../../stores/toastStore.js';
 import type { ApiResponse } from '@clitoris/shared';
+import SuggestedUsers from './SuggestedUsers.js';
 
 const TOOL_ICONS: Record<string, string> = {
   'claude-code': '*',
@@ -16,6 +18,13 @@ const TOOL_ICONS: Record<string, string> = {
 interface LlmProviderRow { provider: string; source: string }
 interface LlmEntry { id: string; model: string; isApi?: boolean }
 
+/** CLI tool → API provider mapping. Used to de-duplicate sidebar entries. */
+const CLI_TO_API_PROVIDER: Record<string, string> = {
+  'claude-code': 'anthropic',
+  codex: 'openai',
+  'gemini-cli': 'gemini',
+};
+
 function shortModel(model: string): string {
   return model
     .replace(/^claude-/, '')
@@ -27,6 +36,7 @@ const NAV = [
   { to: '/feed/local', label: 'feed --local'  },
   { to: '/explore',    label: 'explore'        },
   { to: '/github',     label: 'github'         },
+  { to: '/activity',   label: 'activity'       },
 ];
 
 const ME_NAV: Array<{
@@ -68,7 +78,7 @@ export default function Sidebar() {
           cliEntries.push({ id, model: s.main });
         }
       }
-    } catch { /* ignore */ }
+    } catch { /* ignore localStorage */ }
 
     let cancelled = false;
     api
@@ -88,10 +98,17 @@ export default function Sidebar() {
           }),
         );
         if (cancelled) return;
-        setLlmEntries([...cliEntries, ...apiEntries]);
+        const coveredProviders = new Set(
+          cliEntries.map((e) => CLI_TO_API_PROVIDER[e.id]).filter(Boolean),
+        );
+        const dedupedApi = apiEntries.filter((e) => !coveredProviders.has(e.id));
+        setLlmEntries([...cliEntries, ...dedupedApi]);
       })
       .catch(() => {
-        if (!cancelled) setLlmEntries([...cliEntries]);
+        if (!cancelled) {
+          setLlmEntries([...cliEntries]);
+          toastError('Failed to load LLM providers');
+        }
       });
     return () => {
       cancelled = true;
@@ -101,7 +118,7 @@ export default function Sidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <aside className="w-[200px] bg-[#0a0a14] border-r border-[#1c1c30] flex flex-col shrink-0 overflow-y-auto">
+    <aside className="w-[200px] bg-[var(--bg-surface)] border-r border-[var(--border)] flex-col shrink-0 overflow-y-auto hidden sm:flex">
 
       {/* Primary nav */}
       <nav className="flex flex-col pt-4 pb-2">
@@ -111,12 +128,12 @@ export default function Sidebar() {
             to={to}
             className={`py-2 px-4 font-mono text-[12px] border-l-2 transition-colors ${
               isActive(to)
-                ? 'text-[#3dd68c] border-[#3dd68c] bg-[#3dd68c]/[0.06]'
-                : 'text-[#9aacbf] border-transparent hover:text-white hover:border-[#4a5568]'
+                ? 'text-[var(--accent-green)] border-[var(--accent-green)] bg-[var(--accent-green)]/[0.06]'
+                : 'text-[var(--text-muted)] border-transparent hover:text-white hover:border-[#4a5568]'
             }`}
           >
             {isActive(to) ? (
-              <><span className="text-[#f59e0b]">$</span> {label}</>
+              <><span className="text-[var(--accent-amber)]">$</span> {label}</>
             ) : (
               label
             )}
@@ -126,7 +143,7 @@ export default function Sidebar() {
 
       {/* LLM selector */}
       {isAuthenticated && (
-        <div className="border-t border-[#1c1c30] pt-3 pb-2">
+        <div className="border-t border-[var(--border)] pt-3 pb-2">
           {llmEntries.length > 0 ? (
             llmEntries.map(({ id, model, isApi }) => {
               const isSelected = selectedCliTool === id;
@@ -136,15 +153,17 @@ export default function Sidebar() {
                   key={id}
                   onClick={() => selectModel(id, model)}
                   title={`${id} — ${model}`}
+                  aria-label={`Select ${id} model: ${model}`}
+                  aria-pressed={isSelected}
                   className={`w-full flex items-center gap-2 py-1.5 px-4 font-mono text-[11px] border-l-2 text-left transition-colors ${
                     isSelected
-                      ? 'text-[#3dd68c] border-[#3dd68c] bg-[#3dd68c]/[0.06]'
-                      : 'text-[#7a8898] border-transparent hover:text-[#c9d1d9]'
+                      ? 'text-[var(--accent-green)] border-[var(--accent-green)] bg-[var(--accent-green)]/[0.06]'
+                      : 'text-[var(--text-muted)] border-transparent hover:text-[var(--text)]'
                   }`}
                 >
-                  <span className={isSelected ? 'text-[#3dd68c]' : 'text-[#6b7a8d]'}>{icon}</span>
+                  <span className={isSelected ? 'text-[var(--accent-green)]' : 'text-[var(--text-faint)]'}>{icon}</span>
                   <span>{id}</span>
-                  <span className={`ml-auto ${isSelected ? 'text-[#3dd68c]/60' : 'text-[#4e5d6e]'}`}>
+                  <span className={`ml-auto ${isSelected ? 'text-[var(--accent-green)]/60' : 'text-[var(--text-faint)]'}`}>
                     {shortModel(model)}
                   </span>
                 </button>
@@ -153,7 +172,7 @@ export default function Sidebar() {
           ) : (
             <Link
               to={user ? `/@${user.username}?tab=cli` : '/login'}
-              className="block py-1.5 px-4 font-mono text-[11px] text-[#7a8898] hover:text-[#c9d1d9] transition-colors border-l-2 border-transparent"
+              className="block py-1.5 px-4 font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors border-l-2 border-transparent"
             >
               + connect LLM
             </Link>
@@ -161,13 +180,16 @@ export default function Sidebar() {
         </div>
       )}
 
+      {/* Suggested users */}
+      {isAuthenticated && <SuggestedUsers />}
+
       {/* Me section */}
       {isAuthenticated && user ? (
-        <div className="border-t border-[#1c1c30] pt-3 mt-auto">
+        <div className="border-t border-[var(--border)] pt-3 mt-auto">
           <div className="px-4 pb-2">
             <Link
               to={`/@${user.username}`}
-              className="font-mono text-[12px] text-[#f59e0b] hover:text-amber-300 transition-colors"
+              className="font-mono text-[12px] text-[var(--accent-amber)] hover:text-amber-300 transition-colors"
             >
               @{user.username}
             </Link>
@@ -181,8 +203,8 @@ export default function Sidebar() {
                 to={to}
                 className={`block py-1.5 px-4 font-mono text-[12px] border-l-2 transition-colors ${
                   active
-                    ? 'text-[#3dd68c] border-[#3dd68c] bg-[#3dd68c]/[0.06]'
-                    : 'text-[#9aacbf] border-transparent hover:text-white hover:border-[#4a5568]'
+                    ? 'text-[var(--accent-green)] border-[var(--accent-green)] bg-[var(--accent-green)]/[0.06]'
+                    : 'text-[var(--text-muted)] border-transparent hover:text-white hover:border-[#4a5568]'
                 }`}
               >
                 {label}
@@ -192,10 +214,10 @@ export default function Sidebar() {
           <div className="pb-4" />
         </div>
       ) : (
-        <div className="mt-auto px-4 py-5 border-t border-[#1c1c30]">
+        <div className="mt-auto px-4 py-5 border-t border-[var(--border)]">
           <Link
             to="/login"
-            className="block text-center border border-[#2d3748] text-[#9aacbf] hover:text-[#3dd68c] hover:border-[#3dd68c]/40 font-mono text-[12px] py-2 transition-colors"
+            className="block text-center border border-[var(--border-hover)] text-[var(--text-muted)] hover:text-[var(--accent-green)] hover:border-[var(--accent-green)]/40 font-mono text-[12px] py-2 transition-colors"
           >
             $ login
           </Link>

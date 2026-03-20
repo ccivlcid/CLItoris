@@ -1,62 +1,96 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore.js';
 import { useUiStore } from '../../stores/uiStore.js';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import NotificationBell from './NotificationBell.js';
 
 export default function HeaderBar() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { t } = useUiStore();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
+  // Close dropdown on Escape
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setMenuOpen(false); }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [menuOpen]);
+
   return (
-    <header className="h-11 bg-[#0a0a14] border-b border-[#1c1c30] flex items-center justify-between px-5 shrink-0">
+    <header className="h-11 bg-[var(--bg-surface)] border-b border-[var(--border)] flex items-center justify-between px-5 shrink-0">
       <Link
         to="/"
-        className="font-mono text-sm font-bold text-[#e2e8f0] tracking-tight hover:text-white transition-colors"
+        className="font-mono text-sm font-bold text-[var(--text)] tracking-tight hover:text-white transition-colors"
       >
-        terminal<span className="text-[#3dd68c]">.</span>social
+        terminal<span className="text-[var(--accent-green)]">.</span>social
       </Link>
 
       <div className="flex items-center gap-3">
+        <Link
+          to="/search"
+          className="font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+          aria-label="Search"
+        >
+          [grep]
+        </Link>
+
+        {isAuthenticated && <NotificationBell />}
+
         {isAuthenticated && user ? (
-          <div className="relative">
+          <div className="relative" ref={menuRef}>
             <button
-              className="font-mono text-xs text-[#f59e0b] hover:text-amber-300 flex items-center gap-1 transition-colors"
+              className="font-mono text-xs text-[var(--accent-amber)] hover:text-amber-300 flex items-center gap-1 transition-colors"
               onClick={() => setMenuOpen((o) => !o)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
             >
-              <span className="text-[#9aacbf]">@</span>
+              <span className="text-[var(--text-muted)]">@</span>
               {user.username}
-              <span className="text-[#7a8898] text-[10px] ml-0.5">▾</span>
+              <span className="text-[var(--text-muted)] text-[10px] ml-0.5">▾</span>
             </button>
 
             {menuOpen && (
               <>
-                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-8 bg-[#0f0f1e] border border-[#1c1c30] w-36 z-50 py-1 shadow-xl shadow-black/60">
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setMenuOpen(false)}
+                  aria-hidden="true"
+                />
+                <div
+                  className="absolute right-0 top-8 bg-[var(--bg-surface)] border border-[var(--border)] w-36 z-50 py-1 shadow-xl shadow-black/60"
+                  role="menu"
+                >
                   <Link
                     to={`/@${user.username}`}
-                    className="block px-4 py-2 text-[#9aacbf] hover:text-white font-mono text-[11px] transition-colors"
+                    className="block px-4 py-2 text-[var(--text-muted)] hover:text-white font-mono text-[11px] transition-colors"
                     onClick={() => setMenuOpen(false)}
+                    role="menuitem"
                   >
                     {t('menu.profile')}
                   </Link>
                   <Link
                     to={`/@${user.username}?tab=cli`}
-                    className="block px-4 py-2 text-[#9aacbf] hover:text-white font-mono text-[11px] transition-colors"
+                    className="block px-4 py-2 text-[var(--text-muted)] hover:text-white font-mono text-[11px] transition-colors"
                     onClick={() => setMenuOpen(false)}
+                    role="menuitem"
                   >
                     {t('menu.llm')}
                   </Link>
-                  <div className="border-t border-[#1c1c30] my-0.5" />
+                  <div className="border-t border-[var(--border)] my-0.5" />
                   <button
-                    className="w-full text-left px-4 py-2 text-[#9aacbf] hover:text-red-400 font-mono text-[11px] transition-colors"
+                    className="w-full text-left px-4 py-2 text-[var(--text-muted)] hover:text-[var(--color-error)] font-mono text-[11px] transition-colors"
                     onClick={handleLogout}
+                    role="menuitem"
                   >
                     {t('menu.logout')}
                   </button>
@@ -67,7 +101,7 @@ export default function HeaderBar() {
         ) : (
           <Link
             to="/login"
-            className="font-mono text-[12px] text-[#9aacbf] hover:text-white transition-colors"
+            className="font-mono text-[12px] text-[var(--text-muted)] hover:text-white transition-colors"
           >
             connect
           </Link>
@@ -75,7 +109,7 @@ export default function HeaderBar() {
 
         <button
           onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }))}
-          className="font-mono text-[11px] text-[#7a8898] hover:text-[#c9d1d9] transition-colors"
+          className="font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
           aria-label="Keyboard shortcuts"
           title="Keyboard shortcuts (?)"
         >

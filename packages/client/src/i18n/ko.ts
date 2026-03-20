@@ -84,6 +84,16 @@ const ko: Record<string, string> = {
   'settings.section.llm': '// LLM 키',
   'settings.section.account': '// 계정',
 
+  // Settings — API tab
+  'settings.api.description': '로컬 모델(Ollama 등), 프론티어 모델(OpenAI, Anthropic 등), 기타 서비스의 API를 등록하여 언어모델에 접근합니다.',
+  'settings.api.saving': '저장 중...',
+  'settings.api.add': '추가',
+  'settings.api.cancel': '취소',
+  'settings.api.remove': '제거',
+  'settings.api.confirmRemove': '확인?',
+  'settings.api.registered': '등록된 프로바이더',
+  'settings.api.empty': '등록된 프로바이더가 없습니다.',
+
   // Errors
   'error.keyNotConfigured': 'API 키가 설정되지 않았습니다. 설정에서 추가하세요.',
   'error.unauthorized': '계속하려면 로그인하세요.',

@@ -4,6 +4,7 @@ import AppShell from '../components/layout/AppShell.js';
 import FeedList from '../components/feed/FeedList.js';
 import { useFeedStore } from '../stores/feedStore.js';
 import { api } from '../api/client.js';
+import { toastError } from '../stores/toastStore.js';
 import type { ApiResponse, TrendingTag, TrendingRepo } from '@clitoris/shared';
 
 function formatCount(n: number): string {
@@ -24,12 +25,12 @@ export default function ExplorePage() {
   useEffect(() => {
     api.get<ApiResponse<TrendingTag[]>>('/posts/trending/tags')
       .then((res) => setTrendingTags(res.data))
-      .catch(() => {/* silent */})
+      .catch(() => toastError('Failed to load trending tags'))
       .finally(() => setTagsLoading(false));
 
     api.get<ApiResponse<TrendingRepo[]>>('/posts/trending/repos')
       .then((res) => setTrendingRepos(res.data))
-      .catch(() => {/* silent */})
+      .catch(() => toastError('Failed to load trending repos'))
       .finally(() => setReposLoading(false));
   }, []);
 

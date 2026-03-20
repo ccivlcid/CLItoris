@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Database } from 'better-sqlite3';
 import { generateId } from '../lib/id.js';
 import { requireAuth } from '../middleware/auth.js';
+import { createNotification, createActivity } from './notifications.js';
 
 interface UserProfileRow {
   id: string;
@@ -77,18 +78,19 @@ export function createUsersRouter(db: Database): Router {
     const userId = (req as { session?: { userId?: string } }).session?.userId;
     const { username } = req.params;
 
-    const starredSub = userId
-      ? `, (SELECT 1 FROM follows WHERE follower_id = '${userId}' AND following_id = u.id) as is_following`
+    const followingSql = userId
+      ? `, (SELECT 1 FROM follows WHERE follower_id = ? AND following_id = u.id) as is_following`
       : ', 0 as is_following';
+    const followingParams: unknown[] = userId ? [userId, username] : [username];
 
     const user = db.prepare(`
       SELECT u.*,
         (SELECT COUNT(*) FROM follows WHERE following_id = u.id) as follower_count,
         (SELECT COUNT(*) FROM follows WHERE follower_id = u.id) as following_count,
         (SELECT COUNT(*) FROM posts WHERE user_id = u.id) as post_count
-        ${starredSub}
+        ${followingSql}
       FROM users u WHERE u.username = ?
-    `).get(username) as UserProfileRow | undefined;
+    `).get(...followingParams) as UserProfileRow | undefined;
 
     if (!user) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
@@ -110,8 +112,8 @@ export function createUsersRouter(db: Database): Router {
       return;
     }
 
-    const starredSub = userId
-      ? `, (SELECT 1 FROM stars s2 WHERE s2.user_id = '${userId}' AND s2.post_id = p.id) as is_starred`
+    const starredSql = userId
+      ? `, (SELECT 1 FROM stars s2 WHERE s2.user_id = ? AND s2.post_id = p.id) as is_starred`
       : ', 0 as is_starred';
 
     const sql = `
@@ -119,7 +121,7 @@ export function createUsersRouter(db: Database): Router {
         (SELECT COUNT(*) FROM stars s WHERE s.post_id = p.id) as star_count,
         (SELECT COUNT(*) FROM posts r WHERE r.parent_id = p.id) as reply_count,
         (SELECT COUNT(*) FROM posts f WHERE f.forked_from_id = p.id) as fork_count
-        ${starredSub}
+        ${starredSql}
         , ra.repo_owner, ra.repo_name, ra.repo_stars, ra.repo_forks, ra.repo_language
       FROM posts p JOIN users u ON p.user_id = u.id
       LEFT JOIN repo_attachments ra ON ra.post_id = p.id
@@ -127,9 +129,10 @@ export function createUsersRouter(db: Database): Router {
       ORDER BY p.created_at DESC LIMIT ?
     `;
 
+    const baseParams: unknown[] = userId ? [userId] : [];
     const rows = cursor
-      ? db.prepare(sql).all(user.id, cursor, pageLimit + 1)
-      : db.prepare(sql).all(user.id, pageLimit + 1);
+      ? db.prepare(sql).all(...baseParams, user.id, cursor, pageLimit + 1)
+      : db.prepare(sql).all(...baseParams, user.id, pageLimit + 1);
 
     const data = (rows as PostRow[]).slice(0, pageLimit).map(mapPostBasic);
     const hasMore = rows.length > pageLimit;
@@ -149,8 +152,8 @@ export function createUsersRouter(db: Database): Router {
       return;
     }
 
-    const isStarredSub = sessionUserId
-      ? `, (SELECT 1 FROM stars s2 WHERE s2.user_id = '${sessionUserId}' AND s2.post_id = p.id) as is_starred`
+    const isStarredSql = sessionUserId
+      ? `, (SELECT 1 FROM stars s2 WHERE s2.user_id = ? AND s2.post_id = p.id) as is_starred`
       : ', 0 as is_starred';
 
     const sql = `
@@ -158,7 +161,7 @@ export function createUsersRouter(db: Database): Router {
         (SELECT COUNT(*) FROM stars s WHERE s.post_id = p.id) as star_count,
         (SELECT COUNT(*) FROM posts r WHERE r.parent_id = p.id) as reply_count,
         (SELECT COUNT(*) FROM posts f WHERE f.forked_from_id = p.id) as fork_count
-        ${isStarredSub}
+        ${isStarredSql}
         , ra.repo_owner, ra.repo_name, ra.repo_stars, ra.repo_forks, ra.repo_language
       FROM stars st
       JOIN posts p ON st.post_id = p.id
@@ -168,9 +171,10 @@ export function createUsersRouter(db: Database): Router {
       ORDER BY st.created_at DESC LIMIT ?
     `;
 
+    const starredParams: unknown[] = sessionUserId ? [sessionUserId] : [];
     const rows = cursor
-      ? db.prepare(sql).all(targetUser.id, cursor, pageLimit + 1)
-      : db.prepare(sql).all(targetUser.id, pageLimit + 1);
+      ? db.prepare(sql).all(...starredParams, targetUser.id, cursor, pageLimit + 1)
+      : db.prepare(sql).all(...starredParams, targetUser.id, pageLimit + 1);
 
     const data = (rows as PostRow[]).slice(0, pageLimit).map(mapPostBasic);
     const hasMore = rows.length > pageLimit;
@@ -248,10 +252,53 @@ export function createUsersRouter(db: Database): Router {
       db.prepare('DELETE FROM follows WHERE follower_id = ? AND following_id = ?').run(sessionUserId, target.id);
     } else {
       db.prepare('INSERT INTO follows (follower_id, following_id) VALUES (?, ?)').run(sessionUserId, target.id);
+      createNotification(db, target.id, 'follow', sessionUserId, null, null);
+      createActivity(db, sessionUserId, 'follow', target.id, null);
     }
 
     const count = (db.prepare('SELECT COUNT(*) as c FROM follows WHERE following_id = ?').get(target.id) as { c: number }).c;
     res.json({ data: { following: !existing, followerCount: count } });
+  });
+
+  // ── Suggested users ──────────────────────────────────────────────────
+  router.get('/suggested', requireAuth, (req, res) => {
+    const sessionUserId = req.session.userId!;
+
+    // Suggest users who share languages or are followed by people you follow,
+    // excluding users you already follow and yourself
+    const rows = db.prepare(`
+      SELECT u.username, u.display_name, u.avatar_url, u.github_username,
+        u.top_languages, u.bio,
+        CASE
+          WHEN EXISTS (
+            SELECT 1 FROM follows f1
+            JOIN follows f2 ON f2.follower_id = f1.following_id AND f2.following_id = u.id
+            WHERE f1.follower_id = ?
+          ) THEN 'mutual_connection'
+          ELSE 'similar_interests'
+        END as reason
+      FROM users u
+      WHERE u.id != ?
+        AND u.id NOT IN (SELECT following_id FROM follows WHERE follower_id = ?)
+      ORDER BY
+        (SELECT COUNT(*) FROM follows WHERE following_id = u.id) DESC
+      LIMIT 10
+    `).all(sessionUserId, sessionUserId, sessionUserId) as Array<{
+      username: string; display_name: string; avatar_url: string | null;
+      github_username: string; top_languages: string | null; bio: string | null;
+      reason: string;
+    }>;
+
+    const data = rows.map(r => ({
+      username: r.username,
+      displayName: r.display_name,
+      avatarUrl: r.avatar_url,
+      githubUsername: r.github_username,
+      reason: r.reason === 'mutual_connection' ? 'Followed by people you follow' : 'Popular in the community',
+      topLanguages: JSON.parse(r.top_languages ?? '[]') as string[],
+    }));
+
+    res.json({ data });
   });
 
   // ── Sync GitHub profile ────────────────────────────────────────────────
