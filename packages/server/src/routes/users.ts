@@ -78,18 +78,19 @@ export function createUsersRouter(db: Database): Router {
     const userId = (req as { session?: { userId?: string } }).session?.userId;
     const { username } = req.params;
 
-    const starredSub = userId
-      ? `, (SELECT 1 FROM follows WHERE follower_id = '${userId}' AND following_id = u.id) as is_following`
+    const followingSql = userId
+      ? `, (SELECT 1 FROM follows WHERE follower_id = ? AND following_id = u.id) as is_following`
       : ', 0 as is_following';
+    const followingParams: unknown[] = userId ? [userId, username] : [username];
 
     const user = db.prepare(`
       SELECT u.*,
         (SELECT COUNT(*) FROM follows WHERE following_id = u.id) as follower_count,
         (SELECT COUNT(*) FROM follows WHERE follower_id = u.id) as following_count,
         (SELECT COUNT(*) FROM posts WHERE user_id = u.id) as post_count
-        ${starredSub}
+        ${followingSql}
       FROM users u WHERE u.username = ?
-    `).get(username) as UserProfileRow | undefined;
+    `).get(...followingParams) as UserProfileRow | undefined;
 
     if (!user) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
@@ -111,8 +112,8 @@ export function createUsersRouter(db: Database): Router {
       return;
     }
 
-    const starredSub = userId
-      ? `, (SELECT 1 FROM stars s2 WHERE s2.user_id = '${userId}' AND s2.post_id = p.id) as is_starred`
+    const starredSql = userId
+      ? `, (SELECT 1 FROM stars s2 WHERE s2.user_id = ? AND s2.post_id = p.id) as is_starred`
       : ', 0 as is_starred';
 
     const sql = `
@@ -120,7 +121,7 @@ export function createUsersRouter(db: Database): Router {
         (SELECT COUNT(*) FROM stars s WHERE s.post_id = p.id) as star_count,
         (SELECT COUNT(*) FROM posts r WHERE r.parent_id = p.id) as reply_count,
         (SELECT COUNT(*) FROM posts f WHERE f.forked_from_id = p.id) as fork_count
-        ${starredSub}
+        ${starredSql}
         , ra.repo_owner, ra.repo_name, ra.repo_stars, ra.repo_forks, ra.repo_language
       FROM posts p JOIN users u ON p.user_id = u.id
       LEFT JOIN repo_attachments ra ON ra.post_id = p.id
@@ -128,9 +129,10 @@ export function createUsersRouter(db: Database): Router {
       ORDER BY p.created_at DESC LIMIT ?
     `;
 
+    const baseParams: unknown[] = userId ? [userId] : [];
     const rows = cursor
-      ? db.prepare(sql).all(user.id, cursor, pageLimit + 1)
-      : db.prepare(sql).all(user.id, pageLimit + 1);
+      ? db.prepare(sql).all(...baseParams, user.id, cursor, pageLimit + 1)
+      : db.prepare(sql).all(...baseParams, user.id, pageLimit + 1);
 
     const data = (rows as PostRow[]).slice(0, pageLimit).map(mapPostBasic);
     const hasMore = rows.length > pageLimit;
@@ -150,8 +152,8 @@ export function createUsersRouter(db: Database): Router {
       return;
     }
 
-    const isStarredSub = sessionUserId
-      ? `, (SELECT 1 FROM stars s2 WHERE s2.user_id = '${sessionUserId}' AND s2.post_id = p.id) as is_starred`
+    const isStarredSql = sessionUserId
+      ? `, (SELECT 1 FROM stars s2 WHERE s2.user_id = ? AND s2.post_id = p.id) as is_starred`
       : ', 0 as is_starred';
 
     const sql = `
@@ -159,7 +161,7 @@ export function createUsersRouter(db: Database): Router {
         (SELECT COUNT(*) FROM stars s WHERE s.post_id = p.id) as star_count,
         (SELECT COUNT(*) FROM posts r WHERE r.parent_id = p.id) as reply_count,
         (SELECT COUNT(*) FROM posts f WHERE f.forked_from_id = p.id) as fork_count
-        ${isStarredSub}
+        ${isStarredSql}
         , ra.repo_owner, ra.repo_name, ra.repo_stars, ra.repo_forks, ra.repo_language
       FROM stars st
       JOIN posts p ON st.post_id = p.id
@@ -169,9 +171,10 @@ export function createUsersRouter(db: Database): Router {
       ORDER BY st.created_at DESC LIMIT ?
     `;
 
+    const starredParams: unknown[] = sessionUserId ? [sessionUserId] : [];
     const rows = cursor
-      ? db.prepare(sql).all(targetUser.id, cursor, pageLimit + 1)
-      : db.prepare(sql).all(targetUser.id, pageLimit + 1);
+      ? db.prepare(sql).all(...starredParams, targetUser.id, cursor, pageLimit + 1)
+      : db.prepare(sql).all(...starredParams, targetUser.id, pageLimit + 1);
 
     const data = (rows as PostRow[]).slice(0, pageLimit).map(mapPostBasic);
     const hasMore = rows.length > pageLimit;

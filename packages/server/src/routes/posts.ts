@@ -143,10 +143,10 @@ function mapPost(row: PostRow, _userId: string | undefined, db?: Database): Post
   };
 }
 
-function starredSubquery(userId: string | undefined): string {
+function starredSubquery(userId: string | undefined): { sql: string; params: unknown[] } {
   return userId
-    ? `, (SELECT 1 FROM stars s2 WHERE s2.user_id = '${userId}' AND s2.post_id = p.id) as is_starred`
-    : ', 0 as is_starred';
+    ? { sql: `, (SELECT 1 FROM stars s2 WHERE s2.user_id = ? AND s2.post_id = p.id) as is_starred`, params: [userId] }
+    : { sql: ', 0 as is_starred', params: [] };
 }
 
 function countsFragment(): string {
@@ -174,75 +174,99 @@ function quotedPostJoin(): string {
   return `LEFT JOIN posts qp ON qp.id = p.quoted_post_id LEFT JOIN users qu ON qu.id = qp.user_id`;
 }
 
-function feedQueryNoCursor(userId: string | undefined): string {
-  return `
+function feedQueryNoCursor(userId: string | undefined): { sql: string; params: unknown[] } {
+  const starred = starredSubquery(userId);
+  return {
+    sql: `
     SELECT p.*, u.username, u.domain, u.display_name, u.avatar_url,
       ${countsFragment()}
-      ${starredSubquery(userId)}
+      ${starred.sql}
       ${repoFragment()}
       ${quotedPostFragment()}
     FROM posts p JOIN users u ON p.user_id = u.id ${repoJoin()} ${quotedPostJoin()}
     WHERE p.visibility = 'public' AND p.parent_id IS NULL
-    ORDER BY p.created_at DESC LIMIT ?`;
+    ORDER BY p.created_at DESC LIMIT ?`,
+    params: [...starred.params],
+  };
 }
 
-function feedQuery(userId: string | undefined): string {
-  return `
+function feedQuery(userId: string | undefined): { sql: string; params: unknown[] } {
+  const starred = starredSubquery(userId);
+  return {
+    sql: `
     SELECT p.*, u.username, u.domain, u.display_name, u.avatar_url,
       ${countsFragment()}
-      ${starredSubquery(userId)}
+      ${starred.sql}
       ${repoFragment()}
       ${quotedPostFragment()}
     FROM posts p JOIN users u ON p.user_id = u.id ${repoJoin()} ${quotedPostJoin()}
     WHERE p.visibility = 'public' AND p.parent_id IS NULL AND p.created_at < ?
-    ORDER BY p.created_at DESC LIMIT ?`;
+    ORDER BY p.created_at DESC LIMIT ?`,
+    params: [...starred.params],
+  };
 }
 
-function singlePostQuery(userId: string | undefined): string {
-  return `
+function singlePostQuery(userId: string | undefined): { sql: string; params: unknown[] } {
+  const starred = starredSubquery(userId);
+  return {
+    sql: `
     SELECT p.*, u.username, u.domain, u.display_name, u.avatar_url,
       ${countsFragment()}
-      ${starredSubquery(userId)}
+      ${starred.sql}
       ${repoFragment()}
       ${quotedPostFragment()}
     FROM posts p JOIN users u ON p.user_id = u.id ${repoJoin()} ${quotedPostJoin()}
-    WHERE p.id = ?`;
+    WHERE p.id = ?`,
+    params: [...starred.params],
+  };
 }
 
-function repliesQuery(userId: string | undefined): string {
-  return `
+function repliesQuery(userId: string | undefined): { sql: string; params: unknown[] } {
+  const starred = starredSubquery(userId);
+  return {
+    sql: `
     SELECT p.*, u.username, u.domain, u.display_name, u.avatar_url,
       ${countsFragment()}
-      ${starredSubquery(userId)}
+      ${starred.sql}
       ${repoFragment()}
       ${quotedPostFragment()}
     FROM posts p JOIN users u ON p.user_id = u.id ${repoJoin()} ${quotedPostJoin()}
     WHERE p.parent_id = ?
-    ORDER BY p.created_at ASC`;
+    ORDER BY p.created_at ASC`,
+    params: [...starred.params],
+  };
 }
 
-function feedByModelQueryNoCursor(userId: string | undefined): string {
-  return `
+function feedByModelQueryNoCursor(userId: string | undefined): { sql: string; params: unknown[] } {
+  const starred = starredSubquery(userId);
+  return {
+    sql: `
     SELECT p.*, u.username, u.domain, u.display_name, u.avatar_url,
       ${countsFragment()}
-      ${starredSubquery(userId)}
+      ${starred.sql}
       ${repoFragment()}
       ${quotedPostFragment()}
     FROM posts p JOIN users u ON p.user_id = u.id ${repoJoin()} ${quotedPostJoin()}
     WHERE p.visibility = 'public' AND p.parent_id IS NULL AND p.llm_model = ?
-    ORDER BY p.created_at DESC LIMIT ?`;
+    ORDER BY p.created_at DESC LIMIT ?`,
+    params: [...starred.params],
+  };
 }
 
-function feedByModelQuery(userId: string | undefined): string {
-  return `
+function feedByModelQuery(userId: string | undefined): { sql: string; params: unknown[] } {
+  const starred = starredSubquery(userId);
+  return {
+    sql: `
     SELECT p.*, u.username, u.domain, u.display_name, u.avatar_url,
       ${countsFragment()}
-      ${starredSubquery(userId)}
+      ${starred.sql}
       ${repoFragment()}
       ${quotedPostFragment()}
     FROM posts p JOIN users u ON p.user_id = u.id ${repoJoin()} ${quotedPostJoin()}
     WHERE p.visibility = 'public' AND p.parent_id IS NULL AND p.llm_model = ? AND p.created_at < ?
-    ORDER BY p.created_at DESC LIMIT ?`;
+    ORDER BY p.created_at DESC LIMIT ?`,
+    params: [...starred.params],
+  };
 }
 
 function modelToProvider(model: string): string {
@@ -263,9 +287,10 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
     const pageLimit = Math.min(parseInt(limit, 10) || 20, 50);
     const userId = (req as { session?: { userId?: string } }).session?.userId;
 
+    const q = cursor ? feedQuery(userId) : feedQueryNoCursor(userId);
     const posts = cursor
-      ? db.prepare(feedQuery(userId)).all(cursor, pageLimit + 1)
-      : db.prepare(feedQueryNoCursor(userId)).all(pageLimit + 1);
+      ? db.prepare(q.sql).all(...q.params, cursor, pageLimit + 1)
+      : db.prepare(q.sql).all(...q.params, pageLimit + 1);
 
     const rows = posts as PostRow[];
     const hasMore = rows.length > pageLimit;
@@ -366,7 +391,8 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
       }
     }
 
-    const row = db.prepare(singlePostQuery(userId)).get(id) as PostRow;
+    const spq = singlePostQuery(userId);
+    const row = db.prepare(spq.sql).get(...spq.params, id) as PostRow;
     res.status(201).json({ data: mapPost(row, userId, db) });
   });
 
@@ -382,18 +408,18 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
     const base = `
       SELECT p.*, u.username, u.domain, u.display_name, u.avatar_url,
         ${countsFragment()}
-        , (SELECT 1 FROM stars s2 WHERE s2.user_id = '${userId}' AND s2.post_id = p.id) as is_starred
+        , (SELECT 1 FROM stars s2 WHERE s2.user_id = ? AND s2.post_id = p.id) as is_starred
         ${repoFragment()}
         ${quotedPostFragment()}
       FROM posts p
       JOIN users u ON p.user_id = u.id
-      JOIN follows f ON f.following_id = p.user_id AND f.follower_id = '${userId}'
+      JOIN follows f ON f.following_id = p.user_id AND f.follower_id = ?
       ${repoJoin()} ${quotedPostJoin()}
       WHERE p.visibility = 'public' AND p.parent_id IS NULL`;
 
     const posts = cursor
-      ? db.prepare(`${base} AND p.created_at < ? ORDER BY p.created_at DESC LIMIT ?`).all(cursor, pageLimit + 1)
-      : db.prepare(`${base} ORDER BY p.created_at DESC LIMIT ?`).all(pageLimit + 1);
+      ? db.prepare(`${base} AND p.created_at < ? ORDER BY p.created_at DESC LIMIT ?`).all(userId, userId, cursor, pageLimit + 1)
+      : db.prepare(`${base} ORDER BY p.created_at DESC LIMIT ?`).all(userId, userId, pageLimit + 1);
 
     const rows = posts as PostRow[];
     const hasMore = rows.length > pageLimit;
@@ -449,23 +475,23 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
     const userId = (req as { session?: { userId?: string } }).session?.userId;
     const pageLimit = Math.min(parseInt(limit, 10) || 20, 50);
 
-    const tagFilter = tag ? `AND EXISTS (SELECT 1 FROM json_each(p.tags) t WHERE t.value = '${tag.replace(/'/g, "''")}')` : '';
-    const starredSub = userId
-      ? `, (SELECT 1 FROM stars s2 WHERE s2.user_id = '${userId}' AND s2.post_id = p.id) as is_starred`
-      : ', 0 as is_starred';
+    const tagFilter = tag ? `AND EXISTS (SELECT 1 FROM json_each(p.tags) t WHERE t.value = ?)` : '';
+    const starred = starredSubquery(userId);
 
     const base = `
       SELECT p.*, u.username, u.domain, u.display_name, u.avatar_url,
         ${countsFragment()}
-        ${starredSub}
+        ${starred.sql}
         ${repoFragment()}
         ${quotedPostFragment()}
       FROM posts p JOIN users u ON p.user_id = u.id ${repoJoin()} ${quotedPostJoin()}
       WHERE p.visibility = 'public' AND p.parent_id IS NULL ${tagFilter}`;
 
+    const baseParams: unknown[] = [...starred.params, ...(tag ? [tag] : [])];
+
     const posts = cursor
-      ? db.prepare(`${base} AND (SELECT COUNT(*) FROM stars s WHERE s.post_id = p.id) < ? ORDER BY (SELECT COUNT(*) FROM stars s WHERE s.post_id = p.id) DESC, p.created_at DESC LIMIT ?`).all(parseInt(cursor, 10), pageLimit + 1)
-      : db.prepare(`${base} ORDER BY (SELECT COUNT(*) FROM stars s WHERE s.post_id = p.id) DESC, p.created_at DESC LIMIT ?`).all(pageLimit + 1);
+      ? db.prepare(`${base} AND (SELECT COUNT(*) FROM stars s WHERE s.post_id = p.id) < ? ORDER BY (SELECT COUNT(*) FROM stars s WHERE s.post_id = p.id) DESC, p.created_at DESC LIMIT ?`).all(...baseParams, parseInt(cursor, 10), pageLimit + 1)
+      : db.prepare(`${base} ORDER BY (SELECT COUNT(*) FROM stars s WHERE s.post_id = p.id) DESC, p.created_at DESC LIMIT ?`).all(...baseParams, pageLimit + 1);
 
     const rows = posts as PostRow[];
     const hasMore = rows.length > pageLimit;
@@ -481,9 +507,10 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
     const pageLimit = Math.min(parseInt(limit, 10) || 20, 50);
     const { model } = req.params;
 
+    const q = cursor ? feedByModelQuery(userId) : feedByModelQueryNoCursor(userId);
     const posts = cursor
-      ? db.prepare(feedByModelQuery(userId)).all(model, cursor, pageLimit + 1)
-      : db.prepare(feedByModelQueryNoCursor(userId)).all(model, pageLimit + 1);
+      ? db.prepare(q.sql).all(...q.params, model, cursor, pageLimit + 1)
+      : db.prepare(q.sql).all(...q.params, model, pageLimit + 1);
 
     const rows = posts as PostRow[];
     const hasMore = rows.length > pageLimit;
@@ -512,18 +539,18 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
       return;
     }
 
-    const starredSub = starredSubquery(userId);
+    const starred = starredSubquery(userId);
     const cursorClause = cursor ? 'AND p.created_at < ?' : '';
-    const params = cursor
-      ? [ftsQuery, cursor, pageLimit + 1]
-      : [ftsQuery, pageLimit + 1];
+    const params: unknown[] = cursor
+      ? [...starred.params, ftsQuery, cursor, pageLimit + 1]
+      : [...starred.params, ftsQuery, pageLimit + 1];
 
     let postRows: PostRow[] = [];
     try {
       postRows = db.prepare(`
         SELECT p.*, u.username, u.domain, u.display_name, u.avatar_url,
           ${countsFragment()}
-          ${starredSub}
+          ${starred.sql}
           ${repoFragment()}
           ${quotedPostFragment()}
         FROM posts p
@@ -580,13 +607,15 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
 
   router.get('/:id', (req, res) => {
     const userId = (req as { session?: { userId?: string } }).session?.userId;
-    const row = db.prepare(singlePostQuery(userId)).get(req.params.id) as PostRow | undefined;
+    const sq = singlePostQuery(userId);
+    const row = db.prepare(sq.sql).get(...sq.params, req.params.id) as PostRow | undefined;
     if (!row) {
       res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Post not found' } });
       return;
     }
 
-    const replies = db.prepare(repliesQuery(userId)).all(req.params.id) as PostRow[];
+    const rq = repliesQuery(userId);
+    const replies = db.prepare(rq.sql).all(...rq.params, req.params.id) as PostRow[];
     res.json({ data: { ...mapPost(row, userId, db), replies: replies.map((r) => mapPost(r, userId, db)) } });
   });
 
@@ -644,7 +673,8 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
     createNotification(db, original.user_id, 'fork', userId, newId, null);
     createActivity(db, userId, 'fork_post', original.user_id, newId);
 
-    const row = db.prepare(singlePostQuery(userId)).get(newId) as PostRow;
+    const fq = singlePostQuery(userId);
+    const row = db.prepare(fq.sql).get(...fq.params, newId) as PostRow;
     res.status(201).json({ data: mapPost(row, userId, db) });
   });
 

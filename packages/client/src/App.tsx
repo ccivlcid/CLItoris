@@ -1,3 +1,4 @@
+import { Component, type ReactNode } from 'react';
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import GlobalFeedPage from './pages/GlobalFeedPage.js';
 import LoginPage from './pages/LoginPage.js';
@@ -11,6 +12,42 @@ import AnalyzePage from './pages/AnalyzePage.js';
 import GitHubFeedPage from './pages/GitHubFeedPage.js';
 import ActivityFeedPage from './pages/ActivityFeedPage.js';
 import SearchPage from './pages/SearchPage.js';
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-[var(--bg-void)] flex items-center justify-center p-8">
+          <div className="font-mono text-center max-w-md">
+            <div className="text-[var(--accent-red,#f87171)] text-lg mb-2">$ error --fatal</div>
+            <div className="text-[var(--text-muted)] text-sm mb-6">
+              Something went wrong. The process has crashed.
+            </div>
+            <button
+              onClick={() => {
+                this.setState({ hasError: false });
+                window.location.href = '/';
+              }}
+              className="font-mono text-sm text-[var(--accent-green)] hover:text-green-300 transition-colors"
+            >
+              $ restart --force
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const router = createBrowserRouter([
   { path: '/', element: <GlobalFeedPage /> },
@@ -30,5 +67,9 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
+  );
 }
