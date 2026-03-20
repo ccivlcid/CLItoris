@@ -16,6 +16,13 @@ const TOOL_ICONS: Record<string, string> = {
 interface LlmProviderRow { provider: string; source: string }
 interface LlmEntry { id: string; model: string; isApi?: boolean }
 
+/** CLI tool → API provider mapping. Used to de-duplicate sidebar entries. */
+const CLI_TO_API_PROVIDER: Record<string, string> = {
+  'claude-code': 'anthropic',
+  codex: 'openai',
+  'gemini-cli': 'gemini',
+};
+
 function shortModel(model: string): string {
   return model
     .replace(/^claude-/, '')
@@ -88,7 +95,12 @@ export default function Sidebar() {
           }),
         );
         if (cancelled) return;
-        setLlmEntries([...cliEntries, ...apiEntries]);
+        // De-duplicate: if a CLI tool covers an API provider, skip the API entry
+        const coveredProviders = new Set(
+          cliEntries.map((e) => CLI_TO_API_PROVIDER[e.id]).filter(Boolean),
+        );
+        const dedupedApi = apiEntries.filter((e) => !coveredProviders.has(e.id));
+        setLlmEntries([...cliEntries, ...dedupedApi]);
       })
       .catch(() => {
         if (!cancelled) setLlmEntries([...cliEntries]);

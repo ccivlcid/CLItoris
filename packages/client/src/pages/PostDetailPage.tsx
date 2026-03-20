@@ -45,7 +45,7 @@ function SkeletonBlock({ lines }: { lines: number }) {
 
 function ReplyComposer({ parentId, parentUsername }: { parentId: string; parentUsername: string }) {
   const { isAuthenticated } = useAuthStore();
-  const { draft, cliPreview, isTransforming, isSubmitting, setDraft, transformReply, submitReply } =
+  const { draft, cliPreview, isTransforming, isSubmitting, transformError, setDraft, transformReply, submitReply } =
     usePostDetailStore();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const navigate = useNavigate();
@@ -99,6 +99,12 @@ function ReplyComposer({ parentId, parentUsername }: { parentId: string; parentU
         <pre className="mt-2 px-3 py-2 bg-[#0d1117] text-green-400 font-mono text-xs whitespace-pre-wrap border border-gray-700">
           {cliPreview}
         </pre>
+      )}
+
+      {transformError && (
+        <p className="mt-2 px-3 py-2 bg-red-400/5 text-red-400 font-mono text-xs border border-red-400/20">
+          error: {transformError}
+        </p>
       )}
 
       <div className="flex items-center justify-between mt-3">
