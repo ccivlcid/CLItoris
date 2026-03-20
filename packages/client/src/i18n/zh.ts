@@ -156,6 +156,7 @@ const zh: Record<string, string> = {
   'mobile.log': '活动',
   'mobile.more': '更多',
   'mobile.me': '我',
+  'mobile.chat': '聊天',
   'mobile.analyze': '分析',
   'mobile.github': 'github',
   'mobile.leaderboard': '排名',
@@ -203,6 +204,9 @@ const zh: Record<string, string> = {
   'profile.loadMore': '加载更多',
   'profile.bioPlaceholder': '写一条状态消息...',
   'profile.loading': '加载中...',
+  'profile.chat': '代理聊天',
+  'profile.messages': '消息',
+  'profile.analyze': '分析',
 
   // Post detail
   'detail.replyAuth': '回复需要登录',

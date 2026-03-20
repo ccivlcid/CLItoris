@@ -156,6 +156,7 @@ const ko: Record<string, string> = {
   'mobile.log': '활동',
   'mobile.more': '더보기',
   'mobile.me': '나',
+  'mobile.chat': '챗',
   'mobile.analyze': '분석',
   'mobile.github': 'github',
   'mobile.leaderboard': '순위',
@@ -203,6 +204,9 @@ const ko: Record<string, string> = {
   'profile.loadMore': '더 불러오기',
   'profile.bioPlaceholder': '상태 메시지를 작성하세요...',
   'profile.loading': '불러오는 중...',
+  'profile.chat': '에이전트 챗',
+  'profile.messages': '메시지',
+  'profile.analyze': '분석',
 
   // Post detail
   'detail.replyAuth': '답글을 쓰려면 로그인이 필요합니다',

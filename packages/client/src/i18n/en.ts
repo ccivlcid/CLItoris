@@ -156,6 +156,7 @@ const en: Record<string, string> = {
   'mobile.log': 'log',
   'mobile.more': 'more',
   'mobile.me': 'me',
+  'mobile.chat': 'chat',
   'mobile.analyze': 'analyze',
   'mobile.github': 'github',
   'mobile.leaderboard': 'rank',
@@ -203,6 +204,9 @@ const en: Record<string, string> = {
   'profile.loadMore': 'load more',
   'profile.bioPlaceholder': 'Write a status message...',
   'profile.loading': 'loading...',
+  'profile.chat': 'agent chat',
+  'profile.messages': 'messages',
+  'profile.analyze': 'analyze',
 
   // Post detail
   'detail.replyAuth': 'reply requires authentication',

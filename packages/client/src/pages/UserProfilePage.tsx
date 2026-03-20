@@ -8,18 +8,17 @@ import { toastError, toastSuccess } from '../stores/toastStore.js';
 import ContributionGraph from '../components/profile/ContributionGraph.js';
 import GithubFollowSync from '../components/profile/GithubFollowSync.js';
 import ApiTab from '../components/settings/ApiTab.js';
-import GithubTab from '../components/settings/GithubTab.js';
 import type { UserProfile, Post, ApiResponse } from '@clitoris/shared';
 import InfluenceBadge from '../components/profile/InfluenceBadge.js';
 import InfluenceDetail from '../components/profile/InfluenceDetail.js';
 import { useInfluenceStore } from '../stores/influenceStore.js';
 import { useUiStore } from '../stores/uiStore.js';
 
-type Tab = 'posts' | 'starred' | 'repos' | 'github' | 'api';
+type Tab = 'posts' | 'starred' | 'repos' | 'api';
 
 const BASE_TABS = ['posts', 'starred', 'repos'] as const;
 const SELF_BASE_TABS = ['posts', 'starred', 'repos'] as const;
-const SELF_TABS = ['github', 'api'] as const;
+const SELF_TABS = ['api'] as const;
 const ALL_TABS: Tab[] = [...SELF_BASE_TABS, ...SELF_TABS];
 
 interface GithubRepo {
@@ -115,7 +114,7 @@ export default function UserProfilePage() {
   }, [username, tab]);
 
   useEffect(() => {
-    if (tab === 'repos' || tab === 'github' || (SELF_TABS as readonly string[]).includes(tab)) return;
+    if (tab === 'repos' || (SELF_TABS as readonly string[]).includes(tab)) return;
     setPosts([]);
     setCursor(null);
     setHasMore(true);
@@ -412,6 +411,30 @@ export default function UserProfilePage() {
           </>
         ) : null}
 
+        {/* ── Quick actions (self only) ── */}
+        {!isLoading && profile && isSelf && (
+          <div className="px-5 sm:px-6 pb-4 flex gap-2 overflow-x-auto">
+            <Link
+              to="/chat"
+              className="shrink-0 flex items-center gap-1.5 px-3 py-2 border border-[var(--border)]/40 hover:border-[var(--accent-green)]/30 font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--accent-green)] transition-colors"
+            >
+              <span>⊙</span> {t('profile.chat')}
+            </Link>
+            <Link
+              to="/messages"
+              className="shrink-0 flex items-center gap-1.5 px-3 py-2 border border-[var(--border)]/40 hover:border-[var(--accent-cyan)]/30 font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--accent-cyan)] transition-colors"
+            >
+              <span>✉</span> {t('profile.messages')}
+            </Link>
+            <Link
+              to="/github"
+              className="shrink-0 flex items-center gap-1.5 px-3 py-2 border border-[var(--border)]/40 hover:border-[var(--accent-blue)]/30 font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--accent-blue)] transition-colors"
+            >
+              <span>⑂</span> github
+            </Link>
+          </div>
+        )}
+
         {/* ── Tabs ── */}
         {!isLoading && profile && (
           <>
@@ -523,13 +546,6 @@ export default function UserProfilePage() {
                   )}
                 </div>
               )
-            )}
-
-            {/* GitHub (self only) */}
-            {tab === 'github' && isSelf && (
-              <div className="px-5 sm:px-6 py-5">
-                <GithubTab onToast={toastSuccess} />
-              </div>
             )}
 
             {/* API (self only) */}

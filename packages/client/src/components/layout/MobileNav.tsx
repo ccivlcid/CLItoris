@@ -42,7 +42,7 @@ export default function MobileNav() {
         }`}>{t('mobile.explore')}</span>
       </Link>
 
-      {/* Create post — center, prominent */}
+      {/* Create post — center */}
       <button
         onClick={() => navigate('/new')}
         className="flex items-center justify-center w-10 h-8 mx-1 bg-[var(--accent-green)] text-[var(--bg-void)] font-mono text-[16px] font-bold active:bg-[var(--accent-green)]/80 transition-colors"

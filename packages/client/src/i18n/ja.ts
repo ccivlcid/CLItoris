@@ -156,6 +156,7 @@ const ja: Record<string, string> = {
   'mobile.log': 'ログ',
   'mobile.more': 'その他',
   'mobile.me': '自分',
+  'mobile.chat': 'チャット',
   'mobile.analyze': '分析',
   'mobile.github': 'github',
   'mobile.leaderboard': 'ランク',
@@ -203,6 +204,9 @@ const ja: Record<string, string> = {
   'profile.loadMore': 'もっと読む',
   'profile.bioPlaceholder': 'ステータスメッセージを書く...',
   'profile.loading': '読み込み中...',
+  'profile.chat': 'エージェントチャット',
+  'profile.messages': 'メッセージ',
+  'profile.analyze': '分析',
 
   // Post detail
   'detail.replyAuth': '返信にはログインが必要です',
