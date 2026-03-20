@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import CliHighlighter from './CliHighlighter.js';
 import { useUiStore } from '../../stores/uiStore.js';
 import { api } from '../../api/client.js';
+import { toastError } from '../../stores/toastStore.js';
 import type { ApiResponse, TranslateResponse } from '@clitoris/shared';
 
 interface DualPanelProps {
@@ -27,12 +28,25 @@ export default function DualPanel({
   const [copied, setCopied] = useState(false);
   const [translatedText, setTranslatedText] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup copy timer on unmount
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await navigator.clipboard.writeText(messageCli);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(messageCli);
+      setCopied(true);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toastError('Failed to copy to clipboard');
+    }
   };
 
   const handleTranslate = async (e: React.MouseEvent) => {
@@ -48,7 +62,9 @@ export default function DualPanel({
         { targetLang: uiLang },
       );
       setTranslatedText(res.data.translatedText);
-    } catch { /* silently fail */ }
+    } catch {
+      toastError('Translation failed');
+    }
     finally { setIsTranslating(false); }
   };
 
@@ -61,7 +77,7 @@ export default function DualPanel({
             key={i}
             href={`/explore?tag=${word.slice(1)}`}
             data-testid="post-hashtag"
-            className="text-[#60a5fa] hover:text-[#93c5fd] transition-colors"
+            className="text-[var(--accent-cyan)] hover:text-cyan-300 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             {word}
@@ -74,7 +90,7 @@ export default function DualPanel({
             key={i}
             href={`/@${word.slice(1)}`}
             data-testid="post-username"
-            className="text-[#f59e0b] hover:text-amber-300 transition-colors"
+            className="text-[var(--accent-amber)] hover:text-amber-300 transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             {word}
@@ -101,7 +117,7 @@ export default function DualPanel({
               <a
                 key={tag}
                 href={`/explore?tag=${tag}`}
-                className="text-[#60a5fa]/60 hover:text-[#60a5fa] text-[12px] transition-colors"
+                className="text-[var(--accent-cyan)]/60 hover:text-[var(--accent-cyan)] text-[12px] transition-colors"
                 onClick={(e) => e.stopPropagation()}
               >
                 #{tag}
@@ -111,11 +127,11 @@ export default function DualPanel({
         )}
 
         {translatedText !== null && (
-          <div className="mt-3 pl-3 border-l border-[#c084fc]/20">
-            <span className="text-[#c084fc]/40 text-[10px] font-mono block mb-1">
+          <div className="mt-3 pl-3 border-l border-[var(--accent-purple)]/20">
+            <span className="text-[var(--accent-purple)]/40 text-[10px] font-mono block mb-1">
               {t('post.translated.from', { lang: postLang })}
             </span>
-            <p className="text-[#7d8590] text-[13px] italic">{translatedText}</p>
+            <p className="text-[var(--text-muted)] text-[13px] italic">{translatedText}</p>
           </div>
         )}
 
@@ -123,7 +139,7 @@ export default function DualPanel({
           <button
             data-testid="translate-button"
             onClick={handleTranslate}
-            className="mt-3 text-[#7a8898] hover:text-[#c084fc] text-[11px] font-mono transition-colors"
+            className="mt-3 text-[var(--text-muted)] hover:text-[var(--accent-purple)] text-[11px] font-mono transition-colors"
           >
             {isTranslating
               ? t('post.translating')
@@ -137,17 +153,17 @@ export default function DualPanel({
       {/* CLI — cold, precise, terminal void */}
       <div
         data-testid="cli-panel"
-        className="bg-[#06060e] px-5 py-3 border-t border-[#13132a] sm:border-t-0 sm:border-l sm:border-l-[#13132a]"
+        className="bg-[var(--bg-cli)] px-5 py-3 border-t border-[var(--border)] sm:border-t-0 sm:border-l sm:border-l-[var(--border)]"
       >
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[#525270] text-[10px] font-mono">$</span>
+          <span className="text-[var(--text-faint)] text-[10px] font-mono">$</span>
           <button
             data-testid="copy-cli-button"
             onClick={handleCopy}
-            className="text-[#7a8898] hover:text-[#3dd68c] text-[10px] font-mono transition-colors"
+            className="text-[var(--text-muted)] hover:text-[var(--accent-green)] text-[10px] font-mono transition-colors"
             aria-label="Copy CLI command"
           >
-            {copied ? <span className="text-[#3dd68c]">{t('post.copied')}</span> : 'copy'}
+            {copied ? <span className="text-[var(--accent-green)]">{t('post.copied')}</span> : 'copy'}
           </button>
         </div>
         <CliHighlighter code={messageCli} />

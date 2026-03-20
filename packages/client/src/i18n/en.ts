@@ -84,6 +84,16 @@ const en: Record<string, string> = {
   'settings.section.llm': '// LLM keys',
   'settings.section.account': '// account',
 
+  // Settings — API tab
+  'settings.api.description': 'Register local models (Ollama etc.), frontier models (OpenAI, Anthropic etc.), or other API services.',
+  'settings.api.saving': 'saving...',
+  'settings.api.add': 'add',
+  'settings.api.cancel': 'cancel',
+  'settings.api.remove': 'remove',
+  'settings.api.confirmRemove': 'confirm?',
+  'settings.api.registered': 'registered providers',
+  'settings.api.empty': 'No providers registered.',
+
   // Errors
   'error.keyNotConfigured': 'API key not configured. Add it in Settings.',
   'error.unauthorized': 'Please log in to continue.',

@@ -137,7 +137,7 @@ export default function CliTab({ onToast }: { onToast: (msg: string) => void }) 
     setDefaultToolState(toolId);
     const model = modelSettings[toolId]?.main ?? '';
     selectModel(toolId, model);
-    onToast(`기본 CLI 도구: ${toolId}`);
+    onToast(`Default CLI tool: ${toolId}`);
   };
 
   if (loading) {
@@ -179,8 +179,8 @@ export default function CliTab({ onToast }: { onToast: (msg: string) => void }) 
                   <p className="text-gray-200 font-mono text-sm font-semibold">{tool.name}</p>
                   <p className="text-gray-600 font-mono text-xs mt-0.5">
                     {tool.installed
-                      ? tool.version ?? '버전 확인 불가'
-                      : '미설치'}
+                      ? tool.version ?? 'version unknown'
+                      : 'not installed'}
                   </p>
                 </div>
               </div>
@@ -189,7 +189,7 @@ export default function CliTab({ onToast }: { onToast: (msg: string) => void }) 
               <div className="flex items-center gap-2 shrink-0">
                 {tool.installed && defaultTool === tool.id && (
                   <span className="text-green-400 border border-green-400/40 bg-green-400/5 font-mono text-[10px] px-2 py-0.5">
-                    기본
+                    default
                   </span>
                 )}
                 {tool.installed && defaultTool !== tool.id && (
@@ -197,26 +197,26 @@ export default function CliTab({ onToast }: { onToast: (msg: string) => void }) 
                     onClick={() => handleSetDefault(tool.id)}
                     className="text-gray-600 hover:text-gray-300 border border-gray-700 hover:border-gray-500 font-mono text-[10px] px-2 py-0.5 transition-colors"
                   >
-                    기본으로 설정
+                    set default
                   </button>
                 )}
                 {tool.installed ? (
                   <span className="text-emerald-400 border border-emerald-400/40 bg-emerald-400/5 font-mono text-[10px] px-2 py-0.5">
-                    설치됨
+                    installed
                   </span>
                 ) : (
                   <span className="text-gray-500 border border-gray-600 font-mono text-[10px] px-2 py-0.5">
-                    미설치
+                    not installed
                   </span>
                 )}
                 {tool.installed && (
                   tool.authenticated ? (
                     <span className="text-sky-400 border border-sky-400/40 bg-sky-400/5 font-mono text-[10px] px-2 py-0.5">
-                      인증됨
+                      authenticated
                     </span>
                   ) : (
                     <span className="text-amber-400 border border-amber-400/40 bg-amber-400/5 font-mono text-[10px] px-2 py-0.5">
-                      미인증
+                      not authenticated
                     </span>
                   )
                 )}
@@ -228,7 +228,7 @@ export default function CliTab({ onToast }: { onToast: (msg: string) => void }) 
               <div className="space-y-2 pt-1">
                 {/* Main model */}
                 <div className="flex items-center gap-3">
-                  <label className="text-gray-500 font-mono text-xs w-20 shrink-0">모델:</label>
+                  <label className="text-gray-500 font-mono text-xs w-20 shrink-0">model:</label>
                   <select
                     value={settings.main}
                     onChange={(e) => setModel(tool.id, e.target.value)}
@@ -252,7 +252,7 @@ export default function CliTab({ onToast }: { onToast: (msg: string) => void }) 
                     rel="noreferrer"
                     className="text-gray-400 hover:text-sky-400 border border-gray-700 hover:border-sky-400/30 font-mono text-xs px-3 py-1.5 transition-colors"
                   >
-                    다운로드
+                    download
                   </a>
                 ) : (
                   <button
@@ -260,7 +260,7 @@ export default function CliTab({ onToast }: { onToast: (msg: string) => void }) 
                     disabled={installing === tool.id}
                     className="text-gray-400 hover:text-emerald-400 border border-gray-700 hover:border-emerald-400/30 font-mono text-xs px-3 py-1.5 transition-colors disabled:opacity-40"
                   >
-                    {installing === tool.id ? '설치 중...' : 'npm 설치'}
+                    {installing === tool.id ? 'installing…' : 'npm install'}
                   </button>
                 )}
                 <code className="text-gray-700 font-mono text-[10px]">{tool.installCmd}</code>
@@ -270,7 +270,7 @@ export default function CliTab({ onToast }: { onToast: (msg: string) => void }) 
             {/* Installed but no models: show warning */}
             {tool.installed && tool.models.length === 0 && (
               <p className="text-amber-400/60 font-mono text-xs">
-                &gt; 모델 목록을 가져올 수 없습니다.
+                &gt; unable to fetch model list.
               </p>
             )}
           </div>

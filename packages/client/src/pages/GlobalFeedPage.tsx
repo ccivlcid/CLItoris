@@ -7,6 +7,7 @@ import { useAuthStore } from '../stores/authStore.js';
 import { useUiStore } from '../stores/uiStore.js';
 import { useFeedStore } from '../stores/feedStore.js';
 import { api } from '../api/client.js';
+import { toastError } from '../stores/toastStore.js';
 import type { ApiResponse } from '@clitoris/shared';
 
 export default function GlobalFeedPage() {
@@ -35,7 +36,8 @@ export default function GlobalFeedPage() {
     try {
       await api.post<ApiResponse<{ isStarred: boolean; starCount: number }>>(`/posts/${postId}/star`);
     } catch {
-      starPost(postId, post.isStarred); // revert
+      starPost(postId, post.isStarred);
+      toastError('Failed to star post');
     }
   }, [posts, isAuthenticated, navigate, starPost]);
 
@@ -61,7 +63,7 @@ export default function GlobalFeedPage() {
           break;
         case 'f':
           if (focusedPostId && isAuthenticated) {
-            void api.post(`/posts/${focusedPostId}/fork`).catch(() => {});
+            void api.post(`/posts/${focusedPostId}/fork`).catch(() => toastError('Failed to fork post'));
           }
           break;
       }

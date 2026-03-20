@@ -1,9 +1,10 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import AppShell from '../components/layout/AppShell.js';
 import PostCard from '../components/post/PostCard.js';
 import { useAuthStore } from '../stores/authStore.js';
 import { api, ApiError } from '../api/client.js';
+import { toastError } from '../stores/toastStore.js';
 import ContributionGraph from '../components/profile/ContributionGraph.js';
 import GithubFollowSync from '../components/profile/GithubFollowSync.js';
 import ProfileTab from '../components/settings/ProfileTab.js';
@@ -155,12 +156,15 @@ export default function UserProfilePage() {
     setIsLoadingRepos(true);
     api.get<ApiResponse<GithubRepo[]>>(`/users/@${username}/repos`)
       .then((res) => setRepos(res.data))
-      .catch(() => {/* silent */})
+      .catch(() => toastError('Failed to load repositories'))
       .finally(() => setIsLoadingRepos(false));
   }, [tab, username]);
 
+  const followBusy = useRef(false);
   const handleFollow = async () => {
     if (!me) { navigate('/login'); return; }
+    if (followBusy.current) return;
+    followBusy.current = true;
     const next = !isFollowing;
     setIsFollowing(next);
     setFollowerCount((c) => c + (next ? 1 : -1));
@@ -169,6 +173,9 @@ export default function UserProfilePage() {
     } catch {
       setIsFollowing(!next);
       setFollowerCount((c) => c + (next ? -1 : 1));
+      toastError('Failed to update follow status');
+    } finally {
+      followBusy.current = false;
     }
   };
 

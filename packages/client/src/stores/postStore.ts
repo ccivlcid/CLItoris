@@ -85,7 +85,7 @@ export const usePostStore = create<PostState>((set, get) => ({
     const { draft, selectedModel, selectedCliTool, selectedLang } = get();
     if (!draft.trim()) return;
     if (!selectedModel.trim()) {
-      set({ transformError: '모델을 선택하세요 (사이드바 또는 설정 → CLI).' });
+      set({ transformError: 'Select a model (sidebar or Settings → CLI).' });
       return;
     }
 

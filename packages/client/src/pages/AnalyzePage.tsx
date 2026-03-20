@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import AppShell from '../components/layout/AppShell.js';
 import { useAuthStore } from '../stores/authStore.js';
 import { api } from '../api/client.js';
+import { toastError } from '../stores/toastStore.js';
 import type { ApiResponse, Analysis, AnalysisProgress } from '@clitoris/shared';
 
 type OutputType = 'report' | 'pptx' | 'video';
@@ -133,7 +134,7 @@ export default function AnalyzePage() {
     if (!isAuthenticated) return;
     api.get<ApiResponse<AnalysisResult[]>>('/analyze')
       .then((res) => setHistory(res.data))
-      .catch(() => {})
+      .catch(() => toastError('Failed to load analysis history'))
       .finally(() => setHistoryLoading(false));
   }, [isAuthenticated]);
 
@@ -165,6 +166,7 @@ export default function AnalyzePage() {
 
     return () => {
       if (pollingRef.current) clearTimeout(pollingRef.current);
+      if (elapsedRef.current) clearInterval(elapsedRef.current);
     };
   }, [activeAnalysis?.id, activeAnalysis?.status]);
 
@@ -174,7 +176,7 @@ export default function AnalyzePage() {
     try {
       const res = await api.post<ApiResponse<{ postId: string }>>(`/analyze/${activeAnalysis.id}/share`);
       setSharedPostId(res.data.postId);
-    } catch { /* silent */ } finally {
+    } catch { toastError('Failed to share analysis'); } finally {
       setIsSharing(false);
     }
   };
@@ -370,7 +372,7 @@ export default function AnalyzePage() {
                     className="bg-[#0d1117] border border-gray-700 text-gray-300 font-mono text-xs px-2 py-1.5 focus:outline-none"
                   >
                     {modelOptions.length === 0 ? (
-                      <option value="">— CLI 또는 설정(API 키)에서 모델 로드 —</option>
+                      <option value="">— load models from CLI or Settings (API keys) —</option>
                     ) : (
                       modelOptions.map((m) => <option key={m} value={m}>{m}</option>)
                     )}

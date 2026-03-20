@@ -13,6 +13,7 @@ interface PostCardProps {
 
 function timeAgo(isoDate: string): string {
   const diff = Date.now() - new Date(isoDate).getTime();
+  if (diff < 0) return 'now';
   const minutes = Math.floor(diff / 60_000);
   if (minutes < 1) return 'now';
   if (minutes < 60) return `${minutes}m`;
@@ -40,17 +41,27 @@ export default function PostCard({ post, focused = false }: PostCardProps) {
   const showTranslate = post.lang !== uiLang;
   const color = avatarColor(user.username);
 
+  const handleNavigate = () => navigate(`/post/${post.id}`);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleNavigate();
+    }
+  };
+
   return (
     <article
       data-testid="post-card"
       data-post-id={post.id}
       role="article"
+      tabIndex={0}
       aria-labelledby={`post-header-${post.id}`}
-      onClick={() => navigate(`/post/${post.id}`)}
-      className={`cursor-pointer border-b transition-colors ${
+      onClick={handleNavigate}
+      onKeyDown={handleKeyDown}
+      className={`cursor-pointer border-b transition-colors outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-green)]/40 ${
         focused
-          ? 'border-[#3dd68c]/20 bg-[#3dd68c]/[0.02]'
-          : 'border-[#13132a] hover:bg-[#0d0d1e]'
+          ? 'border-[var(--accent-green)]/20 bg-[var(--accent-green)]/[0.02]'
+          : 'border-[var(--border)] hover:bg-[var(--bg-surface)]'
       }`}
     >
       {/* Header */}
@@ -60,7 +71,7 @@ export default function PostCard({ post, focused = false }: PostCardProps) {
       >
         {/* Avatar */}
         <div
-          className="w-8 h-8 shrink-0 flex items-center justify-center font-mono text-[13px] font-bold text-[#090912]"
+          className="w-8 h-8 shrink-0 flex items-center justify-center font-mono text-[13px] font-bold text-[var(--bg-void)]"
           style={{ backgroundColor: color }}
           aria-hidden="true"
         >
@@ -77,16 +88,16 @@ export default function PostCard({ post, focused = false }: PostCardProps) {
           >
             @{user.username}
           </Link>
-          <span className="text-[#525270] text-[11px] font-mono">·</span>
-          <span className="text-[#7a8898] text-[11px] font-mono shrink-0">{timeAgo(post.createdAt)}</span>
+          <span className="text-[var(--text-faint)] text-[11px] font-mono">·</span>
+          <span className="text-[var(--text-muted)] text-[11px] font-mono shrink-0">{timeAgo(post.createdAt)}</span>
 
           {post.intent && post.intent !== 'casual' && (
-            <span className="text-[#525270] text-[10px] font-mono shrink-0 hidden sm:inline">
+            <span className="text-[var(--text-faint)] text-[10px] font-mono shrink-0 hidden sm:inline">
               --{post.intent}
             </span>
           )}
           {post.emotion && post.emotion !== 'neutral' && (
-            <span className="text-[#525270] text-[10px] font-mono shrink-0 hidden sm:inline">
+            <span className="text-[var(--text-faint)] text-[10px] font-mono shrink-0 hidden sm:inline">
               --{post.emotion}
             </span>
           )}

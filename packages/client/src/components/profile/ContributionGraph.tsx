@@ -19,11 +19,11 @@ interface ContributionData {
 
 // Map GitHub's contribution colors to our dark theme
 function levelColor(count: number): string {
-  if (count === 0) return '#0d0d1e';
+  if (count === 0) return 'var(--bg-surface)';
   if (count <= 2) return '#0f3d24';
   if (count <= 5) return '#1a6b3a';
   if (count <= 10) return '#26994f';
-  return '#3dd68c';
+  return 'var(--accent-green)';
 }
 
 export default function ContributionGraph({ githubUsername }: { githubUsername: string }) {
@@ -34,13 +34,13 @@ export default function ContributionGraph({ githubUsername }: { githubUsername: 
     setIsLoading(true);
     api.get<ApiResponse<ContributionData>>(`/github/contributions/${githubUsername}`)
       .then((res) => setData(res.data))
-      .catch(() => {/* silently fail — graph is optional */})
+      .catch(() => { /* graph is optional — fail silently */ })
       .finally(() => setIsLoading(false));
   }, [githubUsername]);
 
   if (isLoading) {
     return (
-      <div className="h-[72px] animate-pulse bg-[#0a0a14] border border-[#1c1c30]" />
+      <div className="h-[72px] animate-pulse bg-[var(--bg-input)] border border-[var(--border)]" />
     );
   }
 
@@ -52,8 +52,8 @@ export default function ContributionGraph({ githubUsername }: { githubUsername: 
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-[#525270] font-mono text-[10px]">// contributions</span>
-        <span className="text-[#7a8898] font-mono text-[10px]">{data.total.toLocaleString()} this year</span>
+        <span className="text-[var(--text-faint)] font-mono text-[10px]">// contributions</span>
+        <span className="text-[var(--text-muted)] font-mono text-[10px]">{data.total.toLocaleString()} this year</span>
       </div>
       <div className="flex gap-[3px]" role="img" aria-label={`${data.total} contributions this year`}>
         {weeks.map((week, wi) => (

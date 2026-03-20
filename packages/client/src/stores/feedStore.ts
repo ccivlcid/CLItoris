@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../api/client.js';
+import { toastError } from './toastStore.js';
 import type { Post, ApiResponse, LlmModel } from '@clitoris/shared';
 
 type FeedEndpoint = 'global' | 'local' | 'explore';
@@ -86,6 +87,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
       });
     } catch {
       set({ isLoadingMore: false });
+      toastError('Failed to load more posts');
     }
   },
 
