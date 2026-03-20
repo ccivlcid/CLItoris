@@ -53,6 +53,7 @@ pnpm test             # Vitest unit tests
 pnpm test:e2e         # Playwright E2E
 pnpm lint             # ESLint
 pnpm format           # Prettier
+pnpm seed             # Seed DB with mock users & posts (scripts/seed.ts)
 ```
 
 ### Package Dependencies
@@ -146,11 +147,12 @@ docs/
 │   ├── LOGIN.md                       # /login — GitHub OAuth connect (SSH metaphor)
 │   ├── SETUP.md                       # /setup — First-time profile setup (replaces REGISTER.md)
 │   ├── SETTINGS.md                    # /settings — User settings
-│   └── ANALYZE.md                     # /analyze — Repo analysis tool (report, pptx, video)
+│   ├── ANALYZE.md                     # /analyze — Repo analysis tool (report, pptx, video)
+│   └── GITHUB_FEED.md                 # /github — GitHub Stars, Notifications, Issues & PRs
 ├── specs/                             # Technical specifications
 │   ├── PRD.md                         # Product requirements document
 │   ├── DATABASE.md                    # DB schema, queries, migrations, migration files
-│   ├── API.md                         # REST API documentation (29 endpoints, error formats, rate limits)
+│   ├── API.md                         # REST API documentation (41 endpoints, error formats, rate limits)
 │   ├── api-schema.json                # OpenAPI 3.1 schema (machine-readable)
 │   └── types.ts                       # Shared type definitions
 ├── llm/                               # LLM integration documentation

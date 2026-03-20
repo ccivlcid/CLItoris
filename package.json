@@ -2,20 +2,23 @@
   "name": "clitoris",
   "private": true,
   "scripts": {
-    "dev": "pnpm --parallel -r run dev",
+    "dev": "concurrently -k -n client,server \"pnpm --filter @clitoris/client dev\" \"pnpm --filter @clitoris/server dev\"",
     "dev:client": "pnpm --filter @clitoris/client dev",
     "dev:server": "pnpm --filter @clitoris/server dev",
     "build": "pnpm -r run build",
     "test": "vitest",
     "test:e2e": "playwright test",
     "lint": "eslint packages/",
-    "format": "prettier --write packages/"
+    "format": "prettier --write packages/",
+    "seed": "tsx scripts/seed.ts"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
-    "vitest": "^3.0.0",
     "@playwright/test": "^1.50.0",
+    "concurrently": "^9.1.0",
     "eslint": "^9.0.0",
-    "prettier": "^3.4.0"
+    "prettier": "^3.4.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
   }
 }

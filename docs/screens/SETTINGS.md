@@ -1,690 +1,499 @@
 # SETTINGS Screen Specification
 
 > **Source of truth** for the Settings screen (`/settings`).
+> Last updated: 2026-03-20 — Full redesign: single-scroll → tabbed layout
 
 ---
 
 ## 1. Screen Overview
 
-| Property        | Value                                                        |
-|-----------------|--------------------------------------------------------------|
-| **Route**       | `/settings`                                                  |
-| **Title**       | `settings -- terminal.social`                                |
-| **Description** | Terminal-style settings page where users edit their profile via CLI-like commands. Each field mimics a `$ set --flag="value"` pattern. Includes a danger zone for account deletion with a confirmation dialog. Standard layout with sidebar. |
-| **Auth Required** | Yes. Redirects to `/login` if not authenticated.            |
+| Property | Value |
+|---|---|
+| **Route** | `/settings` |
+| **Title** | `settings -- terminal.social` |
+| **Auth Required** | Yes. Redirects to `/login?redirect=/settings` if not authenticated. |
+| **Layout** | AppShell + tabbed content area (max-w-2xl mx-auto) |
 
 ---
 
-## 2. Desktop Wireframe
+## 2. Tab Structure
 
 ```
-┌──────────────────────────────────────────────────────────────────────────┐
-│ terminal.social / settings                                               │
-├────────────┬─────────────────────────────────────────────────────────────┤
-│            │                                                             │
-│ // navigate│  ┌─ Profile Settings ───────────────────────────────────┐   │
-│ $ feed     │  │                                                       │   │
-│   --global │  │  // profile                                           │   │
-│   --local  │  │                                                       │   │
-│   following│  │  $ set --display-name="Current Name"                  │   │
-│   explore  │  │                                                       │   │
-│            │  │  $ set --domain="yourdomain.dev"                      │   │
-│ // by LLM  │  │                                                       │   │
-│ ● claude   │  │  $ set --bio="Your bio text here"                     │   │
-│ ○ gpt-4o   │  │                                                       │   │
-│ ○ llama-3  │  │  $ set --avatar-url="https://..."                     │   │
-│            │  │                                                       │   │
-│ // me      │  │                                                       │   │
-│ → @you     │  │  ┌──────────────────────────────┐                     │   │
-│   my posts │  │  │ [Apply changes]              │                     │   │
-│   starred  │  │  └──────────────────────────────┘                     │   │
-│ → settings │  │                                                       │   │
-│            │  └───────────────────────────────────────────────────────┘   │
-│            │                                                             │
-│            │  ┌─ GitHub Connection ─────────────────────────────────┐   │
-│            │  │                                                       │   │
-│            │  │  // github integration                                │   │
-│            │  │                                                       │   │
-│            │  │  $ github --status                                    │   │
-│            │  │  > connected: github.com/jiyeon-kim                   │   │
-│            │  │  > scope: read:user, user:email                       │   │
-│            │  │  > synced: 2026-03-20T10:30:00Z                       │   │
-│            │  │                                                       │   │
-│            │  │  $ set --auto-sync=on                                 │   │
-│            │  │  info: profile syncs with github daily.               │   │
-│            │  │                                                       │   │
-│            │  │  ┌──────────────────────────────┐                     │   │
-│            │  │  │ [Enter] sync now             │                     │   │
-│            │  │  └──────────────────────────────┘                     │   │
-│            │  │                                                       │   │
-│            │  └───────────────────────────────────────────────────────┘   │
-│            │                                                             │
-│            │  ┌─ Danger Zone ────────────────────────────────────────┐   │
-│            │  │                                                       │   │
-│            │  │  // danger                                            │   │
-│            │  │                                                       │   │
-│            │  │  $ delete --account                                   │   │
-│            │  │                                                       │   │
-│            │  │  This action is irreversible. All posts, stars,       │   │
-│            │  │  and followers will be permanently deleted.            │   │
-│            │  │                                                       │   │
-│            │  │  ┌────────────────────────────────┐                   │   │
-│            │  │  │ $ delete --confirm             │                   │   │
-│            │  │  └────────────────────────────────┘                   │   │
-│            │  │                                                       │   │
-│            │  └───────────────────────────────────────────────────────┘   │
-│            │                                                             │
-└────────────┴─────────────────────────────────────────────────────────────┘
+$ settings --tab=[profile | language | cli | oauth | api | channel | github]
+                    ────────  ────────  ───  ─────  ───  ───────   ──────
 ```
 
-### Desktop with Success Toast
+| Tab | Label | Contents | Badge |
+|-----|-------|----------|-------|
+| `profile` | profile | Display name, domain, bio, avatar, danger zone | — |
+| `language` | language | UI lang, default post lang | — |
+| `cli` | cli | CLI tool selector, path override, connection test | — |
+| `oauth` | oauth | GitHub connection status & management | `connected` / `!` |
+| `api` | api | LLM API key management (anthropic, openai, gemini) | configured count |
+| `channel` | channel | Subscribe / manage topic channels | — |
+| `github` | github | PR review requests + webhook setup instructions | review count |
 
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│ terminal.social / settings                            Settings updated ✓ │
-├────────────┬─────────────────────────────────────────────────────────────┤
-│  ...       │  ...                                                        │
-```
-
-The success toast appears top-right as a brief inline message: `text-emerald-400 font-mono text-sm`.
-
-### Desktop Confirmation Dialog (Delete Account)
-
-```
-┌──────────────────────────────────────────────────────────────────────────┐
-│ terminal.social / settings                                               │
-├────────────┬─────────────────────────────────────────────────────────────┤
-│            │                                                             │
-│            │      ┌─ Confirm Deletion ───────────────────────┐          │
-│            │      │                                           │          │
-│            │      │  $ delete --account --confirm             │          │
-│            │      │                                           │          │
-│            │      │  Type your username to confirm:           │          │
-│            │      │                                           │          │
-│            │      │  > █                                      │          │
-│            │      │                                           │          │
-│            │      │  ┌────────────────┐  ┌────────────────┐  │          │
-│            │      │  │ $ abort        │  │ $ confirm      │  │          │
-│            │      │  └────────────────┘  └────────────────┘  │          │
-│            │      │                                           │          │
-│            │      └───────────────────────────────────────────┘          │
-│            │                                                             │
-└────────────┴─────────────────────────────────────────────────────────────┘
-```
+Active tab URL param: `/settings?tab=profile` (default: `profile`)
 
 ---
 
-## 3. Mobile Wireframe
+## 3. Tab Navigation Wireframe
 
 ```
-┌─────────────────────────────────┐
-│ ≡  terminal.social              │
-├─────────────────────────────────┤
-│                                 │
-│  ┌─ Profile Settings ───────┐  │
-│  │                            │  │
-│  │  // profile                │  │
-│  │                            │  │
-│  │  $ set                     │  │
-│  │  --display-name=           │  │
-│  │  "Current Name"            │  │
-│  │                            │  │
-│  │  $ set                     │  │
-│  │  --domain=                 │  │
-│  │  "yourdomain.dev"          │  │
-│  │                            │  │
-│  │  $ set                     │  │
-│  │  --bio=                    │  │
-│  │  "Your bio text"           │  │
-│  │                            │  │
-│  │  $ set                     │  │
-│  │  --avatar-url=             │  │
-│  │  "https://..."             │  │
-│  │                            │  │
-│  │  ┌──────────────────────┐  │  │
-│  │  │ [Apply changes]      │  │  │
-│  │  └──────────────────────┘  │  │
-│  │                            │  │
-│  └────────────────────────────┘  │
-│                                 │
-│  ┌─ GitHub ─────────────────┐  │
-│  │                            │  │
-│  │  // github integration    │  │
-│  │                            │  │
-│  │  $ github --status        │  │
-│  │  > connected:             │  │
-│  │  github.com/jiyeon-kim    │  │
-│  │  > synced: 2026-03-20     │  │
-│  │                            │  │
-│  │  $ set --auto-sync=on     │  │
-│  │                            │  │
-│  │  ┌──────────────────────┐  │  │
-│  │  │ [Enter] sync now     │  │  │
-│  │  └──────────────────────┘  │  │
-│  │                            │  │
-│  └────────────────────────────┘  │
-│                                 │
-│  ┌─ Danger Zone ─────────────┐  │
-│  │                            │  │
-│  │  // danger                 │  │
-│  │                            │  │
-│  │  $ delete --account        │  │
-│  │                            │  │
-│  │  This action is            │  │
-│  │  irreversible.             │  │
-│  │                            │  │
-│  │  ┌──────────────────────┐  │  │
-│  │  │ $ delete --confirm   │  │  │
-│  │  └──────────────────────┘  │  │
-│  │                            │  │
-│  └────────────────────────────┘  │
-│                                 │
-└─────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│ terminal.social / settings                                           │
+├────────────┬─────────────────────────────────────────────────────────┤
+│  sidebar   │                                                         │
+│            │  $ settings --tab=                                      │
+│            │  [profile] [language] [cli] [oauth ●] [api 2/3] [channel] │
+│            │  ─────────────────────────────────────────────────────  │
+│            │                                                         │
+│            │  (tab content here)                                     │
+│            │                                                         │
+└────────────┴─────────────────────────────────────────────────────────┘
 ```
 
-### Mobile Confirmation Dialog
-
-```
-┌─────────────────────────────────┐
-│ ≡  terminal.social              │
-├─────────────────────────────────┤
-│                                 │
-│  ┌─ Confirm Deletion ────────┐  │
-│  │                            │  │
-│  │  $ delete --account        │  │
-│  │    --confirm               │  │
-│  │                            │  │
-│  │  Type your username        │  │
-│  │  to confirm:               │  │
-│  │                            │  │
-│  │  > █                       │  │
-│  │                            │  │
-│  │  ┌──────────┐             │  │
-│  │  │ $ abort   │             │  │
-│  │  └──────────┘             │  │
-│  │  ┌──────────┐             │  │
-│  │  │ $ confirm │             │  │
-│  │  └──────────┘             │  │
-│  │                            │  │
-│  └────────────────────────────┘  │
-│                                 │
-└─────────────────────────────────┘
-```
+Tab bar styling:
+- Container: `flex gap-1 border-b border-gray-700 mb-6 pb-0`
+- Inactive tab: `px-3 py-1.5 font-mono text-sm text-[#7a8898] border border-transparent hover:text-gray-300`
+- Active tab: `px-3 py-1.5 font-mono text-sm text-green-400 border border-gray-700 border-b-[#1a1a2e] bg-[#1a1a2e] -mb-px`
+- Badge: `ml-1.5 text-[10px] px-1 bg-green-400/10 text-green-400 rounded`
 
 ---
 
-## 4. Component Tree
+## 4. Tab Contents
+
+---
+
+### Tab: `profile`
 
 ```
-<SettingsPage>                         // packages/client/src/pages/SettingsPage.tsx
-  <PageLayout>                         // packages/client/src/components/layout/PageLayout.tsx
-    <HeaderBar />                      // packages/client/src/components/layout/HeaderBar.tsx
-    <Sidebar />                        // packages/client/src/components/layout/Sidebar.tsx
-    <main>
-      <SettingsForm>                   // packages/client/src/components/settings/SettingsForm.tsx
-        <SectionLabel />              // "// profile"
-        <CliSettingField               // packages/client/src/components/settings/CliSettingField.tsx
-          command="$ set"
-          flag="--display-name"
-          value={displayName}
-        />
-        <CliSettingField
-          command="$ set"
-          flag="--domain"
-          value={domain}
-        />
-        <CliSettingField
-          command="$ set"
-          flag="--bio"
-          value={bio}
-        />
-        <CliSettingField
-          command="$ set"
-          flag="--avatar-url"
-          value={avatarUrl}
-        />
-        <SubmitButton                  // packages/client/src/components/auth/SubmitButton.tsx
-          label="[Apply changes]"
-        />
-      </SettingsForm>
+// profile
 
-      <GitHubConnection>              // packages/client/src/components/settings/GitHubConnection.tsx
-        <SectionLabel />              // "// github integration"
-        <GitHubStatus />              // packages/client/src/components/settings/GitHubStatus.tsx
-          ├── connection status (connected/disconnected)
-          ├── GitHub username + link
-          ├── OAuth scope
-          └── last sync timestamp
-        <AutoSyncToggle />            // packages/client/src/components/settings/AutoSyncToggle.tsx
-        <SyncNowButton />             // packages/client/src/components/settings/SyncNowButton.tsx
-      </GitHubConnection>
+$ set --display-name="Jiyeon Kim"
+$ set --domain="jiyeon.dev"
+$ set --bio="building things in the terminal"
+$ set --avatar-url="https://..."
 
-      <DangerZone>                     // packages/client/src/components/settings/DangerZone.tsx
-        <SectionLabel />              // "// danger"
-        <DeleteAccountButton />       // packages/client/src/components/settings/DeleteAccountButton.tsx
-      </DangerZone>
+[Apply changes]
 
-      <ConfirmDeleteDialog />         // packages/client/src/components/settings/ConfirmDeleteDialog.tsx
-        <CliInput />                  // username confirmation input
-        <AbortButton />
-        <ConfirmButton />
+─────────────────────────────────────────────────────
 
-      <SuccessToast />                // packages/client/src/components/common/SuccessToast.tsx
-    </main>
-  </PageLayout>
+// danger
+
+$ delete --account
+This action is irreversible.
+
+[$ delete --confirm]  →  Are you sure? [yes, delete] [cancel]
+```
+
+**Fields:**
+
+| Flag | Type | Max | Placeholder |
+|------|------|-----|-------------|
+| `--display-name` | text | 50 | user.displayName |
+| `--domain` | text | 100 | `yourdomain.dev` |
+| `--bio` | textarea | 300 | `Write something about yourself...` |
+| `--avatar-url` | url | — | `https://...` |
+
+**API:** `PUT /api/auth/me` → `{ displayName, domain, bio, avatarUrl }`
+
+---
+
+### Tab: `language`
+
+```
+// language
+
+$ set --ui-lang=
+  ○ en  English
+  ● ko  한국어
+  ○ zh  中文
+  ○ ja  日本語
+
+$ set --default-post-lang=
+  ● auto  (detect from input)
+  ○ en
+  ○ ko
+  ○ zh
+  ○ ja
+```
+
+**State:** `uiStore.lang` (client-only, persisted to `localStorage('clitoris:ui-lang')`)
+**API:** none — purely client-side setting. Survives page reload; default `en` if no stored value.
+
+---
+
+### Tab: `cli`
+
+CLI 연동 설정. API 키가 필요 없는 로컬 CLI 도구들을 관리.
+
+```
+// cli tools
+
+$ cli --list
+> claude-code    claude --print        [● active]  [test]
+> codex          codex --quiet         [○ inactive] [test]
+> gemini-cli     gemini -p             [○ inactive] [test]
+> opencode       opencode run          [○ inactive] [test]
+
+$ cli --default=
+  [claude-code ▾]
+
+$ cli --path-override=
+  // leave empty to use $PATH
+  ┌──────────────────────────────────────────────────────┐
+  │ /usr/local/bin/claude                                │
+  └──────────────────────────────────────────────────────┘
+
+[test connection]  →  ✓ claude-code responding (0.3s)
+                  →  ✗ codex: command not found
+```
+
+**Fields:**
+
+| Setting | Description |
+|---------|-------------|
+| Active tools | Toggle which CLI tools are enabled for use |
+| Default CLI tool | Used when no model is explicitly selected |
+| Path override | Custom binary path (optional, overrides $PATH) |
+
+**Implementation:**
+- Tool list from `GET /api/llm/cli/status` (**session required**): binary install + version probe; `authenticated` / `models` use the logged-in user’s **Settings API keys** and/or local CLI login files — **not** server `.env` API keys
+- Selected model per tool stored in `localStorage('clitoris:cli-model-settings')`: `{ toolId: { main: modelId } }`
+- Sidebar `// my LLM` section reads this localStorage to show active tools instantly
+
+**Actions:**
+
+| Action | Endpoint | Description |
+|--------|----------|-------------|
+| Refresh status | `GET /api/llm/cli/status` | Re-runs binary detection |
+| Install tool | `POST /api/llm/cli/install` | Runs `npm install -g <package>` server-side (dev only) |
+| Test connection | `POST /api/llm/cli/test` | Runs `<bin> --version`; returns latency |
+
+---
+
+### Tab: `oauth`
+
+```
+// oauth connections
+
+$ oauth --provider=github --status
+> connected: github.com/jiyeon-kim
+> scope: read:user, user:email, notifications, repo
+> connected at: 2026-03-20T02:30:00Z
+
+[sync profile]   [import activity]   [disconnect github]
+
+─────────────────────────────────────────────────────
+
+// sync result (after action)
+✓ profile synced
+✓ 3 new posts created (30 events scanned)
+
+─────────────────────────────────────────────────────
+
+// future providers (coming soon)
+
+$ oauth --provider=gitlab  [not connected]
+$ oauth --provider=gitea   [not connected]
+```
+
+**States:**
+
+| State | Display |
+|-------|---------|
+| Connected | `text-emerald-400` badge `[connected]`, username, full scope list, timestamp, action buttons |
+| Disconnected | `text-yellow-400` `[not connected]`, connect button |
+
+**Actions:**
+
+| Action | Endpoint | Description |
+|--------|----------|-------------|
+| Sync profile | `POST /api/users/sync-profile` | Re-fetches GitHub avatar, bio, repo count |
+| Import activity | `POST /api/users/sync-activity` | Imports recent GitHub events as posts (deduped) |
+| Disconnect GitHub | `DELETE /api/auth/github` | Unlinks GitHub; keeps account but disables OAuth login |
+| Connect (if disconnected) | `GET /api/auth/github` | Initiates OAuth flow |
+
+**Sync result messages:**
+- `✓ profile synced` — profile sync succeeded
+- `✓ N new posts created (M events scanned)` — activity import result
+- `0 new posts (all already imported)` — all events already deduped
+
+> Note: Disconnecting GitHub while it is the only login method will lock the user out. Show warning.
+
+---
+
+### Tab: `api`
+
+LLM 클라우드 API 키 관리. 키는 서버 DB에 암호화 저장, 클라이언트에 평문 노출 없음.
+
+```
+// llm api keys
+// keys are stored server-side and never exposed to the client
+
+$ set --llm-key=anthropic
+  [configured ✓]  [× remove]
+
+$ set --llm-key=openai
+  [not configured]  [+ add key]
+    → input: sk-...    [save]
+
+$ set --llm-key=gemini
+  [not configured]  [+ add key]
+
+─────────────────────────────────────────────────────
+
+// local providers (no key needed)
+> ollama     — running at localhost:11434
+> claude-code — via claude CLI
+> codex       — via codex CLI
+> gemini-cli  — via gemini CLI
+> opencode    — via opencode CLI
+```
+
+**Providers requiring keys:**
+
+| Provider | Key format | Docs |
+|----------|-----------|------|
+| anthropic | `sk-ant-...` | platform.anthropic.com |
+| openai | `sk-...` | platform.openai.com |
+| gemini | `AIza...` | aistudio.google.com |
+
+**API:**
+
+| Action | Endpoint | Method |
+|--------|----------|--------|
+| List configured | `GET /api/llm/providers` | GET |
+| Save key | `POST /api/llm/keys` | POST `{ provider, apiKey }` |
+| Remove key | `DELETE /api/llm/keys/:provider` | DELETE |
+
+**Badge:** `api 2/3` — configured count out of 3 cloud providers.
+
+---
+
+### Tab: `channel`
+
+채널 = 해시태그 기반 토픽 스트림 (IRC 채널 컨셉). 구독하면 로컬 피드에 해당 태그 포스트가 포함됨.
+
+```
+// channel subscriptions
+
+$ channel --list
+> #ai-tools      142 posts  3.2k members  [unsubscribe]
+> #rust          89 posts   1.1k members  [unsubscribe]
+> #devops        204 posts  4.5k members  [unsubscribe]
+
+$ channel --join
+  ┌────────────────────────────────┐
+  │ #                              │  (type channel name)
+  └────────────────────────────────┘
+  [join channel]
+
+─────────────────────────────────────────────────────
+
+// trending channels
+> #llm           +234 this week  [join]
+> #terminal      +89 this week   [join]
+> #typescript    +67 this week   [join]
+```
+
+**Data model:**
+
+```typescript
+interface Channel {
+  id: string;
+  name: string;        // e.g. "ai-tools" (without #)
+  postCount: number;
+  memberCount: number;
+  subscribedAt: string;
+}
+```
+
+**API:**
+
+| Action | Endpoint | Method |
+|--------|----------|--------|
+| List subscribed | `GET /api/channels` | GET |
+| Subscribe | `POST /api/channels/:name/subscribe` | POST |
+| Unsubscribe | `DELETE /api/channels/:name/subscribe` | DELETE |
+| List trending | `GET /api/channels/trending` | GET |
+
+> Phase note: Channel backend (DB table, routes) is **not yet implemented**. Tab renders as coming-soon placeholder until Phase 3 is complete.
+
+---
+
+### Tab: `github`
+
+GitHub 통합 관리. PR 리뷰 요청 목록과 Webhook 설정 안내를 제공.
+
+```
+// github integration
+
+$ github --reviews
+> review-requested:@me
+
+┌─────────────────────────────────────────────────────────────────────┐
+│ #88  feat: add dark mode              owner/repo        2026-03-20  │
+│      [enhancement]                    by contributor    [open PR →] │
+├─────────────────────────────────────────────────────────────────────┤
+│ #42  fix: memory leak in event loop   owner/other-repo  2026-03-19  │
+│      [bug]                            by someone        [open PR →] │
+└─────────────────────────────────────────────────────────────────────┘
+
+// 0 reviews pending  (when empty)
+
+─────────────────────────────────────────────────────────────────────
+
+$ github --webhook --setup
+
+// auto-post on push, PR, release, and branch create events
+
+Payload URL:   https://yourdomain/api/webhook/github
+Content type:  application/json
+Secret:        (set GITHUB_WEBHOOK_SECRET in your server .env)
+
+Events:  ● push
+         ● pull_request  (opened, merged, closed)
+         ● release       (published)
+         ● create        (branch, tag)
+
+[copy payload URL]
+```
+
+**PR Reviews section:**
+
+| State | Display |
+|-------|---------|
+| Reviews pending | List rows with PR title, repo, author, label badges, `[open PR →]` link |
+| Empty | `// 0 reviews pending` — green monospace message |
+| Loading | Skeleton rows with pulsing bars |
+| Error | `error: failed to fetch reviews` in red monospace |
+
+**Webhook section:**
+
+Provides setup instructions for connecting a GitHub repository webhook. No configuration is stored in the UI — the user copies the payload URL and configures the webhook directly in GitHub repository settings.
+
+| Field | Value |
+|-------|-------|
+| Payload URL | `https://yourdomain/api/webhook/github` (server URL) |
+| Content type | `application/json` |
+| Secret | Value of `GITHUB_WEBHOOK_SECRET` env var (set server-side) |
+| Events | `push`, `pull_request`, `release`, `create` |
+
+**API:**
+
+| Action | Endpoint | Description |
+|--------|----------|-------------|
+| List PR reviews | `GET /api/github/reviews` | PRs where `review-requested:@me` |
+
+**Badge:** `github N` where `N` is the count of open review requests (hidden when 0).
+
+---
+
+## 5. Component Tree
+
+```
+<SettingsPage>
+  <AppShell breadcrumb="settings">
+    <Toast />                       // shared toast (success/error)
+    <TabBar>                        // tab navigation
+      <TabButton tab="profile" />
+      <TabButton tab="language" />
+      <TabButton tab="cli" />
+      <TabButton tab="oauth" badge="connected" />
+      <TabButton tab="api" badge="2/3" />
+      <TabButton tab="channel" />
+      <TabButton tab="github" badge="3" />
+    </TabBar>
+
+    {tab === 'profile'  && <ProfileTab />}
+    {tab === 'language' && <LanguageTab />}
+    {tab === 'cli'      && <CliTab />}
+    {tab === 'oauth'    && <OAuthTab />}
+    {tab === 'api'      && <ApiTab />}
+    {tab === 'channel'  && <ChannelTab />}
+    {tab === 'github'   && <GithubTab />}
+  </AppShell>
 </SettingsPage>
 ```
 
----
-
-## 5. State Requirements
-
-### Zustand Stores
-
-**`authStore`** (existing)
-```typescript
-{
-  user: User | null;
-  logout: () => Promise<void>;
-  updateUser: (data: Partial<User>) => void;  // optimistic update after settings save
-}
-```
-
-**`settingsStore`** (new)
-```typescript
-{
-  // Form state (initialized from authStore.user on mount)
-  displayName: string;
-  domain: string;
-  bio: string;
-  avatarUrl: string;
-
-  // UI state
-  isDirty: boolean;              // true if any field differs from original
-  isSaving: boolean;
-  isDeleting: boolean;
-  showDeleteDialog: boolean;
-  deleteConfirmUsername: string;  // typed confirmation value
-  error: string | null;
-  successMessage: string | null;
-
-  // GitHub connection state
-  githubConnected: boolean;
-  githubUsername: string | null;
-  githubSyncedAt: string | null;
-  autoSync: boolean;
-  isSyncing: boolean;
-
-  // GitHub actions
-  syncGitHub: () => Promise<void>;
-  toggleAutoSync: () => Promise<void>;
-
-  // Actions
-  initFromUser: (user: User) => void;
-  setField: (field: string, value: string) => void;
-  saveSettings: () => Promise<void>;
-  openDeleteDialog: () => void;
-  closeDeleteDialog: () => void;
-  setDeleteConfirmUsername: (value: string) => void;
-  deleteAccount: () => Promise<void>;
-  clearMessages: () => void;
-}
-```
-
-### Data Shape: `User`
-```typescript
-interface User {
-  id: string;
-  username: string;
-  domain: string | null;
-  displayName: string;
-  bio: string | null;
-  avatarUrl: string | null;
-  createdAt: string;
-}
-```
+All tab components live in `packages/client/src/components/settings/`.
 
 ---
 
-## 6. API Calls
+## 6. State
 
-### On Mount
+**URL state:** `?tab=profile` (via `useSearchParams`)
 
-| Trigger          | Endpoint          | Method | Purpose                                      |
-|------------------|-------------------|--------|----------------------------------------------|
-| Page load        | `/api/auth/me`    | GET    | Fetch current user data to populate form fields |
-
-### On User Interaction
-
-| Trigger                    | Endpoint              | Method  | Purpose                          |
-|----------------------------|-----------------------|---------|----------------------------------|
-| Click "Apply changes"      | `/api/auth/me`        | PUT     | Update user profile settings     |
-| Click "$ confirm" (delete) | `/api/auth/me`        | DELETE  | Delete user account permanently  |
-| Click "sync now"             | `/api/auth/github/sync`  | POST    | Sync profile data from GitHub |
-| Toggle auto-sync             | `/api/auth/me`           | PUT     | Update auto-sync preference   |
-
-**Update request payload (PUT /api/auth/me):**
-```json
-{
-  "displayName": "New Name",
-  "domain": "newdomain.dev",
-  "bio": "Updated bio text",
-  "avatarUrl": "https://example.com/avatar.png"
-}
-```
-
-**Success response (200):**
-```json
-{
-  "id": "01968a3b-...",
-  "username": "jiyeon_dev",
-  "displayName": "New Name",
-  "domain": "newdomain.dev",
-  "bio": "Updated bio text",
-  "avatarUrl": "https://example.com/avatar.png",
-  "createdAt": "2026-03-01T00:00:00Z"
-}
-```
-Update `authStore.user`, show success toast "Settings updated", set `isDirty` to false.
-
-**Delete request (DELETE /api/auth/me):**
-No body required. Server validates session.
-
-**Success (200):** Clear `authStore.user`, redirect to `/login`.
-```json
-{ "message": "Account deleted successfully" }
-```
-
-**Sync response (POST /api/auth/github/sync, 200):**
-```json
-{
-  "displayName": "Jiyeon Kim",
-  "avatarUrl": "https://avatars.githubusercontent.com/u/...",
-  "bio": "Software Engineer",
-  "syncedAt": "2026-03-20T10:30:00Z"
-}
-```
-Update `authStore.user` with synced fields, update `githubSyncedAt`.
-
-> Note: The PUT and DELETE endpoints on `/api/auth/me` are implied by the architecture but not yet defined in API.md. They should be added to the API spec.
+**Local state per tab** (no global settings store needed):
+- Each tab manages its own loading/saving state
+- Toast is shared via prop drilling or a simple local state in SettingsPage
+- `authStore.user` is the source of truth for profile fields
 
 ---
 
-## 7. User Interactions
+## 7. URL / Navigation
 
-| Element                        | Action            | Result                                                          |
-|--------------------------------|-------------------|-----------------------------------------------------------------|
-| Display name field             | Type              | Updates `settingsStore.displayName`; sets `isDirty=true`        |
-| Display name field             | Focus             | Border changes to `border-green-400`                            |
-| Domain field                   | Type              | Updates `settingsStore.domain`; sets `isDirty=true`             |
-| Domain field                   | Focus             | Border changes to `border-green-400`                            |
-| Bio field                      | Type              | Updates `settingsStore.bio`; sets `isDirty=true`                |
-| Bio field                      | Focus             | Border changes to `border-green-400`                            |
-| Avatar URL field               | Type              | Updates `settingsStore.avatarUrl`; sets `isDirty=true`          |
-| Avatar URL field               | Focus             | Border changes to `border-green-400`                            |
-| "Apply changes" button         | Click             | Validates, calls PUT `/api/auth/me`; shows toast on success    |
-| "Apply changes" button         | Click (not dirty) | Button is `opacity-40 cursor-not-allowed`; no API call         |
-| Keyboard: `Cmd+Enter`          | Press             | Submits settings form (same as Apply changes)                   |
-| "$ delete --confirm" button    | Click             | Opens confirmation dialog                                       |
-| Confirmation input             | Type              | Updates `deleteConfirmUsername`                                  |
-| "$ abort" button               | Click             | Closes confirmation dialog; clears confirmation input           |
-| "$ confirm" button             | Click             | Validates username match; calls DELETE `/api/auth/me`           |
-| "$ confirm" button             | Click (no match)  | Shows error: "error: username does not match"                   |
-| Keyboard: `Escape`             | Press (in dialog) | Closes confirmation dialog                                      |
-| Success toast                  | Auto              | Appears top-right; auto-dismisses after 3 seconds              |
-| Navigate away (dirty form)     | Route change      | No blocking -- changes are silently discarded                   |
-| "Sync now" button            | Click             | Calls POST `/api/auth/github/sync`; updates synced timestamp   |
-| "Sync now" button            | Click (syncing)   | Button is `opacity-40 cursor-not-allowed`; no API call         |
-| Auto-sync toggle             | Click             | Toggles `autoSync` setting; calls PUT `/api/auth/me`           |
-| GitHub profile link          | Click             | Opens github.com profile in new tab                             |
+| URL | Result |
+|-----|--------|
+| `/settings` | Opens `profile` tab (default) |
+| `/settings?tab=language` | Opens language tab |
+| `/settings?tab=cli` | Opens CLI tab |
+| `/settings?tab=oauth` | Opens OAuth tab |
+| `/settings?tab=api` | Opens API tab |
+| `/settings?tab=channel` | Opens channel tab |
+| `/settings?tab=github` | Opens GitHub integration tab |
+| `/settings?tab=invalid` | Falls back to `profile` |
 
-### Validation Rules (Client-side)
-
-| Field        | Rule                          | Error Message                              |
-|--------------|-------------------------------|--------------------------------------------|
-| Display Name | Max 50 chars                  | `error: --display-name max 50 characters`  |
-| Domain       | Valid domain format or empty  | `error: --domain invalid format`           |
-| Bio          | Max 300 chars                 | `error: --bio max 300 characters`          |
-| Avatar URL   | Valid URL format or empty     | `error: --avatar-url invalid URL`          |
+Tab switch: updates URL param without page reload (`replace: false`).
 
 ---
 
-## 8. Loading State
+## 8. Loading & Error States
 
-### Initial Load (fetching current user data)
-
-```
-┌─ Profile Settings ───────────────────────────────────────────────────┐
-│                                                                       │
-│  // profile                                                           │
-│                                                                       │
-│  $ set --display-name="████████████"                                  │
-│                                                                       │
-│  $ set --domain="████████████"                                        │
-│                                                                       │
-│  $ set --bio="████████████████████████████"                            │
-│                                                                       │
-│  $ set --avatar-url="████████████████████████"                        │
-│                                                                       │
-│  ┌──────────────────────────────┐                                     │
-│  │ [Apply changes]              │  ← disabled                         │
-│  └──────────────────────────────┘                                     │
-│                                                                       │
-└───────────────────────────────────────────────────────────────────────┘
-```
-
-**Implementation:**
-- Command prefixes (`$ set --flag=`) render immediately in `text-green-400` and `text-sky-400`
-- Value portions show `bg-gray-700/50 animate-pulse` blocks where editable text will appear
-- "Apply changes" button is disabled until data loads
-- Danger zone renders normally (no data dependency)
-
-### Save Loading (while PUT is in-flight)
-
-```
-│  ┌──────────────────────────────┐                                     │
-│  │ applying...                  │  ← disabled, opacity-40             │
-│  └──────────────────────────────┘                                     │
-```
-
-- Button text changes to `applying...`
-- All fields become `disabled`
-- Button gets `opacity-40 cursor-not-allowed`
-
-### Delete Loading (while DELETE is in-flight)
-
-```
-│  ┌────────────────┐  ┌────────────────┐  │
-│  │ $ abort        │  │ deleting...    │  │  ← confirm disabled
-│  └────────────────┘  └────────────────┘  │
-```
-
-- Confirm button text changes to `deleting...`
-- Both buttons get `opacity-40 cursor-not-allowed`
-- Confirmation input becomes `disabled`
-
-### GitHub Sync Loading
-
-```
-│  $ github --status                                    │
-│  > connected: github.com/jiyeon-kim                   │
-│  > syncing...                                         │
-│                                                       │
-│  ┌──────────────────────────────┐                     │
-│  │ syncing...                   │  ← disabled          │
-│  └──────────────────────────────┘                     │
-```
-
-- Sync button text changes to `syncing...`
-- Button gets `opacity-40 cursor-not-allowed`
-- Status line shows `> syncing...` with opacity pulse
-
-### GitHub Disconnected State
-
-```
-┌─ GitHub Connection ─────────────────────────────────┐
-│                                                       │
-│  // github integration                                │
-│                                                       │
-│  $ github --status                                    │
-│  > not connected                                      │
-│                                                       │
-│  Connect your GitHub account to sync your profile     │
-│  and enable repo analysis.                            │
-│                                                       │
-│  ┌──────────────────────────────┐                     │
-│  │ $ ssh --connect=github      │                      │
-│  └──────────────────────────────┘                     │
-│                                                       │
-└───────────────────────────────────────────────────────┘
-```
-
-**Styling:**
-- Status text `> not connected`: `text-yellow-400 font-mono text-sm`
-- Description: `text-gray-400 font-sans text-sm`
-- Connect button: Same as primary action button style
-- Clicking connect navigates to GitHub OAuth flow (`/api/auth/github`)
+Same patterns as current implementation:
+- Skeleton pulse on initial load where data is needed
+- Button text changes to `applying...` / `saving...` / `testing...` during async ops
+- Errors inline below the relevant field/action in `text-red-400 font-mono text-xs`
+- Success toast: `text-emerald-400`, auto-dismiss 2.5s, top-right fixed
 
 ---
 
-## 9. Empty State
+## 9. Implementation Order
 
-### Fields with No Current Value
-
-When a user has not set a value for a field, the input shows a placeholder:
-
-```
-  $ set --domain=""                      ← empty string, placeholder: "yourdomain.dev"
-  $ set --bio=""                         ← empty string, placeholder: "Tell us about yourself"
-  $ set --avatar-url=""                  ← empty string, placeholder: "https://..."
-```
-
-**Styling:**
-- Empty value: shows `""` in `text-gray-500` (muted)
-- Placeholder text inside the input: `text-gray-600 italic`
-- The field is always editable regardless of empty/filled state
-
-There is no data-list empty state -- this page always shows the form.
+1. `TabBar` component + URL param switching
+2. `ProfileTab` — migrate existing profile + danger zone
+3. `LanguageTab` — migrate existing language section
+4. `ApiTab` — migrate existing LLM key management
+5. `OAuthTab` — migrate existing GitHub section + disconnect action
+6. `CliTab` — new: tool list, default selector, path override, test endpoint
+7. `ChannelTab` — new: requires DB migration + API routes (Phase 3)
 
 ---
 
-## 10. Error State
+## 10. API Endpoints
 
-### Save Failed (400 - Validation Error)
-
-```
-┌─ Profile Settings ───────────────────────────────────────────────────┐
-│                                                                       │
-│  // profile                                                           │
-│                                                                       │
-│  $ set --display-name="A"                                             │
-│  error: display name too short (400)                                  │
-│                                                                       │
-│  ...                                                                  │
-│                                                                       │
-│  ┌──────────────────────────────┐                                     │
-│  │ [Apply changes]              │                                     │
-│  └──────────────────────────────┘                                     │
-│                                                                       │
-└───────────────────────────────────────────────────────────────────────┘
-```
-
-### Save Failed (401 - Session Expired)
-
-```
-  error: session expired. please log in again (401)
-```
-
-After 2 seconds, redirect to `/login`.
-
-### Save Failed (500 - Server Error)
-
-```
-  error: failed to save settings. please try again (500)
-```
-
-Appears below the form, above the submit button.
-
-### Delete Failed (username mismatch - client-side)
-
-```
-  error: username does not match
-```
-
-Appears inside the confirmation dialog below the input.
-
-### Delete Failed (500 - Server Error)
-
-```
-  error: failed to delete account. please try again (500)
-```
-
-Appears inside the confirmation dialog.
-
-### Network Error
-
-```
-  error: connection failed. please try again
-```
-
-**Styling for all errors:**
-- Error text: `text-red-400 font-mono text-sm`
-- Field-specific errors appear directly below the related field with `mt-1`
-- General errors appear below the form with `mt-4`
-- Errors clear when the user modifies the related field or after 5 seconds
-- Danger zone errors appear inside the confirmation dialog
-
----
-
-## 11. Test IDs (`data-testid`)
-
-| Element | `data-testid` | Purpose |
-|---------|---------------|---------|
-| Display name input | `settings-display-name` | E2E: edit display name |
-| Domain input | `settings-domain` | E2E: edit domain |
-| Bio input | `settings-bio` | E2E: edit bio |
-| Avatar URL input | `settings-avatar-url` | E2E: edit avatar URL |
-| Apply changes button | `settings-submit` | E2E: save settings |
-| Delete account button | `delete-account-button` | E2E: open delete dialog |
-| Delete confirm dialog | `delete-confirm-dialog` | E2E: verify dialog open |
-| Delete confirm input | `delete-confirm-input` | E2E: type username confirmation |
-| Abort button | `delete-abort` | E2E: cancel deletion |
-| Confirm delete button | `delete-confirm` | E2E: confirm account deletion |
-| Success toast | `settings-success-toast` | E2E: verify save success |
-| Settings error | `settings-error` | E2E: verify error display |
-| Settings form | `settings-form` | E2E: verify form visible |
-| GitHub status section | `github-connection` | E2E: verify GitHub connection info |
-| GitHub sync button | `github-sync-button` | E2E: trigger GitHub sync |
-| GitHub auto-sync toggle | `github-auto-sync` | E2E: toggle auto-sync |
-| GitHub profile link | `github-profile-link` | E2E: verify GitHub link |
-| GitHub connect button | `github-connect-button` | E2E: initiate GitHub OAuth (disconnected state) |
-| GitHub not connected status | `github-not-connected` | E2E: verify disconnected state |
-
----
-
-## 12. Accessibility Notes
-
-| Requirement | Implementation |
-|-------------|---------------|
-| Settings form | `role="form"` with `aria-label="Profile settings"` |
-| CLI-style inputs | Each has `aria-label` matching the flag name (e.g., `aria-label="Display name"`) |
-| Dirty state | Apply button `aria-disabled="true"` when no changes made |
-| Delete dialog | `role="alertdialog"` with `aria-labelledby` pointing to dialog title |
-| Focus trap | Dialog traps focus; `Escape` closes dialog |
-| Delete confirmation | Input has `aria-label="Type your username to confirm deletion"` |
-| Success toast | `role="status"` with `aria-live="polite"` |
-| Danger zone | `aria-label="Danger zone - account deletion"` on container |
-| GitHub section | `aria-label="GitHub connection settings"` on container |
-| Sync button | `aria-label="Sync profile with GitHub"`, `aria-busy="true"` when syncing |
-| Auto-sync toggle | `role="switch"` with `aria-checked="true/false"` |
-| GitHub connect button | `aria-label="Connect GitHub account"` (disconnected state) |
-| GitHub not connected | `role="status"` with connection status text |
+| Endpoint | Method | Status | Purpose |
+|----------|--------|--------|---------|
+| `GET /api/llm/cli/status` | GET | ✅ Done | Detect installed CLI tools, versions, auth, models |
+| `POST /api/llm/cli/install` | POST `{ id }` | ✅ Done | npm install CLI tool (dev only) |
+| `POST /api/llm/cli/test` | POST `{ tool }` | ✅ Done | Test CLI tool connectivity + latency |
+| `GET /api/llm/providers` | GET | ✅ Done | List local runtimes + user-configured API keys |
+| `POST /api/llm/keys` | POST `{ provider, apiKey }` | ✅ Done | Save user API key |
+| `DELETE /api/llm/keys/:provider` | DELETE | ✅ Done | Remove user API key |
+| `GET /api/auth/me/pending` | GET | ✅ Done | Return pending GitHub profile (pre-setup) |
+| `DELETE /api/auth/github` | DELETE | ⏳ Planned | Disconnect GitHub OAuth |
+| `GET /api/channels` | GET | ⏳ Phase 3 | List subscribed channels |
+| `POST /api/channels/:name/subscribe` | POST | ⏳ Phase 3 | Subscribe to channel |
+| `DELETE /api/channels/:name/subscribe` | DELETE | ⏳ Phase 3 | Unsubscribe |
+| `GET /api/channels/trending` | GET | ⏳ Phase 3 | Trending channel list |
+| `GET /api/github/reviews` | GET | ✅ Done | PR review requests for authenticated user |
 
 ---
 
 ## See Also
 
-- [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
-- [API.md](../specs/API.md) — Endpoint request/response details
-- [CONVENTIONS.md](../guides/CONVENTIONS.md) — Coding rules for implementation
-- [USER_PROFILE.md](./USER_PROFILE.md) — Related screen specification
+- [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual tokens
+- [API.md](../specs/API.md) — Existing endpoint docs
+- [CONVENTIONS.md](../guides/CONVENTIONS.md) — Coding rules

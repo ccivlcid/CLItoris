@@ -380,8 +380,8 @@ interface Analysis {
 |-----------------------|---------------------------------------|--------|------|-----------------------------------|
 | Click start analysis  | `/api/analyze`                        | POST   | Yes  | Start repo analysis               |
 | Click cancel          | `/api/analyze/:id/cancel`             | POST   | Yes  | Cancel in-progress analysis       |
-| Click download        | `/api/analyze/:id/download`           | GET    | Yes  | Download result file              |
-| Click post to feed    | `/api/posts`                          | POST   | Yes  | Create post with analysis attached |
+| Click download        | `/api/analyze/:id/download`           | GET    | Yes  | Download PPTX file or open HTML video inline |
+| Click post to feed    | `/api/analyze/:id/share`              | POST   | Yes  | Create post from analysis with repo attachment |
 | Click fetch more      | `/api/analyze?cursor=X`               | GET    | Yes  | Load more analysis history        |
 
 ### Server-Sent Events (SSE)

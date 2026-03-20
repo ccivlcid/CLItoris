@@ -17,6 +17,21 @@
 | `better-sqlite3` build fails | Missing build tools | Install: `sudo apt install build-essential python3` (Linux) or `xcode-select --install` (macOS) |
 | `ERESOLVE` / peer dependency errors | Wrong package manager | Always use `pnpm`, never `npm` or `yarn` |
 
+### `better-sqlite3` native bindings missing (Windows)
+
+**Symptom:** Server starts but crashes with `Cannot find module '...better-sqlite3.node'` or `The specified module could not be found`.
+
+```bash
+# Rebuild native bindings manually
+cd node_modules/.pnpm/better-sqlite3@<version>/node_modules/better-sqlite3
+npx node-gyp rebuild
+
+# Or from project root (finds the correct version automatically)
+pnpm --filter @clitoris/server exec node-gyp rebuild --directory node_modules/better-sqlite3
+```
+
+**Requirements:** Python 3 + Visual Studio Build Tools (Windows) or `build-essential` (Linux).
+
 ### `.env` not loaded
 
 ```bash
@@ -33,7 +48,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 **Checklist:**
 - `.env` is in the project root (same level as `package.json`)
 - `SESSION_SECRET` is set (min 32 chars)
-- `ANTHROPIC_API_KEY` is set (starts with `sk-ant-`)
+- Cloud LLM keys are **not** in `.env` — add them in the app under **Settings → LLM keys** (stored in `user_llm_keys`)
 - No quotes around values: `KEY=value` not `KEY="value"`
 
 ---
@@ -45,7 +60,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 | Symptom | Cause | Solution |
 |---------|-------|----------|
 | `Error: SESSION_SECRET is required` | Missing env var | Set `SESSION_SECRET` in `.env` |
-| `EADDRINUSE: port 3000` | Port already in use | Kill process: `lsof -ti:3000 \| xargs kill` or change `PORT` in `.env` |
+| `EADDRINUSE: port 3771` | Port already in use | Kill process: `lsof -ti:3771 \| xargs kill` or change `PORT` in `.env` |
 | `Cannot find module '@clitoris/shared'` | Missing build | Run `pnpm build` first, or use `pnpm dev` (auto-builds) |
 | `SQLITE_CANTOPEN` | Invalid DB path | Check `DATABASE_URL` in `.env`. Default `clitoris.db` creates in project root |
 
@@ -79,10 +94,10 @@ sqlite3 clitoris.db ".schema users"
 
 | Symptom | Cause | Solution |
 |---------|-------|----------|
-| Blank page on `localhost:5173` | JS error | Open browser DevTools (F12) → Console tab |
+| Blank page on `localhost:7878` | JS error | Open browser DevTools (F12) → Console tab |
 | `VITE_API_URL` not working | Wrong prefix | Client env vars MUST start with `VITE_` |
 | CORS errors in console | Backend not running | Start server first: `pnpm dev:server` |
-| `Failed to fetch` in network tab | API server down | Check server is running on `localhost:3000` |
+| `Failed to fetch` in network tab | API server down | Check server is running on `localhost:3771` |
 | Hot reload not working | File watcher limit | Linux: `echo fs.inotify.max_user_watches=524288 \| sudo tee -a /etc/sysctl.conf && sudo sysctl -p` |
 
 ### Tailwind styles not applying
@@ -104,14 +119,36 @@ pnpm dev:client
 
 ---
 
-## 4. LLM Integration Issues
+## 4. GitHub OAuth Issues
+
+### Login loop (redirected back to /login after GitHub auth)
+
+**Symptom:** After approving GitHub OAuth, browser redirects back to `/login` instead of landing on the feed.
+
+**Causes & solutions:**
+
+| Cause | Symptom | Solution |
+|-------|---------|----------|
+| Missing `GET /api/auth/me/pending` endpoint | SetupPage gets 404, assumes no session | Endpoint must exist — returns `req.session.pendingGithubProfile` |
+| `requireSetupComplete` on `POST /setup` | "Complete profile setup first" error for new users | Remove this middleware from the setup route; new users haven't completed setup yet |
+| Session cookie not sent cross-origin | `credentials: 'include'` missing on fetch | All API calls use `credentials: 'include'`; Vite proxy must have `cookieDomainRewrite: "localhost"` |
+| Wrong callback URL in GitHub OAuth app | OAuth redirects to wrong port | GitHub app callback must be `http://localhost:3771/api/auth/github/callback` |
+
+**GitHub App callback URL (must match exactly):**
+```
+http://localhost:3771/api/auth/github/callback
+```
+
+---
+
+## 5. LLM Integration Issues
 
 ### API key errors
 
 | Symptom | Cause | Solution |
 |---------|-------|----------|
 | `401 Unauthorized` from Anthropic | Invalid/expired key | Verify key at [console.anthropic.com](https://console.anthropic.com) |
-| `ANTHROPIC_API_KEY is required` | Missing env var | Add to `.env` file |
+| `KEY_NOT_CONFIGURED` / no models in CLI tab | No key saved for that provider | Open **Settings → LLM keys** and save the provider key (server does not use `ANTHROPIC_API_KEY` in `.env`) |
 | `429 Too Many Requests` | Rate limited | Wait and retry; check usage limits |
 | LLM returns garbage | Wrong model name | Use exact model IDs: `claude-sonnet-4-20250514` |
 
@@ -240,8 +277,8 @@ node -v
 pnpm -v
 
 # Check if ports are in use
-lsof -i :3000    # server
-lsof -i :5173    # client
+lsof -i :3771    # server
+lsof -i :7878    # client
 
 # Check env vars are loaded
 node -e "require('dotenv').config(); console.log(Object.keys(process.env).filter(k => k.startsWith('ANTHROPIC') || k === 'SESSION_SECRET'))"

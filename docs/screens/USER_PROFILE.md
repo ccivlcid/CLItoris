@@ -150,6 +150,10 @@
           ├── githubFollowers
           └── topLanguages
         <FollowButton />              // packages/client/src/components/profile/FollowButton.tsx
+        <ContributionGraph />         // packages/client/src/components/profile/ContributionGraph.tsx
+          └── (all users — grass heatmap, 52 weeks)
+        <GithubFollowSync />          // packages/client/src/components/profile/GithubFollowSync.tsx
+          └── (own profile only — following/followers subtabs)
       </ProfileHeader>
       <ProfileTabs>                    // packages/client/src/components/profile/ProfileTabs.tsx
         ├── "posts"
@@ -270,6 +274,9 @@ interface Post {
 |------------------|---------------------------------------|--------|---------------------------------|
 | Page load        | `/api/users/@:username`               | GET    | Fetch profile data              |
 | Page load        | `/api/users/@:username/posts`         | GET    | Fetch user's posts (default tab)|
+| Page load        | `/api/github/contributions/:username` | GET    | Fetch contribution graph data (all users) |
+| Page load (own profile) | `/api/github/following`        | GET    | Fetch GitHub following + CLItoris status |
+| Page load (own profile) | `/api/github/followers`        | GET    | Fetch GitHub followers + CLItoris status |
 
 ### On User Interaction
 
@@ -284,6 +291,8 @@ interface Post {
 | Click star on post      | `/api/posts/:id/star`                       | POST   | Toggle star on a post           |
 | Click fork on post      | `/api/posts/:id/fork`                       | POST   | Fork a post                     |
 | Click reply on post     | Navigate to `/post/:id` or open reply composer | --  | Start reply flow                |
+| Click "sync all follows" | `/api/github/sync-follows`                 | POST   | Bulk-follow GitHub following on CLItoris (own profile only) |
+| Click "follow →" in sync list | `/api/users/@:username/follow`        | POST   | Follow individual CLItoris user from sync list |
 
 ---
 
@@ -483,6 +492,9 @@ Profile header renders normally. Post list area shows:
 | Load more button | `load-more-button` | E2E: load more posts |
 | Profile 404 error | `profile-not-found` | E2E: verify 404 state |
 | Profile empty state | `profile-empty` | E2E: verify empty state |
+| Contribution graph | `contribution-graph` | E2E: verify heatmap renders |
+| GitHub follow sync | `github-follow-sync` | E2E: verify own-profile sync section |
+| Sync all follows button | `sync-all-follows` | E2E: trigger bulk follow |
 
 ---
 
@@ -499,6 +511,76 @@ Profile header renders normally. Post list area shows:
 | GitHub info | `aria-label="GitHub profile information"` with link `rel="noopener noreferrer"` |
 | Repos tab panel | Same tabpanel pattern as other tabs |
 | External domain link | `rel="noopener noreferrer"` with `aria-label="Visit jiyeon.kim (opens in new tab)"` |
+
+---
+
+## 13. Contribution Graph
+
+Displayed below the follow button on all user profiles. Shows the last 52 weeks of GitHub contribution activity as a heatmap.
+
+```
+// contributions — 2025
+
+░░▒▒▒░░░▓▓▒░░░░▒▒▓▓▓░░░▒▒░░▓▓▓▓▒░░░▒▒▒▒░░▒▒▒▓▓░░░▒▒▓▓░░░░▒▒▒░░
+(52 weeks, 7 rows — Mon through Sun)
+
+1,247 contributions in the last year
+```
+
+**Color levels:**
+
+| Level | Count | Color class |
+|-------|-------|-------------|
+| 0 | 0 | `bg-gray-800` (empty) |
+| 1 | 1–3 | `bg-green-900` |
+| 2 | 4–6 | `bg-green-700` |
+| 3 | 7–9 | `bg-green-500` |
+| 4 | 10+ | `bg-green-400` |
+
+**API:** `GET /api/github/contributions/:username` (GitHub GraphQL)
+
+**Loading state:** Placeholder grid with `animate-pulse bg-gray-800` cells.
+
+**Error state:** `// contribution data unavailable` — shown silently (non-blocking).
+
+---
+
+## 14. GitHub Follow Sync (Own Profile Only)
+
+Displayed below the Contribution Graph when viewing the authenticated user's own profile. Provides two subtabs: `[following]` and `[followers]`.
+
+```
+// github sync
+
+[following]  [followers]
+─────────────────────────────────────────────────────────────────
+
+octocat        github.com/octocat    [not on CLItoris]
+jiyeon-kim     @jiyeon_dev           [follow →]
+tsdev          @tsdev                [following ✓]
+
+[sync all follows]   // follows all CLItoris users from GitHub following list
+```
+
+**Following subtab columns:**
+
+| Column | Description |
+|--------|-------------|
+| GitHub login | GitHub username (links to github.com profile) |
+| CLItoris user | `@username` if registered, `[not on CLItoris]` if not |
+| Action | `[follow →]` if not yet following; `[following ✓]` if already following; blank if not on CLItoris |
+
+**Followers subtab columns:**
+
+| Column | Description |
+|--------|-------------|
+| GitHub login | GitHub username |
+| CLItoris user | `@username` or `[not on CLItoris]` |
+| Action | `[follow back →]` if not following back; `[mutual ✓]` if mutual; blank if not on CLItoris |
+
+**Sync all follows button:** Calls `POST /api/github/sync-follows`. Shows result: `✓ N users followed`.
+
+**Visibility:** Only rendered when `authStore.user.username === profileUsername`.
 
 ---
 

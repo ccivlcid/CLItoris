@@ -80,6 +80,15 @@
       "auth": true,
       "layout": "AppShell",
       "spec": "docs/screens/ANALYZE.md"
+    },
+    {
+      "path": "/github",
+      "page": "GitHubFeedPage",
+      "file": "packages/client/src/pages/GitHubFeedPage.tsx",
+      "title": "terminal.social / github --connect",
+      "auth": true,
+      "layout": "AppShell",
+      "spec": "docs/screens/GITHUB_FEED.md"
     }
   ]
 }

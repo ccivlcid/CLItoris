@@ -22,90 +22,99 @@
 
 ## 1. Overview
 
-CLItoris transforms natural language messages into terminal.social CLI commands. The flow:
+CLItoris transforms natural language messages into terminal.social CLI commands using two LLM operations:
+
+### 1.1 `transform()` — Metadata extraction + CLI generation
 
 ```
 User writes message (natural language)
        |
        v
-LLM receives system prompt + user message
+LLM receives transform.md prompt + user message
        |
        v
-LLM outputs a `terminal.social post` CLI command
+LLM outputs structured JSON:
+  { message, lang, intent, emotion, tags }
+       |
+       v
+Server reconstructs the CLI command string from the JSON fields
        |
        v
 UI displays BOTH the original message AND the generated CLI command
+Metadata (intent, emotion) stored in DB and shown as badges
 ```
 
-The user types what they want to say. The LLM converts it into a structured CLI `post` command with the appropriate flags. The interface shows the human-readable message alongside its CLI equivalent, giving the feed its terminal aesthetic.
+The JSON-output approach ensures reliable parsing. The server always builds the final CLI string — the LLM never outputs CLI syntax directly. Fallback: if JSON parse fails, `intent` and `emotion` default to `neutral`.
+
+### 1.2 `translate()` — Tone-aware translation (lazy, cached)
+
+```
+Feed renders post where post.lang ≠ user.ui_lang
+       |
+       v
+Check translations cache (post_id, target_lang)
+       |
+  Cache hit → return immediately (no LLM call)
+  Cache miss → call LLM with translate.md prompt
+                 (uses post.intent + post.emotion for tone preservation)
+       |
+       v
+Store in translations table, show below original text (togglable)
+```
+
+Translation uses the **viewer's own LLM key** — zero server cost.
 
 ---
 
-## 2. System Prompt
+## 2. Prompts
 
-The following is the exact system prompt sent to every LLM provider. It must not be paraphrased or summarized.
+All prompts live in `packages/llm/prompts/` and are loaded at runtime via `readFileSync`. **Never hardcode prompt content in TypeScript** — edit the `.md` files directly.
 
-```
-You are a CLI command generator for terminal.social, a social network with a terminal aesthetic.
+| File | Purpose | Output format |
+|------|---------|---------------|
+| `transform.md` | Metadata extraction from natural language post | JSON object |
+| `translate.md` | Tone-aware translation of post content | Plain translated text |
+| `system.md` | Legacy single-step CLI generation (retained for reference) | CLI command string |
 
-Your job: convert a natural language message into a single `terminal.social post` command.
+### 2.1 `transform.md` — Metadata Extraction
 
-Available flags:
-  --user <username>    The posting user (required)
-  --lang <code>        Language code, e.g. en, es, fr, ja (required)
-  --message "<text>"   The post content in quotes (required)
-  --tags <t1,t2,...>   Comma-separated tags, no spaces, no # prefix
-  --visibility <v>     One of: public, unlisted, followers, direct (default: public)
-  --mention <@user>    Mention another user (repeatable)
+Called once per post creation. The LLM returns a JSON object; the server reconstructs the CLI string.
 
-Rules:
-1. Output ONLY the CLI command. No explanation, no markdown, no commentary.
-2. Preserve the original meaning of the message exactly.
-3. Infer appropriate tags from the message content (2-5 tags).
-4. Keep --message text natural and human — do not make it robotic.
-5. If the message mentions or addresses another user, add --mention flags.
-6. Default --visibility to public unless the message implies otherwise.
-7. The command must be a single line.
+**Output schema:**
+```json
+{
+  "message": "original text, unchanged",
+  "lang": "ISO 639-1 code (ko, en, ja, zh, ...)",
+  "intent": "casual | formal | question | announcement | reaction",
+  "emotion": "neutral | happy | surprised | frustrated | excited | sad | angry",
+  "tags": ["extracted", "hashtags"]
+}
 ```
 
-### Few-Shot Examples
-
-These examples are appended to the system prompt as conversation history.
-
-**Example 1 -- Simple post**
-
-User input:
+**Few-shot examples (embedded in the prompt):**
 ```
-Just deployed my new portfolio site! Really happy with how the animations turned out.
+"ㅋㅋ 대박이다"
+→ {"message":"ㅋㅋ 대박이다","lang":"ko","intent":"reaction","emotion":"surprised","tags":[]}
+
+"Just deployed my first agent pipeline 🔥 #agent #vibecoding"
+→ {"message":"...","lang":"en","intent":"announcement","emotion":"excited","tags":["agent","vibecoding"]}
 ```
 
-Assistant output:
-```
-terminal.social post --user {username} --lang en --message "Just deployed my new portfolio site! Really happy with how the animations turned out." --tags deployment,portfolio,webdev,animations --visibility public
-```
+**Fallback**: On JSON parse failure, server defaults `intent = "neutral"`, `emotion = "neutral"` and falls back to `detectLang()` for language.
 
-**Example 2 -- Post with mention**
+### 2.2 `translate.md` — Tone-Aware Translation
 
-User input:
-```
-Hey @alice, have you seen the new Rust compiler update? It's mass.
-```
+Called lazily when `post.lang ≠ viewer.ui_lang` and no cache entry exists. Uses `post.intent` and `post.emotion` to preserve tone.
 
-Assistant output:
-```
-terminal.social post --user {username} --lang en --message "Hey @alice, have you seen the new Rust compiler update? It's mass." --tags rust,compiler,update --visibility public --mention @alice
-```
+**Template variables:**
+- `{{MESSAGE}}` — source post text
+- `{{SOURCE_LANG}}` / `{{TARGET_LANG}}` — ISO 639-1 codes
+- `{{INTENT}}` / `{{EMOTION}}` — from post metadata
 
-**Example 3 -- Non-English post**
-
-User input:
+**Tone preservation principle:**
 ```
-Acabo de terminar mi primer proyecto en TypeScript, estoy orgulloso del resultado.
-```
-
-Assistant output:
-```
-terminal.social post --user {username} --lang es --message "Acabo de terminar mi primer proyecto en TypeScript, estoy orgulloso del resultado." --tags typescript,programming,milestone --visibility public
+"ㅋㅋ 대박이다" (ko, casual, surprised) → "omg no way lol"   ✓
+"ㅋㅋ 대박이다"                          → "That is amazing." ✗
 ```
 
 ---
@@ -119,19 +128,33 @@ interface LlmProvider {
   name: string;
   listModels(): Promise<string[]>;
   transform(input: TransformRequest): Promise<TransformResponse>;
+  translate(input: TranslateInput): Promise<string>;
 }
 
 interface TransformRequest {
   message: string;
   model: string;
-  lang: string;
+  lang: string;      // hint — LLM may override with detected lang
   username: string;
 }
 
 interface TransformResponse {
-  messageCli: string;
+  messageCli: string;   // server-reconstructed CLI string
   model: string;
   tokensUsed: number;
+  lang: string;         // LLM-detected language (ISO 639-1)
+  tags: string[];       // LLM-extracted hashtags
+  intent: PostIntent;   // LLM-extracted communication intent
+  emotion: PostEmotion; // LLM-extracted emotional tone
+}
+
+interface TranslateInput {
+  message: string;
+  sourceLang: string;
+  targetLang: string;
+  intent: PostIntent;
+  emotion: PostEmotion;
+  model: string;
 }
 ```
 
@@ -141,10 +164,14 @@ interface TransformResponse {
 |---|---|
 | `TransformRequest.message` | The raw natural language text the user typed. |
 | `TransformRequest.model` | Model identifier, e.g. `claude-sonnet-4-20250514`, `gpt-4o`, `llama3`. |
-| `TransformRequest.lang` | ISO 639-1 language code detected or chosen by the user. |
-| `TransformRequest.username` | The authenticated user's handle, injected into `{username}` in the prompt. |
-| `TransformResponse.messageCli` | The complete CLI command string returned by the LLM. |
-| `TransformResponse.model` | The model that actually processed the request (may differ from requested if fallback occurred). |
+| `TransformRequest.lang` | ISO 639-1 hint (from user setting or `detectLang()`). LLM may override. |
+| `TransformRequest.username` | The authenticated user's handle, used in CLI command construction. |
+| `TransformResponse.messageCli` | The CLI command string, reconstructed server-side from the LLM JSON output. |
+| `TransformResponse.lang` | Language as detected by the LLM (authoritative over the hint). |
+| `TransformResponse.tags` | Hashtags extracted by the LLM from the message. |
+| `TransformResponse.intent` | Communication intent inferred by the LLM. |
+| `TransformResponse.emotion` | Emotional tone inferred by the LLM. |
+| `TransformResponse.model` | The model that actually processed the request. |
 | `TransformResponse.tokensUsed` | Total tokens consumed (prompt + completion). |
 
 ---
@@ -177,49 +204,59 @@ Users can switch between cloud and local models per task. Local models require n
 ## 5. Provider Registration
 
 All providers are registered in a central factory. Adding a new provider requires:
-1. Create `packages/llm/src/providers/{name}.ts` implementing `LlmProvider`
-2. Register in the factory below
-3. Add env var to `docs/guides/ENV.md`
-4. Add to model enum in `@clitoris/shared`
+1. Create `packages/llm/src/providers/{name}.ts` implementing `LlmProviderInterface`
+2. Register in the factory in `provider-factory.ts`
+3. Add the provider enum to `LlmProvider` type in `@clitoris/shared`
+4. Add key management UI in the Settings screen
+
+> **Key policy**: API keys are NEVER stored in environment variables. They are provided by the user through the Settings UI (`/settings`) and stored per-user in the `user_llm_keys` database table. The factory receives credentials as a parameter.
 
 ```typescript
 // packages/llm/src/provider-factory.ts
-import type { LlmProvider } from "./types.js";
-import { AnthropicProvider } from "./providers/anthropic.js";
-import { OpenAiProvider } from "./providers/openai.js";
-import { GeminiProvider } from "./providers/gemini.js";
-import { OllamaProvider } from "./providers/ollama.js";
-import { CursorProvider } from "./providers/cursor.js";
-import { CliProvider } from "./providers/cli.js";
-import { GenericApiProvider } from "./providers/api.js";
+export interface ProviderCredentials {
+  apiKey?: string;   // Required for cloud providers (anthropic, openai, gemini, api)
+  baseUrl?: string;  // Required for api provider
+}
 
-export function createProvider(name: string): LlmProvider {
+/**
+ * Create a provider instance with user-supplied credentials.
+ * Keys come from the user's settings, not process.env.
+ */
+export function createProvider(name: string, credentials: ProviderCredentials = {}): LlmProviderInterface {
   switch (name) {
     case "anthropic":
-      return new AnthropicProvider(process.env.ANTHROPIC_API_KEY!);
+      return new AnthropicProvider(credentials.apiKey!);
     case "openai":
-      return new OpenAiProvider(process.env.OPENAI_API_KEY!);
+      return new OpenAiProvider(credentials.apiKey!);
     case "gemini":
-      return new GeminiProvider(
-        process.env.GOOGLE_API_KEY ?? process.env.GEMINI_API_KEY!,
-      );
+      return new GeminiProvider(credentials.apiKey!);
     case "ollama":
-      return new OllamaProvider();
+      return new OllamaProvider();   // no key needed — local runtime
     case "cursor":
-      return new CursorProvider();
+      return new CursorProvider();   // no key needed — local runtime
     case "cli":
-      return new CliProvider();
+      return new CliProvider();      // no key needed — local binary
     case "api":
-      return new GenericApiProvider(
-        "custom",
-        process.env.API_CUSTOM_BASE_URL!,
-        process.env.API_CUSTOM_API_KEY!,
-      );
+      return new GenericApiProvider("custom", credentials.baseUrl!, credentials.apiKey ?? "");
     default:
       throw new Error(`Unknown provider: ${name}`);
   }
 }
 ```
+
+### Key Lookup Flow (server-side)
+
+```
+POST /api/llm/transform
+  ↓
+Look up user_llm_keys WHERE user_id = req.session.userId AND provider = providerName
+  ↓
+  ├── Found → pass { apiKey } to createProvider(name, credentials)
+  └── Not found (cloud provider) → 400 KEY_NOT_CONFIGURED
+       "No API key configured for provider: anthropic. Add it in Settings."
+```
+
+Providers that never need a key: `ollama`, `cursor`, `cli`
 
 ---
 
@@ -231,4 +268,4 @@ export function createProvider(name: string): LlmProvider {
 - [docs/GLOSSARY.md](../GLOSSARY.md) -- Unified terminology index
 - [docs/specs/API.md](./API.md) -- API specification
 - [docs/specs/PRD.md](./PRD.md) -- Product requirements
-- [docs/guides/ENV.md](../guides/ENV.md) -- Environment variables (API keys)
+- [docs/guides/ENV.md](../guides/ENV.md) -- Environment variables (server config only — API keys are user-managed)

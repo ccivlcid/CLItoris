@@ -31,6 +31,9 @@ export interface UserProfile extends User {
 // ============================================
 // Post
 // ============================================
+export type PostIntent = 'casual' | 'formal' | 'question' | 'announcement' | 'reaction';
+export type PostEmotion = 'neutral' | 'happy' | 'surprised' | 'frustrated' | 'excited' | 'sad' | 'angry';
+
 export interface Post {
   id: string;
   userId: string;
@@ -50,6 +53,8 @@ export interface Post {
   forkCount: number;
   isStarred: boolean;
   repoAttachment: RepoAttachment | null;
+  intent: PostIntent;   // LLM-extracted communication intent
+  emotion: PostEmotion; // LLM-extracted emotional tone
 }
 
 export interface PostUser {
@@ -101,7 +106,8 @@ export interface AnalysisProgress {
 // ============================================
 // LLM
 // ============================================
-export type LlmModel = 'claude-sonnet' | 'gpt-4o' | 'gemini-2.5-pro' | 'llama-3' | 'custom';
+/** Model id from provider APIs — not a fixed enum (see packages/shared) */
+export type LlmModel = string;
 
 export type LlmProvider = 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'cursor' | 'cli' | 'api' | 'custom';
 
@@ -120,6 +126,30 @@ export interface TransformResponse {
   messageCli: string;
   model: string;
   tokensUsed: number;
+  lang: string;          // detected language (ISO 639-1)
+  tags: string[];        // extracted hashtags
+  intent: PostIntent;    // extracted communication intent
+  emotion: PostEmotion;  // extracted emotional tone
+}
+
+export interface TranslateRequest {
+  postId: string;
+  targetLang: string;    // ISO 639-1 target language
+}
+
+export interface TranslateResponse {
+  translatedText: string;
+  sourceLang: string;
+  targetLang: string;
+  cached: boolean;       // true if returned from translation cache
+}
+
+export interface Translation {
+  id: string;
+  postId: string;
+  lang: string;          // target language
+  text: string;          // translated content
+  createdAt: string;
 }
 
 export interface LocalModel {

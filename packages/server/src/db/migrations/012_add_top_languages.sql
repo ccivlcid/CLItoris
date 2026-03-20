@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN top_languages TEXT NOT NULL DEFAULT '[]';

@@ -1,13 +1,13 @@
 # PROGRESS.md — Development Status
 
 > **Source of truth** for development status, phase tracking, and decision log.
-> Last updated: 2026-03-19 (Phase 0 completed)
+> Last updated: 2026-03-20
 
 ---
 
-## Current Phase: Phase 0 — Documentation & Setup (COMPLETE)
+## Current Phase: Phase 4 — GitHub Platform (Complete) / Phase 5 — GitHub Social (Complete)
 
-Phase 0 is **complete**. All documentation, configuration files, and project scaffolding are in place. Ready for Phase 1 (Core) implementation.
+All Phase 0–4 features are complete. Phase 5 (GitHub follow sync, contribution graph, webhook auto-posting, topLanguages, UI contrast improvements) is also complete.
 
 ---
 
@@ -16,74 +16,40 @@ Phase 0 is **complete**. All documentation, configuration files, and project sca
 | Phase | Name | Status |
 |-------|------|--------|
 | Phase 0 | Documentation & Setup | **Complete** |
-| Phase 1 | Core | Not Started |
-| Phase 2 | Social | Not Started |
-| Phase 3 | Expansion | Not Started |
+| Phase 1 | Core | **Complete** |
+| Phase 2 | Social | **Complete** |
+| Phase 3 | Expansion | **Complete** |
+| Phase 4 | GitHub Platform + Media | **Complete** |
+| Phase 5 | GitHub Social + UI Polish | **Complete** |
 
 ---
 
-## Phase 0 — Documentation & Setup
+## Phase 0 — Documentation & Setup ✅
 
-### Completed
-
-- [x] Repository initialized
-- [x] CLAUDE.md — AI assistant guide
-- [x] README.md — Public-facing readme
-- [x] Monorepo folder structure (`packages/client`, `server`, `shared`, `llm`)
-- [x] `docs/guides/CONVENTIONS.md` — Strict coding rules
-- [x] `docs/design/DESIGN_GUIDE.md` — Visual system and component specs
-- [x] `docs/guides/PROMPTS.md` — Vibe coding prompt templates
-- [x] `docs/specs/PRD.md` — Product requirements document
-- [x] `docs/specs/DATABASE.md` — Database design and reference
-- [x] `docs/specs/API.md` — Full REST API documentation
-- [x] `docs/specs/api-schema.json` — OpenAPI 3.1 schema
-- [x] `docs/architecture/ARCHITECTURE.md` — System architecture
-- [x] `docs/architecture/architecture.json` — Full system configuration
-- [x] `docs/architecture/backend-dependencies.mmd` — Server dependency graph
-- [x] `docs/architecture/frontend-imports.mmd` — Client import graph
-- [x] `docs/architecture/org-chart.mmd` — Monorepo folder hierarchy
-- [x] `docs/architecture/schema-erd.md` — Database ERD and data flows
-- [x] `docs/GLOSSARY.md` — Unified terminology index (extracted from OVERVIEW.md)
-- [x] `docs/PROGRESS.md` — This file
-
-- [x] `package.json` (root) — pnpm workspace config
-- [x] `pnpm-workspace.yaml`
-- [x] `tsconfig.base.json`
-- [x] `.eslintrc.cjs`
-- [x] `.prettierrc`
-- [x] `.gitignore`
-- [x] `.env.example`
-- [x] Per-package `package.json` files (client, server, shared, llm)
-- [x] Per-package `tsconfig.json` files (client, server, shared, llm)
-- [x] Vite config (`packages/client/vite.config.ts`)
-- [x] Tailwind config (`packages/client/tailwind.config.ts`)
-- [x] Vitest config (`vitest.config.ts`)
-- [x] Playwright config (`playwright.config.ts`)
-- [x] DB migration files (`packages/server/src/db/migrations/001-003`)
-- [x] LLM parser unit test examples in TESTING.md
-
-### Remaining
-
-Phase 0 is **complete**. All documentation and configuration files are in place. Ready for Phase 1 implementation.
+All documentation, configuration files, and project scaffolding complete.
 
 ---
 
-## Phase 1 — Core (Not Started)
+## Phase 1 — Core (In Progress)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| User registration/login | Not Started | Session-based auth (express-session) |
-| Post creation (dual format) | Not Started | Natural language + CLI side by side |
-| LLM transformation | Not Started | claude-sonnet first |
-| Global feed | Not Started | Cursor-based pagination |
-| Star | Not Started | Toggle via composite PK |
-| Reply | Not Started | Threaded via parent_id |
-
-### Key Deliverables
-- `@clitoris/shared` — Type definitions (Post, User, ApiResponse)
-- `@clitoris/llm` — Anthropic provider + transformer
-- `@clitoris/server` — Express app, routes (posts, users, llm), DB setup
-- `@clitoris/client` — Shell layout, global feed page, post card, composer
+| `@clitoris/shared` types | ✅ Done | Post, User, ApiResponse, PostIntent, PostEmotion, TranslateResponse |
+| `@clitoris/llm` providers | ✅ Done | 7 providers: Anthropic, OpenAI, Gemini, Ollama, Cursor, CLI, Generic API |
+| LLM transform (JSON flow) | ✅ Done | transform.md → JSON → CLI reconstruction; intent/emotion extracted |
+| LLM translate | ✅ Done | translate.md; tone-aware, cached in DB |
+| DB migrations 001–007 | ✅ Done | users, posts, social, llm_keys, lang_columns, intent_emotion, translations |
+| Server: auth routes | ✅ Done | GitHub OAuth, session, setup |
+| Server: posts routes | ✅ Done | CRUD, feed, star, fork, reply, translate endpoint |
+| Server: llm routes | ✅ Done | transform, providers list, key management |
+| Server: users routes | ✅ Done | profile, follow |
+| Client: AppShell + Sidebar | ✅ Done | Header, nav, LLM filter |
+| Client: GlobalFeedPage | ✅ Done | Composer + FeedList + infinite scroll |
+| Client: PostCard | ✅ Done | Dual panel, intent badge, translate toggle |
+| Client: LoginPage | ✅ Done | GitHub OAuth connect screen |
+| Client: SetupPage | ✅ Done | First-time profile setup |
+| Client: PostDetailPage | ✅ Done | `/post/:id` — single post + threaded replies + reply composer |
+| App routes (full) | ✅ Done | All routes: `/post/:id`, `/@:username`, `/feed/local`, `/explore`, `/settings`, `/analyze` |
 
 ### Phase 1 Acceptance Criteria
 
@@ -102,10 +68,11 @@ Phase 0 is **complete**. All documentation and configuration files are in place.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Follow/unfollow | Not Started | |
-| Local feed | Not Started | Posts from followed users |
-| Fork | Not Started | Clone post to own timeline |
-| User profile page | Not Started | `/@:username` route |
+| Follow/unfollow | ✅ Done | Server + client UI (UserProfilePage) |
+| Local feed | ✅ Done | `/feed/local` — posts from followed users |
+| Fork | ✅ Done | Server route + ActionBar UI |
+| User profile page | ✅ Done | `/@:username` route |
+| Explore page | ✅ Done | `/explore` — trending tags + star-sorted posts |
 
 ### Phase 2 Acceptance Criteria
 
@@ -118,23 +85,47 @@ Phase 0 is **complete**. All documentation and configuration files are in place.
 
 ---
 
-## Phase 3 — Expansion (Not Started)
+## Phase 3 — Expansion (In Progress)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Multi-LLM support | Not Started | GPT-4o, Gemini, Llama-3 providers |
-| Multilingual auto-translation | Not Started | `--translate=auto` |
-| Explore/trending | Not Started | Algorithm TBD |
-| Custom LLM connections | Not Started | User-provided API keys |
+| SettingsPage (tabbed) | ✅ Done | 6 tabs: profile, language, cli, oauth, api, channel |
+| ProfileTab | ✅ Done | Display name, bio, domain, avatar, danger zone |
+| LanguageTab | ✅ Done | UI lang (en/ko/zh/ja) + persisted to localStorage |
+| CliTab | ✅ Done | Detects installed CLI tools via `/api/llm/cli/status`; model selection saved to localStorage |
+| OAuthTab | ✅ Done | GitHub connection status + disconnect |
+| ApiTab | ✅ Done | LLM API key management (anthropic/openai/gemini) |
+| ChannelTab | ⏳ Stub | UI placeholder; backend not yet implemented |
+| Sidebar my LLM section | ✅ Done | Shows configured CLI tools + API providers; links to settings tabs |
+| UI language persistence | ✅ Done | `localStorage('clitoris:ui-lang')` — survives page reload |
+| Multi-LLM UI | ✅ Done | CLI tools + API models in Composer; LLM filter in Explore/Sidebar |
+| Reference UI polish | ✅ Done | Panel labels (ⓘ 자연어 / ⊡ CLI), ¶ continuation, ↵/○ icons, HeaderBar subtitle |
+| ExplorePage | ✅ Done | Trending tags, star-sorted posts, tag filter |
+| AnalyzePage | ✅ Done | `/analyze` — repo input, progress polling, result display, history |
+| GitHub activity → auto-posts | ✅ Done | `POST /api/users/sync-activity` — imports push/PR/release/create/star/fork events; deduped via `github_synced_events` table |
+| GitHub profile sync | ✅ Done | `POST /api/users/sync-profile` — re-fetches avatar, bio, repos count from GitHub public API; OAuthTab sync buttons |
+| Analysis → feed post | ✅ Done | `POST /api/analyze/:id/share` — creates post from analysis result with repo attachment; AnalyzePage share button |
+| PPTX generation | ✅ Done | `pptxgenjs` 5-slide terminal-style deck; `GET /api/analyze/:id/download`; stored in `uploads/analyses/`; AnalyzePage download button |
+| Video generation | ✅ Done | Terminal animation HTML; scene-by-scene typewriter effect; `▶ open animation` button; served inline via download endpoint |
+| Keyboard shortcuts | ✅ Done | `useKeyboardShortcuts` hook; j/k nav, s star, o open, u author, g+chord pages, ?, /; `KeyboardHelpModal`; [?] button in header |
+| Seed script | ✅ Done | `scripts/seed.ts` — 5 users, 12 posts, 31 stars, 12 follows, 1 reply; runs migrations first; `pnpm seed` |
+| GitHub feed page | ✅ Done | `/github` route — `GitHubFeedPage` with 3 tabs: stars, notifications, issues & PRs; mark-read action; filter bar |
 
-### Phase 3 Acceptance Criteria
+---
 
-| Feature | Acceptance Criteria |
-|---------|-------------------|
-| Multi-LLM support | OpenAI (gpt-4o), Gemini (gemini-2.5-pro), and Ollama (llama-3) providers work end-to-end; model selector shows available models per provider; credential auto-detection badges shown |
-| Multilingual auto-translation | `--translate=auto` flag detects source language and appends translation; dual-language display in post card |
-| Explore/trending | Posts sorted by star count within time window (24h/7d/30d); trending tag cloud updates dynamically |
-| Custom LLM connections | User can configure custom OpenAI-compatible endpoint with base URL + API key; connection test validates before save |
+## Phase 5 — GitHub Social + UI Polish (Complete)
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| GitHub follow sync | ✅ Done | `GET /api/github/following` — following list + CLItoris membership; `POST /api/github/sync-follows` — bulk-follow on CLItoris; `GithubFollowSync` component on own profile page |
+| GitHub followers | ✅ Done | `GET /api/github/followers` — followers list + CLItoris membership + mutual-follow status |
+| topLanguages | ✅ Done | `POST /api/users/sync-profile` computes repo language stats → stored in `top_languages` DB column (migration `012_add_top_languages.sql`) → displayed as badges on profile |
+| PR Review Requests | ✅ Done | `GET /api/github/reviews` — `review-requested:@me` GitHub search; displayed in Settings → `github` tab |
+| Webhook auto-posting | ✅ Done | `POST /api/webhook/github` — HMAC-SHA256 signature verification; push/PR/release/create events → immediate post creation; new router `packages/server/src/routes/webhook.ts` |
+| Contribution Graph | ✅ Done | `GET /api/github/contributions/:username` — GitHub GraphQL; `ContributionGraph` component; grass heatmap on all user profiles |
+| GithubTab (Settings) | ✅ Done | New `github` tab in Settings: PR Review Requests list + Webhook setup instructions |
+| Local Feed mock data | ✅ Done | `packages/client/src/mocks/localFeedMock.ts` — 6 mock posts (Korean/English mix, various LLM models); `LocalFeedPage` auto-injects when API returns empty |
+| UI contrast improvements | ✅ Done | All component text colors improved: `#525270`→`#7a8898`, `#404060`→`#7a8898`, `#6b6b8a`→`#9aacbf`; PostCard timestamps/separators/flags, DualPanel copy/translate buttons, ComposerBar hints/model indicator/lang selector/transform button |
 
 ---
 
@@ -154,7 +145,27 @@ Phase 0 is **complete**. All documentation and configuration files are in place.
 | 2026-03-19 | No light mode | Terminal aesthetic demands dark-only |
 | 2026-03-19 | Unicode icons only | No icon library dependencies; terminal feel |
 | 2026-03-19 | Vibe coding approach | AI-driven development with strict conventions |
-| 2026-03-19 | All docs under docs/ | Single location, organized by category (guides/specs/architecture) |
+| 2026-03-19 | All docs under docs/ | Single location, organized by category |
+| 2026-03-20 | LLM outputs JSON (not CLI string) | Reliable parsing; server reconstructs CLI; enables intent/emotion extraction |
+| 2026-03-20 | Translation cached per (post_id, lang) | Zero server cost (uses viewer's key); instant on cache hit |
+| 2026-03-20 | Ports changed to 3771 (server) / 7878 (client) | Avoids common port conflicts (3000/5173 often occupied) |
+| 2026-03-20 | CLI tool status via process spawn | `claude --version`, `codex --version` etc. run server-side to detect installed tools + models |
+| 2026-03-20 | UI language persisted in localStorage | `clitoris:ui-lang` key; avoids API round-trip for a client-only preference |
+| 2026-03-20 | GitHub OAuth fix: `/api/auth/me/pending` endpoint | SetupPage called this endpoint; missing 404 caused login loop; fixed by adding endpoint |
+| 2026-03-20 | Sidebar my LLM: localStorage + `/api/llm/providers` | CLI tools read from localStorage (client fast); API keys from server (source of truth) |
+| 2026-03-20 | GitHub OAuth scope expanded to `notifications repo` | Required for platform integration (notifications, issues, PRs); only applies to the logged-in user's own data |
+| 2026-03-20 | GitHub token stored in DB (`github_access_token`, `github_token_scope`) | Persists token across sessions; migration 011 |
+| 2026-03-20 | GitHub activity dedup via `github_synced_events` table | Prevents re-importing same event; migration 010 |
+| 2026-03-20 | Video generation uses animated HTML (no ffmpeg) | Self-contained HTML with CSS/JS typewriter animation; no binary deps; served inline |
+| 2026-03-20 | Analysis share uses dedicated endpoint `POST /api/analyze/:id/share` | Creates post with repo_attachment from analysis metadata; not a plain post creation |
+| 2026-03-20 | Keyboard g-chord uses `useRef` for pending state | Avoids stale closure; g+h/l/e/a/p/s navigate pages; 600ms timeout |
+| 2026-03-20 | Seed script reads migrations at runtime | `scripts/seed.ts` runs all migrations before inserting; same DB path as dev server |
+| 2026-03-20 | GitHub follow sync in own profile, not Settings | `GithubFollowSync` component lives on `/@me` profile page — contextually closer to social graph than settings config |
+| 2026-03-20 | topLanguages stored as JSON TEXT column | `top_languages TEXT DEFAULT '[]'` — computed on sync-profile call; parsed in application code; migration 012 |
+| 2026-03-20 | Webhook uses HMAC-SHA256 via `X-Hub-Signature-256` | Industry-standard GitHub webhook verification; `GITHUB_WEBHOOK_SECRET` env var; 400 on signature mismatch |
+| 2026-03-20 | Contribution graph via GitHub GraphQL API | REST API does not expose contribution data; GraphQL `contributionsCollection` is the only official source |
+| 2026-03-20 | LocalFeedMock auto-injected when API returns empty | Avoids empty-state UX during development; 6 posts with Korean/English mix to test dual-format rendering |
+| 2026-03-20 | UI contrast: gray palette shift to `#7a8898` / `#9aacbf` | Previous `#525270` / `#6b6b8a` values failed WCAG AA contrast against `#1a1a2e` background; new values pass 4.5:1 ratio |
 
 ---
 

@@ -19,40 +19,43 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│ terminal.social / feed --global                                    @user ▾     │
+│ terminal.social / 자연어 + CLI · LLM 공유 · all posts open source  @user ▾    │
 ├────────────────┬────────────────────────────────────────────────────────────────┤
 │                │                                                                │
-│ // navigate    │  ┌─ Composer Bar ──────────────────────────────────────────┐   │
-│ $ feed --global│  │ > Write in any language. LLM translates to CLI.         │   │
-│   feed --local │  │ ┌──────────────────────────────────────────────────┐    │   │
-│   explore      │  │ │ Type your post here...                      |    │    │   │
-│                │  │ └──────────────────────────────────────────────────┘    │   │
-│ // by LLM      │  │ Cmd+Enter · save as CLI  [claude-sonnet ▾] [📎 repo]   │   │
-│ ● claude-sonnet│  └────────────────────────────────────────────────────────┘   │
-│ ○ gpt-4o       │                                                                │
-│ ○ llama-3      │  ┌─ Post Card ────────────────────────────────────────────┐   │
+│ // navigate    │  › feed --global --dual-format --translate=auto               │
+│ $ feed --global│                                                                │
+│ $ feed --local │  ┌─ Composer Bar ──────────────────────────────────────────┐   │
+│ $ following    │  │ › 하고 싶은 말을 그냥 쓰세요. LLM이 CLI로 번역하고,     │   │
+│ $ explore      │  │   둘 다 올라갑니다.  (italic, dim — empty placeholder)   │   │
+│                │  │                                                          │   │
+│ // my LLM      │  │ Cmd+Enter · 자연어 + CLI 를 포스트로 저장               │   │
+│ ● claude-sonnet│  │                      [claude-sonnet ▾]   [LLM → CLI ↗]  │   │
+│ ○ gpt-4o       │  └────────────────────────────────────────────────────────┘   │
+│ ○ llama-3      │                                                                │
+│ + connect LLM  │  ┌─ Post Card ────────────────────────────────────────────┐   │
 │                │  │ @0xmitsuki  mitsuki.sh · 3m ago              --lang=en │   │
 │ // me          │  ├──────────────────────────┬─────────────────────────────┤   │
-│ → @you.local   │  │                          │ CLI — claude-sonnet    ⎘    │   │
-│   my posts     │  │  CLI is the new lingua   │                             │   │
-│   starred      │  │  franca. Think in any    │  post --user=0xmitsuki.sh \ │   │
-│                │  │  language, post in any   │    --lang=en \              │   │
-│                │  │  language. @jiyeon_dev   │    --message="CLI flags..." │   │
-│                │  │  you're onto something. │    --tags=cli-first \       │   │
-│                │  │  #cli-first             │    --visibility=public      │   │
+│ ~ @you.local   │  │ ⓘ 자연어                 │ ⊡ CLI — open source   copy │   │
+│ $ my posts --raw│  │                          │                             │   │
+│ $ starred      │  │  CLI is the new lingua   │  post --user=0xmitsuki.sh ¶ │   │
+│                │  │  franca. Think in any    │    --lang=en ¶              │   │
+│                │  │  language, post in any   │    --message="CLI flags..." ¶│   │
+│                │  │  language. @jiyeon_dev   │    --tags=cli-first ¶       │   │
+│                │  │  you're onto something.  │    --visibility=public      │   │
+│                │  │  #cli-first              │                             │   │
 │                │  ├──────────────────────────┴─────────────────────────────┤   │
-│                │  │  ↩ reply 9    ◇ fork 3    ★ 31                        │   │
+│                │  │  ↵ reply 9    ○ fork 3    ★ 31                        │   │
 │                │  └────────────────────────────────────────────────────────┘   │
 │                │                                                                │
 │                │  ┌─ Post Card ────────────────────────────────────────────┐   │
 │                │  │ @jiyeon_dev  jiyeon.kim · 12m ago             --lang=ko│   │
 │                │  ├──────────────────────────┬─────────────────────────────┤   │
-│                │  │                          │ CLI — gpt-4o          ⎘     │   │
-│                │  │  Natural language text   │  post --user=jiyeon.kim \   │   │
-│                │  │  here...                 │    --lang=ko \              │   │
+│                │  │ ⓘ 자연어                 │ ⊡ CLI — open source   copy │   │
+│                │  │  Natural language text   │  post --user=jiyeon.kim ¶   │   │
+│                │  │  here...                 │    --lang=ko ¶              │   │
 │                │  │                          │    --message="..."          │   │
 │                │  ├──────────────────────────┴─────────────────────────────┤   │
-│                │  │  ↩ reply 2    ◇ fork 0    ★ 8                         │   │
+│                │  │  ↵ reply 2    ○ fork 0    ★ 8                         │   │
 │                │  └────────────────────────────────────────────────────────┘   │
 │                │                                                                │
 │                │  ┌─────────────────────────────────────────────────────┐      │
@@ -273,11 +276,11 @@ type LlmModel = 'claude-sonnet' | 'gpt-4o' | 'gemini-2.5-pro' | 'llama-3' | 'cus
 |-----------------------|-----------------------------------|--------|------|-------------------------------|
 | Scroll to bottom      | `/api/posts/feed/global?cursor=X` | GET    | No   | Load next page (infinite scroll) |
 | Click LLM filter tab  | `/api/posts/by-llm/:model`        | GET    | No   | Filter posts by LLM model     |
-| Press Cmd+Enter       | `/api/llm/transform`              | POST   | Yes  | Transform draft to CLI         |
-| Confirm post          | `/api/posts`                      | POST   | Yes  | Create new post (with optional repo attachment) |
+| Click [LLM → CLI ↗]   | `/api/llm/transform`              | POST   | Yes  | Transform draft to CLI (preview) |
+| Press Cmd+Enter       | `/api/posts`                      | POST   | Yes  | Submit post after transform   |
 | Click ★ star          | `/api/posts/:id/star`             | POST   | Yes  | Toggle star on post            |
-| Click ◇ fork          | `/api/posts/:id/fork`             | POST   | Yes  | Fork post to own timeline      |
-| Click ↩ reply         | Navigate to `/post/:id`           | —      | —    | Navigate to post detail        |
+| Click ○ fork          | `/api/posts/:id/fork`             | POST   | Yes  | Fork post to own timeline      |
+| Click ↵ reply         | Navigate to `/post/:id`           | —      | —    | Navigate to post detail        |
 
 ---
 
@@ -288,17 +291,18 @@ type LlmModel = 'claude-sonnet' | 'gpt-4o' | 'gemini-2.5-pro' | 'llama-3' | 'cus
 | Element              | Action    | Result                                                  |
 |----------------------|-----------|---------------------------------------------------------|
 | Post card            | Click     | Navigate to `/post/:id`                                 |
-| ↩ reply count        | Click     | Navigate to `/post/:id` with composer focused           |
-| ◇ fork count         | Click     | POST fork, optimistic update forkCount +1               |
+| ↵ reply count        | Click     | Navigate to `/post/:id` with composer focused           |
+| ○ fork count         | Click     | POST fork, optimistic update forkCount +1               |
 | ★ star count         | Click     | POST toggle star, optimistic update starCount +/-1      |
 | @username            | Click     | Navigate to `/user/@username`                           |
 | #hashtag             | Click     | Navigate to `/explore?tag=hashtag`                      |
-| ⎘ copy (CLI panel)   | Click     | Copy CLI text to clipboard, show "Copied!" flash        |
+| copy (CLI panel)     | Click     | Copy CLI text to clipboard, show "Copied!" flash        |
 | LLM filter (sidebar) | Click     | Filter feed by model, reset cursor, fetch new data      |
+| + connect LLM        | Click     | Navigate to `/settings?tab=cli`                         |
 | Nav items (sidebar)  | Click     | Navigate to corresponding route                         |
 | Composer textarea    | Click     | Focus textarea, show blinking cursor                    |
 | Model selector       | Click     | Open dropdown: claude-sonnet, gpt-4o, gemini-2.5-pro, llama-3, custom   |
-| [LLM -> CLI] button  | Click     | Transform draft via LLM, show CLI preview               |
+| [LLM → CLI ↗] button | Click     | Transform draft via LLM, show CLI preview (does not submit) |
 | User menu            | Click     | Open dropdown: profile, settings, logout                |
 | [📎 repo] button       | Click     | Open repo picker dropdown (search user's GitHub repos)  |
 | Repo picker item       | Click     | Attach repo to post draft; show preview below textarea  |
@@ -316,7 +320,7 @@ type LlmModel = 'claude-sonnet' | 'gpt-4o' | 'gemini-2.5-pro' | 'llama-3' | 'cus
 | `o` / `Enter`| Post focused       | Open post detail                             |
 | `/`          | Anywhere           | Focus composer textarea                      |
 | `Escape`     | Composer focused   | Blur composer, return focus to feed           |
-| `Cmd+Enter`  | Composer focused   | Submit post (transform + confirm)             |
+| `Cmd+Enter`  | Composer focused   | Submit post (after transform is complete)     |
 
 ---
 
@@ -328,10 +332,10 @@ type LlmModel = 'claude-sonnet' | 'gpt-4o' | 'gemini-2.5-pro' | 'llama-3' | 'cus
 ┌────────────────┬────────────────────────────────────────────────────────────────┐
 │                │                                                                │
 │ // navigate    │  ┌─ Composer Bar ──────────────────────────────────────────┐   │
-│ ████████████   │  │ > Write in any language. LLM translates to CLI.         │   │
-│ ████████████   │  │ ┌──────────────────────────────────────────────────┐    │   │
-│ ████████████   │  │ │                                                  │    │   │
-│                │  │ └──────────────────────────────────────────────────┘    │   │
+│ ████████████   │  │ › 하고 싶은 말을 그냥 쓰세요...  (italic, dim)           │   │
+│ ████████████   │  │                                                          │   │
+│ ████████████   │  │ Cmd+Enter · 자연어 + CLI 를 포스트로 저장               │   │
+│                │  │                      [claude-sonnet ▾]   [LLM → CLI ↗]  │   │
 │                │  └────────────────────────────────────────────────────────┘   │
 │                │                                                                │
 │                │  ┌─ Skeleton Card ────────────────────────────────────────┐   │
@@ -342,7 +346,7 @@ type LlmModel = 'claude-sonnet' | 'gpt-4o' | 'gemini-2.5-pro' | 'llama-3' | 'cus
 │                │  │ ██████████████████████   │ ████████████████            │   │
 │                │  │ ██████████               │ ████████████████████████    │   │
 │                │  ├──────────────────────────┴─────────────────────────────┤   │
-│                │  │  ↩ ██    ◇ ██    ★ ██                                 │   │
+│                │  │  ↵ ██    ○ ██    ★ ██                                 │   │
 │                │  └────────────────────────────────────────────────────────┘   │
 │                │                                                                │
 │                │  ┌─ Skeleton Card ────────────────────────────────────────┐   │
@@ -352,7 +356,7 @@ type LlmModel = 'claude-sonnet' | 'gpt-4o' | 'gemini-2.5-pro' | 'llama-3' | 'cus
 │                │  │ ██████████████████       │ ████████████████████        │   │
 │                │  │ ██████████████████████   │ ████████████████            │   │
 │                │  ├──────────────────────────┴─────────────────────────────┤   │
-│                │  │  ↩ ██    ◇ ██    ★ ██                                 │   │
+│                │  │  ↵ ██    ○ ██    ★ ██                                 │   │
 │                │  └────────────────────────────────────────────────────────┘   │
 │                │                                                                │
 └────────────────┴────────────────────────────────────────────────────────────────┘

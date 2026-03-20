@@ -1,0 +1,377 @@
+import { Router } from 'express';
+import type { Database } from 'better-sqlite3';
+import type { Logger } from 'pino';
+import { z } from 'zod';
+import path from 'node:path';
+import { generateId } from '../lib/id.js';
+import { requireAuth } from '../middleware/auth.js';
+import { createProvider } from '@clitoris/llm';
+import type { AnalysisProgress } from '@clitoris/shared';
+import { generatePptx } from '../lib/generatePptx.js';
+import { generateVideoHtml } from '../lib/generateVideo.js';
+import { writeFileSync } from 'node:fs';
+
+const startSchema = z.object({
+  repoOwner: z.string().min(1).max(100),
+  repoName: z.string().min(1).max(100),
+  outputType: z.enum(['report', 'pptx', 'video']).default('report'),
+  llmModel: z.string().min(1),
+  lang: z.string().length(2).default('en'),
+  options: z.record(z.unknown()).default({}),
+});
+
+interface AnalysisRow {
+  id: string;
+  user_id: string;
+  repo_owner: string;
+  repo_name: string;
+  output_type: string;
+  llm_model: string;
+  lang: string;
+  options_json: string;
+  result_url: string | null;
+  result_summary: string | null;
+  status: string;
+  progress_json: string;
+  duration_ms: number | null;
+  created_at: string;
+}
+
+interface LlmKeyRow {
+  api_key: string;
+  base_url?: string;
+}
+
+function mapAnalysis(row: AnalysisRow) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    repoOwner: row.repo_owner,
+    repoName: row.repo_name,
+    outputType: row.output_type,
+    llmModel: row.llm_model,
+    lang: row.lang,
+    optionsJson: JSON.parse(row.options_json) as Record<string, unknown>,
+    resultUrl: row.result_url,
+    resultSummary: row.result_summary,
+    status: row.status,
+    progress: JSON.parse(row.progress_json) as AnalysisProgress[],
+    durationMs: row.duration_ms,
+    createdAt: row.created_at,
+  };
+}
+
+const CLI_MODELS = new Set(['claude-code', 'codex', 'gemini-cli', 'opencode']);
+
+function modelToProvider(model: string): string {
+  if (CLI_MODELS.has(model)) return 'cli';
+  if (model.startsWith('claude')) return 'anthropic';
+  if (model.startsWith('gpt')) return 'openai';
+  if (model.startsWith('gemini')) return 'gemini';
+  if (model.startsWith('llama')) return 'ollama';
+  return 'anthropic';
+}
+
+interface GithubRepoResponse {
+  full_name: string;
+  description: string | null;
+  stargazers_count: number;
+  forks_count: number;
+  language: string | null;
+  topics: string[];
+  size: number;
+  open_issues_count: number;
+  default_branch: string;
+  created_at: string;
+  updated_at: string;
+}
+
+const UPLOADS_DIR = path.join(process.cwd(), 'uploads', 'analyses');
+
+async function runAnalysis(
+  db: Database,
+  analysisId: string,
+  repoOwner: string,
+  repoName: string,
+  outputType: string,
+  llmModel: string,
+  lang: string,
+  userId: string,
+  logger: Logger,
+): Promise<void> {
+  const startedAt = Date.now();
+
+  const setProgress = (progress: AnalysisProgress[]) => {
+    db.prepare('UPDATE analyses SET progress_json = ? WHERE id = ?')
+      .run(JSON.stringify(progress), analysisId);
+  };
+
+  const isPptx = outputType === 'pptx';
+  const isVideo = outputType === 'video';
+  const thirdStep = isPptx ? 'generating presentation' : isVideo ? 'generating video' : 'generating summary';
+  const progress: AnalysisProgress[] = [
+    { name: 'fetching repo metadata', status: 'active' },
+    { name: 'analyzing structure', status: 'pending' },
+    { name: thirdStep, status: 'pending' },
+  ];
+  setProgress(progress);
+
+  try {
+    // Step 1: Fetch GitHub metadata
+    const ghRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}`, {
+      headers: { 'User-Agent': 'CLItoris', Accept: 'application/vnd.github.v3+json' },
+    });
+
+    if (!ghRes.ok) {
+      throw new Error(`GitHub API error: ${ghRes.status}`);
+    }
+
+    const repo = (await ghRes.json()) as GithubRepoResponse;
+    progress[0] = { name: 'fetching repo metadata', status: 'done', detail: `${repo.stargazers_count} stars` };
+    progress[1] = { name: 'analyzing structure', status: 'active' };
+    setProgress(progress);
+
+    // Step 2: Generate analysis with LLM
+    const providerName = modelToProvider(llmModel);
+    const keylessProviders = new Set(['ollama', 'cursor', 'cli']);
+    let credentials: { apiKey?: string; baseUrl?: string } = {};
+
+    if (!keylessProviders.has(providerName)) {
+      const keyRow = db.prepare('SELECT api_key, base_url FROM user_llm_keys WHERE user_id = ? AND provider = ?')
+        .get(userId, providerName) as LlmKeyRow | undefined;
+      if (keyRow) {
+        credentials = {
+          apiKey: keyRow.api_key,
+          ...(keyRow.base_url ? { baseUrl: keyRow.base_url } : {}),
+        };
+      }
+    }
+
+    progress[1] = { name: 'analyzing structure', status: 'done', detail: `${repo.language ?? 'unknown'} · ${repo.size}kb` };
+    progress[2] = { name: 'generating summary', status: 'active' };
+    setProgress(progress);
+
+    const prompt = `Analyze the GitHub repository ${repoOwner}/${repoName}.
+
+Repository info:
+- Description: ${repo.description ?? 'none'}
+- Primary language: ${repo.language ?? 'unknown'}
+- Stars: ${repo.stargazers_count}, Forks: ${repo.forks_count}
+- Topics: ${repo.topics.join(', ') || 'none'}
+- Size: ${repo.size}kb
+- Open issues: ${repo.open_issues_count}
+- Default branch: ${repo.default_branch}
+
+Write a concise technical analysis (3-5 paragraphs) covering:
+1. What the project does
+2. Architecture and key patterns
+3. Code quality indicators
+4. Notable strengths
+
+Reply in ${lang === 'ko' ? 'Korean' : lang === 'ja' ? 'Japanese' : lang === 'zh' ? 'Chinese' : 'English'}. Be specific and technical.`;
+
+    let summary = '';
+    try {
+      const provider = createProvider(providerName, credentials);
+      summary = await provider.translate({
+        message: prompt,
+        sourceLang: 'en',
+        targetLang: lang,
+        intent: 'formal',
+        emotion: 'neutral',
+        model: llmModel,
+      });
+    } catch {
+      summary = `Analysis of ${repoOwner}/${repoName}: ${repo.description ?? 'No description available.'}`;
+    }
+
+    let resultUrl: string | null = null;
+
+    if (isVideo) {
+      // Generate animated HTML terminal video
+      try {
+        const { mkdirSync } = await import('node:fs');
+        mkdirSync(UPLOADS_DIR, { recursive: true });
+        const filename = `${analysisId}.html`;
+        const filePath = path.join(UPLOADS_DIR, filename);
+        const html = generateVideoHtml({
+          repoOwner, repoName,
+          description: repo.description,
+          stars: repo.stargazers_count,
+          forks: repo.forks_count,
+          language: repo.language,
+          topics: repo.topics,
+          size: repo.size,
+          openIssues: repo.open_issues_count,
+          summary,
+          llmModel,
+          lang,
+          durationMs: Date.now() - startedAt,
+        });
+        writeFileSync(filePath, html, 'utf-8');
+        resultUrl = filePath;
+      } catch (videoErr) {
+        logger.warn({ videoErr }, 'Video HTML generation failed');
+      }
+      progress[2] = { name: 'generating video', status: 'done', detail: resultUrl ? 'ready to view' : 'summary only' };
+    } else if (isPptx) {
+      // Generate PPTX file
+      try {
+        const filename = `${analysisId}.pptx`;
+        const filePath = await generatePptx({
+          repoOwner, repoName,
+          description: repo.description,
+          stars: repo.stargazers_count,
+          forks: repo.forks_count,
+          language: repo.language,
+          topics: repo.topics,
+          size: repo.size,
+          openIssues: repo.open_issues_count,
+          defaultBranch: repo.default_branch,
+          createdAt: repo.created_at,
+          updatedAt: repo.updated_at,
+          summary,
+          llmModel,
+          lang,
+        }, UPLOADS_DIR, filename);
+        resultUrl = filePath;
+      } catch (pptxErr) {
+        logger.warn({ pptxErr }, 'PPTX generation failed, saving report only');
+      }
+      progress[2] = { name: 'generating presentation', status: 'done', detail: resultUrl ? 'ready for download' : 'summary only' };
+    } else {
+      progress[2] = { name: 'generating summary', status: 'done' };
+    }
+    setProgress(progress);
+
+    const durationMs = Date.now() - startedAt;
+    db.prepare(`
+      UPDATE analyses SET
+        status = 'completed',
+        result_summary = ?,
+        result_url = ?,
+        progress_json = ?,
+        duration_ms = ?
+      WHERE id = ?
+    `).run(summary, resultUrl, JSON.stringify(progress), durationMs, analysisId);
+
+  } catch (err) {
+    logger.error({ err, analysisId }, 'Analysis failed');
+    progress[progress.findIndex((p) => p.status === 'active')] = {
+      ...progress[progress.findIndex((p) => p.status === 'active')]!,
+      status: 'failed',
+      detail: err instanceof Error ? err.message : 'unknown error',
+    };
+    db.prepare(`UPDATE analyses SET status = 'failed', progress_json = ? WHERE id = ?`)
+      .run(JSON.stringify(progress), analysisId);
+  }
+}
+
+export function createAnalyzeRouter(db: Database, logger: Logger): Router {
+  const router = Router();
+
+  router.post('/', requireAuth, async (req, res) => {
+    const parsed = startSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: parsed.error.message } });
+      return;
+    }
+
+    const { repoOwner, repoName, outputType, llmModel, lang, options } = parsed.data;
+    const userId = req.session.userId!;
+    const id = generateId();
+
+    db.prepare(`
+      INSERT INTO analyses (id, user_id, repo_owner, repo_name, output_type, llm_model, lang, options_json)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, userId, repoOwner, repoName, outputType, llmModel, lang, JSON.stringify(options));
+
+    // Run in background (non-blocking)
+    void runAnalysis(db, id, repoOwner, repoName, outputType, llmModel, lang, userId, logger);
+
+    const row = db.prepare('SELECT * FROM analyses WHERE id = ?').get(id) as AnalysisRow;
+    res.status(201).json({ data: mapAnalysis(row) });
+  });
+
+  router.get('/', requireAuth, (req, res) => {
+    const userId = req.session.userId!;
+    const rows = db.prepare('SELECT * FROM analyses WHERE user_id = ? ORDER BY created_at DESC LIMIT 20').all(userId) as AnalysisRow[];
+    res.json({ data: rows.map(mapAnalysis) });
+  });
+
+  router.get('/:id', requireAuth, (req, res) => {
+    const userId = req.session.userId!;
+    const row = db.prepare('SELECT * FROM analyses WHERE id = ? AND user_id = ?').get(req.params.id, userId) as AnalysisRow | undefined;
+    if (!row) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Analysis not found' } });
+      return;
+    }
+    res.json({ data: mapAnalysis(row) });
+  });
+
+  router.get('/:id/download', requireAuth, (req, res) => {
+    const userId = req.session.userId!;
+    const row = db.prepare('SELECT * FROM analyses WHERE id = ? AND user_id = ?').get(req.params.id, userId) as AnalysisRow | undefined;
+
+    if (!row) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Analysis not found' } });
+      return;
+    }
+    if (row.status !== 'completed' || !row.result_url) {
+      res.status(400).json({ error: { code: 'NOT_READY', message: 'PPTX not available' } });
+      return;
+    }
+
+    if (row.output_type === 'video') {
+      // Serve HTML inline so it opens in browser
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.setHeader('Content-Disposition', 'inline');
+      res.sendFile(row.result_url);
+    } else {
+      const filename = `${row.repo_owner}-${row.repo_name}-analysis.pptx`;
+      res.download(row.result_url, filename);
+    }
+  });
+
+  router.post('/:id/share', requireAuth, async (req, res) => {
+    const userId = req.session.userId!;
+    const row = db.prepare('SELECT * FROM analyses WHERE id = ? AND user_id = ?').get(req.params.id, userId) as AnalysisRow | undefined;
+
+    if (!row) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Analysis not found' } });
+      return;
+    }
+    if (row.status !== 'completed') {
+      res.status(400).json({ error: { code: 'NOT_COMPLETED', message: 'Analysis not completed yet' } });
+      return;
+    }
+
+    const summary = row.result_summary ?? '';
+    const firstLine = summary.split('\n').find((l) => l.trim()) ?? '';
+    const messageRaw = `Analyzed ${row.repo_owner}/${row.repo_name} (${row.output_type})\n\n${summary.slice(0, 500)}`;
+    const messageCli = `analyze --repo=${row.repo_owner}/${row.repo_name} --output=${row.output_type} --model=${row.llm_model}\n# ${firstLine.slice(0, 120)}`;
+
+    const postId = generateId();
+    const tags = JSON.stringify(['analysis', row.output_type, 'github']);
+
+    db.prepare(`
+      INSERT INTO posts (id, user_id, message_raw, message_cli, lang, tags, mentions, visibility, llm_model, intent, emotion)
+      VALUES (?, ?, ?, ?, ?, ?, '[]', 'public', ?, 'announcement', 'neutral')
+    `).run(postId, userId, messageRaw, messageCli, row.lang, tags, row.llm_model);
+
+    // Attach repo metadata
+    try {
+      const ghRes = await fetch(`https://api.github.com/repos/${row.repo_owner}/${row.repo_name}`, {
+        headers: { 'User-Agent': 'CLItoris', Accept: 'application/vnd.github.v3+json' },
+      });
+      if (ghRes.ok) {
+        const ghRepo = await ghRes.json() as { stargazers_count: number; forks_count: number; language: string | null };
+        db.prepare('INSERT OR REPLACE INTO repo_attachments (post_id, repo_owner, repo_name, repo_stars, repo_forks, repo_language) VALUES (?, ?, ?, ?, ?, ?)').run(postId, row.repo_owner, row.repo_name, ghRepo.stargazers_count, ghRepo.forks_count, ghRepo.language);
+      }
+    } catch { /* skip attachment on error */ }
+
+    res.status(201).json({ data: { postId } });
+  });
+
+  return router;
+}

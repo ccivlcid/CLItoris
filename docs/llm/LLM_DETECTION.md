@@ -123,130 +123,79 @@ When `parseCliCommand` throws a `ParseError`, the caller (provider `transform` m
 
 ---
 
-## 3. Credential Auto-Detection
+## 3. Local Runtime Detection
 
-CLItoris detects locally available LLM credentials at server startup. If a provider's credentials are already configured on the user's machine (e.g., via CLI login or config files), no additional API key is needed. The UI displays detected providers with a "ready" badge.
+CLItoris detects locally running LLM runtimes at server startup. This covers Ollama and CLI tools in PATH — **not API keys** (those are user-managed, see below).
+
+> **Key policy change**: API keys (Anthropic, OpenAI, Gemini, etc.) are NOT read from environment variables. Each user enters their own keys in Settings. Keys are stored in the `user_llm_keys` database table and looked up per-request.
 
 ### Detection Logic
 
 ```typescript
 // packages/llm/src/credential-detector.ts
-import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import path from "node:path";
-
-interface DetectedProvider {
-  provider: string;
-  source: string;           // where the credential was found
-  isAvailable: boolean;
-}
-
-/**
- * Scans the local machine for pre-existing LLM credentials.
- * Called once at server startup. Results cached in memory.
- */
-export function detectLocalCredentials(): DetectedProvider[] {
-  const home = homedir();
-  const results: DetectedProvider[] = [];
-
-  // 1. Anthropic — ~/.anthropic/config.json or ANTHROPIC_API_KEY env
-  const anthropicConfig = path.join(home, ".anthropic", "config.json");
-  if (process.env.ANTHROPIC_API_KEY) {
-    results.push({ provider: "anthropic", source: "env:ANTHROPIC_API_KEY", isAvailable: true });
-  } else if (existsSync(anthropicConfig)) {
-    results.push({ provider: "anthropic", source: `file:${anthropicConfig}`, isAvailable: true });
-  }
-
-  // 2. OpenAI — ~/.openai/config or OPENAI_API_KEY env
-  const openaiConfig = path.join(home, ".config", "openai", "auth.json");
-  if (process.env.OPENAI_API_KEY) {
-    results.push({ provider: "openai", source: "env:OPENAI_API_KEY", isAvailable: true });
-  } else if (existsSync(openaiConfig)) {
-    results.push({ provider: "openai", source: `file:${openaiConfig}`, isAvailable: true });
-  }
-
-  // 3. Google Gemini — ~/.config/gcloud/application_default_credentials.json
-  //    or GOOGLE_API_KEY / GEMINI_API_KEY env
-  const gcloudAdc = path.join(home, ".config", "gcloud", "application_default_credentials.json");
-  const geminiConfig = path.join(home, ".config", "gemini", "config.json");
-  if (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY) {
-    results.push({ provider: "gemini", source: "env:GOOGLE_API_KEY", isAvailable: true });
-  } else if (existsSync(gcloudAdc)) {
-    results.push({ provider: "gemini", source: `file:${gcloudAdc}`, isAvailable: true });
-  } else if (existsSync(geminiConfig)) {
-    results.push({ provider: "gemini", source: `file:${geminiConfig}`, isAvailable: true });
-  }
-
-  // 4. Ollama — check if server is running on localhost:11434
-  // (detected asynchronously at startup via health check)
-
-  // 5. CLI tools — check if binaries exist in PATH
-  const cliTools = ["claude", "codex", "gemini", "opencode"] as const;
-  for (const tool of cliTools) {
-    try {
-      const { execSync } = require("node:child_process");
-      execSync(`which ${tool}`, { stdio: "ignore" });
-      results.push({ provider: `cli:${tool}`, source: `path:${tool}`, isAvailable: true });
-    } catch {
-      // binary not found — skip
-    }
-  }
-
-  return results;
+export function detectLocalRuntimes(): DetectedProvider[] {
+  // Checks: Ollama health endpoint + CLI tool binaries in PATH
+  // Does NOT check process.env for API keys
 }
 ```
 
-### Detection Sources (Priority Order)
+| Runtime | Detection Method | Key Required? |
+|---------|-----------------|---------------|
+| Ollama | `curl localhost:11434/api/tags` health check | No |
+| claude (CLI) | `which claude` PATH check | No |
+| codex | `which codex` PATH check | No |
+| opencode | `which opencode` PATH check | No |
+| Anthropic API | User-provided in Settings | **Yes** (user's own key) |
+| OpenAI API | User-provided in Settings | **Yes** (user's own key) |
+| Gemini API | User-provided in Settings | **Yes** (user's own key) |
+| Generic API | User-provided in Settings | **Yes** (user's own key) |
 
-| Provider | Source 1 (env var) | Source 2 (config file) | Source 3 (system) |
-|----------|-------------------|----------------------|-------------------|
-| **Anthropic** | `ANTHROPIC_API_KEY` | `~/.anthropic/config.json` | — |
-| **OpenAI** | `OPENAI_API_KEY` | `~/.config/openai/auth.json` | — |
-| **Gemini** | `GOOGLE_API_KEY` or `GEMINI_API_KEY` | `~/.config/gcloud/application_default_credentials.json` or `~/.config/gemini/config.json` | `gcloud auth` login |
-| **Ollama** | `OLLAMA_URL` | — | `localhost:11434` health check |
-| **CLI tools** | — | — | `which claude/codex/gemini/opencode` |
+### API Key Management Flow
 
-### API Endpoint for Detection
+1. User navigates to `/settings` → LLM Keys section
+2. User enters their API key for a provider (e.g., Anthropic)
+3. Client calls `POST /api/llm/keys` → server stores in `user_llm_keys` table
+4. On transform request, server looks up the key, passes to `createProvider()`
+5. Key is never logged or returned to the client after save
 
-```
-GET /api/llm/providers
-```
+### GET /api/llm/providers Response
 
-Returns the list of available providers with their detection status:
+Requires a logged-in session. Returns local runtimes (e.g. Ollama) plus rows with `source: "user-settings"` for each provider the user saved a key for. Server `.env` must not be used for cloud LLM API keys.
 
 ```json
 {
   "data": [
-    { "provider": "anthropic", "source": "env:ANTHROPIC_API_KEY", "isAvailable": true },
-    { "provider": "gemini", "source": "file:~/.config/gcloud/application_default_credentials.json", "isAvailable": true },
-    { "provider": "openai", "source": null, "isAvailable": false },
     { "provider": "ollama", "source": "localhost:11434", "isAvailable": true },
-    { "provider": "cli:claude", "source": "path:claude", "isAvailable": true }
+    { "provider": "cli:claude", "source": "path:claude", "isAvailable": true },
+    { "provider": "anthropic", "source": "user-settings", "isAvailable": true },
+    { "provider": "openai", "source": "user-settings", "isAvailable": true }
   ]
 }
 ```
 
+Local runtimes appear only if detected. API providers appear only if the user has saved a key.
+
 ### Client UI Integration
 
-The composer's model selector shows a badge for auto-detected providers:
+The composer's model selector shows availability based on combined detection:
 
 ```
-┌─ Model Selector ──────────────────────┐
-│ ● anthropic / claude-sonnet  [ready]  │  ← env var detected
-│ ● gemini / gemini-2.5-pro   [ready]  │  ← gcloud login detected
-│ ○ openai / gpt-4o           [setup]  │  ← no credentials found
-│ ● ollama / llama3            [local]  │  ← running locally
-│ ● cli / claude-code          [path]   │  ← binary in PATH
-└───────────────────────────────────────┘
+┌─ Model Selector ──────────────────────────────────┐
+│ ● anthropic / claude-sonnet  [configured]         │  ← user saved key
+│ ○ openai / gpt-4o           [add key →]           │  ← no key saved
+│ ● gemini / gemini-2.5-pro   [configured]          │  ← user saved key
+│ ● ollama / llama3            [local]              │  ← running locally
+│ ● cli / claude-code          [path]               │  ← binary in PATH
+└───────────────────────────────────────────────────┘
 ```
 
 **Badge meanings:**
 | Badge | Meaning |
 |-------|---------|
-| `[ready]` | API key found (env or config file) — usable immediately |
-| `[local]` | Local server running — usable immediately |
-| `[path]` | CLI binary found in PATH — usable immediately |
-| `[setup]` | No credentials detected — click to configure |
+| `[configured]` | User saved an API key in Settings |
+| `[local]` | Local server running (Ollama) — no key needed |
+| `[path]` | CLI binary found in PATH — no key needed |
+| `[add key →]` | No key saved — click to go to Settings |
 
 ---
 
@@ -255,4 +204,4 @@ The composer's model selector shows a badge for auto-detected providers:
 - [LLM_INTEGRATION.md](./LLM_INTEGRATION.md) -- Overview, system prompt, provider interface, execution modes
 - [LLM_PROVIDERS.md](./LLM_PROVIDERS.md) -- All 7 provider implementations
 - [docs/specs/API.md](./API.md) -- API specification
-- [docs/guides/ENV.md](../guides/ENV.md) -- Environment variables (API keys)
+- [docs/guides/ENV.md](../guides/ENV.md) -- Server environment variables (API keys are user-managed, not env vars)

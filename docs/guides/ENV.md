@@ -11,29 +11,19 @@
 
 | Variable | Type | Default | Required | Description |
 |----------|------|---------|----------|-------------|
-| `PORT` | number | `3000` | No | Express server port |
+| `PORT` | number | `3771` | No | Express server port |
 | `NODE_ENV` | string | `development` | No | `development` or `production` |
 | `DATABASE_URL` | string | `clitoris.db` | No | SQLite database file path |
 | `SESSION_SECRET` | string | — | **Yes** | Express session secret (min 32 chars) |
 | `LOG_LEVEL` | string | `info` | No | Pino log level: `debug`, `info`, `warn`, `error` |
-| `CORS_ORIGIN` | string | `http://localhost:5173` | No | Allowed CORS origin |
+| `CORS_ORIGIN` | string | `http://localhost:7878` | No | Allowed CORS origin |
+| `CURSOR_LLM_BASE` | string | `http://localhost:3100/v1` | No | Cursor local OpenAI-compatible API (`/models`, `/chat/completions`). Used for Settings → CLI tab model list and server-side Cursor transforms. |
+| `GITHUB_WEBHOOK_SECRET` | string | — | No | HMAC-SHA256 secret for verifying GitHub webhook payloads (`X-Hub-Signature-256`). Required when using the `POST /api/webhook/github` endpoint. Must match the secret configured in GitHub repository webhook settings. |
+| `GITHUB_TOKEN` | string | — | No | Server-side fallback GitHub personal access token. Used by `GET /api/github/contributions/:username` when the requesting user is unauthenticated. Without this, unauthenticated contribution graph requests will fail. |
 
-### LLM (`@clitoris/llm`)
-
-| Variable | Type | Default | Required | Description |
-|----------|------|---------|----------|-------------|
-| `ANTHROPIC_API_KEY` | string | — | **Yes*** | Anthropic API key for Claude |
-| `OPENAI_API_KEY` | string | — | No | OpenAI API key for GPT-4o |
-| `GOOGLE_API_KEY` | string | — | No | Google AI API key for Gemini (alternative: `GEMINI_API_KEY`) |
-| `GEMINI_API_KEY` | string | — | No | Alias for Google AI API key (fallback if `GOOGLE_API_KEY` unset) |
-| `OLLAMA_URL` | string | `http://localhost:11434` | No | Ollama server URL for local LLM |
-| `CURSOR_API_KEY` | string | — | No | Cursor AI API key |
-| `CLI_LLM_COMMAND` | string | `claude` | No | CLI tool command (`claude`, `codex`, `gemini`, `opencode`) |
-| `API_CUSTOM_BASE_URL` | string | — | No | Generic API base URL (OpenAI-compatible) |
-| `API_CUSTOM_API_KEY` | string | — | No | Generic API authentication key |
-| `API_CUSTOM_MODEL` | string | — | No | Generic API model name |
-
-*Required for default LLM provider (claude-sonnet). If unset, credential auto-detection will attempt to find keys from local config files. See `docs/llm/LLM_INTEGRATION.md` section 7.
+> **LLM API keys are not environment variables.** Each user enters their own API keys in Settings (`/settings`). Keys are stored per-user in the `user_llm_keys` database table. See [LLM_DETECTION.md](../llm/LLM_DETECTION.md) for the key management flow.
+>
+> Locally running runtimes (Ollama on `localhost:11434`, CLI tools in PATH) are auto-detected and require no key.
 
 ### Client (`@clitoris/client`)
 
@@ -49,26 +39,36 @@
 
 ```bash
 # Server
-PORT=3000
+PORT=3771
 NODE_ENV=development
 DATABASE_URL=clitoris.db
 SESSION_SECRET=replace-with-random-string-at-least-32-chars
 LOG_LEVEL=info
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=http://localhost:7878
 
-# LLM Providers (auto-detected from local config if unset — see LLM_INTEGRATION.md §7)
-ANTHROPIC_API_KEY=sk-ant-api03-your-key-here
-OPENAI_API_KEY=sk-your-openai-key-here
-GOOGLE_API_KEY=your-google-ai-key-here
-# GEMINI_API_KEY=alias-for-google-api-key (used if GOOGLE_API_KEY is unset)
-OLLAMA_URL=http://localhost:11434
-CURSOR_API_KEY=your-cursor-key-here
-CLI_LLM_COMMAND=claude
-API_CUSTOM_BASE_URL=https://your-server.com/v1
-API_CUSTOM_API_KEY=sk-your-custom-key
-API_CUSTOM_MODEL=your-model-name
+# GitHub OAuth (required for login)
+GITHUB_CLIENT_ID=your-github-app-client-id
+GITHUB_CLIENT_SECRET=your-github-app-client-secret
+GITHUB_REDIRECT_URI=http://localhost:3771/api/auth/github/callback
+CLIENT_URL=http://localhost:7878
 
-# Client (prefix with VITE_)
+# LLM API keys are NOT set here.
+# Users enter their own keys in Settings (/settings → LLM Keys).
+# Keys are stored in the user_llm_keys database table.
+
+# Optional: Cursor local API (CLI tab + Cursor provider)
+# CURSOR_LLM_BASE=http://localhost:3100/v1
+
+# Optional: GitHub webhook signature verification secret
+# Required when using POST /api/webhook/github
+# Must match the "Secret" field in GitHub repository → Settings → Webhooks
+# GITHUB_WEBHOOK_SECRET=your-webhook-secret
+
+# Optional: GitHub fallback token for unauthenticated contribution graph requests
+# Required for GET /api/github/contributions/:username without user auth
+# GITHUB_TOKEN=ghp_...
+
+# Client (prefix with VITE_ — exposed to browser)
 VITE_API_URL=/api
 ```
 
@@ -81,12 +81,12 @@ VITE_API_URL=/api
 ```typescript
 // packages/server/src/config.ts
 const CONFIG = {
-  port: Number(process.env.PORT) || 3000,
+  port: Number(process.env.PORT) || 3771,
   nodeEnv: process.env.NODE_ENV || 'development',
   databaseUrl: process.env.DATABASE_URL || 'clitoris.db',
   sessionSecret: process.env.SESSION_SECRET,
   logLevel: process.env.LOG_LEVEL || 'info',
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:7878',
 } as const;
 
 // Validate required vars at startup
@@ -95,17 +95,21 @@ if (!CONFIG.sessionSecret) {
 }
 ```
 
-### LLM reads API keys on provider init
+### LLM keys are user-managed, not env vars
+
+API keys are stored in the `user_llm_keys` table and looked up per-request using the authenticated user's ID. The server fetches the key before calling `createProvider()`:
 
 ```typescript
-// packages/llm/src/providers/anthropic.ts
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// packages/server/src/routes/llm.ts
+const row = db
+  .prepare('SELECT api_key FROM user_llm_keys WHERE user_id = ? AND provider = ?')
+  .get(userId, providerName);
 
-if (!process.env.ANTHROPIC_API_KEY) {
-  throw new Error('ANTHROPIC_API_KEY is required for Claude provider');
+if (!row) {
+  return res.status(400).json({ error: { code: 'KEY_NOT_CONFIGURED', ... } });
 }
+
+const provider = createProvider(providerName, { apiKey: row.api_key });
 ```
 
 ### Client uses Vite env
@@ -126,10 +130,7 @@ cp .env.example .env
 # 2. Generate a session secret
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
-# 3. Add your Anthropic API key (get from console.anthropic.com)
-# Edit .env and set ANTHROPIC_API_KEY=sk-ant-...
-
-# 4. Start development
+# 3. Start development (no LLM key needed in .env — users add keys in Settings)
 pnpm dev
 ```
 

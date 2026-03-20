@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
-    "openai": "^4.80.0",
-    "@clitoris/shared": "workspace:*"
+    "@clitoris/shared": "workspace:*",
+    "@google/genai": "^1.46.0",
+    "openai": "^4.80.0"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "typescript": "^5.7.0"
   }
 }

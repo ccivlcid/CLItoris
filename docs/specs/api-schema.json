@@ -201,6 +201,19 @@
           "isAvailable": { "type": "boolean" }
         }
       },
+      "CliToolStatus": {
+        "type": "object",
+        "required": ["id", "name", "installed", "version", "authenticated", "models", "installCmd"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "installed": { "type": "boolean" },
+          "version": { "type": "string", "nullable": true },
+          "authenticated": { "type": "boolean" },
+          "models": { "type": "array", "items": { "type": "string" } },
+          "installCmd": { "type": "string", "nullable": true }
+        }
+      },
       "LocalModel": {
         "type": "object",
         "required": ["name", "size", "provider"],
@@ -824,8 +837,9 @@
     },
     "/llm/providers": {
       "get": {
-        "summary": "Get available LLM providers with auto-detection status",
+        "summary": "Local runtimes plus providers the user configured in Settings (session required; no server env API keys)",
         "tags": ["LLM"],
+        "security": [{ "session": [] }],
         "responses": {
           "200": {
             "description": "Provider list",
@@ -842,7 +856,42 @@
                 }
               }
             }
+          },
+          "401": { "description": "Not authenticated" }
+        }
+      }
+    },
+    "/llm/cli/status": {
+      "get": {
+        "summary": "CLI binary detection plus per-user auth/models from Settings keys and local CLI sessions",
+        "tags": ["LLM"],
+        "security": [{ "session": [] }],
+        "parameters": [
+          {
+            "name": "refresh",
+            "in": "query",
+            "schema": { "type": "string", "enum": ["1"] },
+            "description": "Set to 1 to bypass cache"
           }
+        ],
+        "responses": {
+          "200": {
+            "description": "CLI tool statuses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/CliToolStatus" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated" }
         }
       }
     },

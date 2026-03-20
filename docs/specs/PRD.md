@@ -39,6 +39,9 @@ All social interactions (post, follow, fork, star) are expressed as CLI commands
 | US-7 | User | Follow other users | I see their posts in my local feed |
 | US-8 | User | Filter feed by AI model | I can compare Claude vs GPT vs Llama outputs |
 | US-9 | User | Write in any language | The CLI flags work the same regardless of language |
+| US-20 | User | See intent/emotion metadata on posts | I can understand the tone at a glance |
+| US-21 | User | Read posts in my language | I can enjoy content written in other languages |
+| US-22 | User | Translation preserves tone and emotion | "ㅋㅋ 대박이다" feels like "omg no way lol", not "That is amazing." |
 | US-10 | Developer | Use keyboard shortcuts | I can navigate without a mouse |
 | US-11 | Developer | Login with my GitHub account | I don't need another password to remember |
 | US-12 | Developer | See my GitHub profile on CLItoris | My developer identity carries over |
@@ -81,6 +84,10 @@ Each post is displayed in two formats simultaneously:
 - `--tags`: Hashtags (comma-separated)
 - `--visibility`: Visibility scope (public, private, unlisted)
 - `--mention`: Mentions
+- `--intent`: Inferred communication intent (`casual` | `formal` | `question` | `announcement` | `reaction`)
+- `--emotion`: Inferred emotional tone (`neutral` | `happy` | `surprised` | `frustrated` | `excited` | `sad` | `angry`)
+
+`--intent` and `--emotion` are extracted automatically by the LLM during transformation — the user does not set these manually. They are stored in the DB and displayed as metadata on the post card.
 
 ### 4.3 Interactions
 
@@ -147,6 +154,60 @@ Users can switch between cloud and local models per task. Local models require n
 - Each post displays language via `--lang` tag
 - `--translate=auto` option for automatic translation
 - `--dual-format` option for original + translation side by side
+
+#### 4.5.1 Metadata Extraction (`transform`)
+
+When a user posts, the LLM performs structured metadata extraction using a dedicated JSON-output prompt:
+
+```json
+{
+  "message": "original text, unchanged",
+  "lang": "ISO 639-1 code (ko, en, ja, zh, ...)",
+  "intent": "casual | formal | question | announcement | reaction",
+  "emotion": "neutral | happy | surprised | frustrated | excited | sad | angry",
+  "tags": ["extracted", "hashtags"]
+}
+```
+
+**Rules:**
+- `message`: original text copied exactly as-is
+- `lang`: primary language detected from text
+- `intent`/`emotion`: inferred from tone, word choice, and structure
+- `tags`: only extracted when hashtags are explicitly present or topic is very clear
+- Always wrapped in `try/catch` — falls back to `{ intent: "neutral", emotion: "neutral" }` on parse failure
+
+This replaces the single-step CLI-string output with a structured two-phase approach:
+1. LLM returns JSON metadata → extracted and stored
+2. Server reconstructs the CLI command string from the JSON fields
+
+#### 4.5.2 Real-Time Translation (`translate`)
+
+When a feed post's `lang` differs from the viewer's `ui_lang`, the post is translated on the fly:
+
+**Flow:**
+1. Feed renders post with `post.lang !== user.ui_lang`
+2. Client checks translation cache (`translations` table) by `(post_id, target_lang)`
+3. **Cache hit** → return cached text immediately (no LLM call)
+4. **Cache miss** → call user's configured LLM with tone-aware translation prompt, cache result
+
+**Tone-aware translation principle:**
+Translation preserves `intent` and `emotion` metadata, not just literal meaning:
+```
+"ㅋㅋ 대박이다" (ko, casual, surprised) → "omg no way lol"   ✓
+"ㅋㅋ 대박이다"                          → "That is amazing." ✗ (wrong tone)
+```
+
+**Cost model:** Translation uses the **user's own LLM key** — no server-side LLM cost.
+
+**Cache policy:**
+- Cache stored per `(post_id, target_lang)` in the `translations` table
+- Cache never expires (translations are deterministic for a given post+lang pair)
+- Cache populated lazily on first view
+
+**UI:**
+- Original text always shown in the natural language panel
+- Translation shown inline below original when `ui_lang ≠ post.lang`, togglable
+- Badge: `--translated-from=ko` in `text-purple-400/70` style
 
 ### 4.6 User Profiles
 
@@ -349,7 +410,16 @@ Post {
   id, user_id, message_raw, message_cli,
   lang, tags[], mentions[], visibility,
   llm_model, parent_id (reply),
-  forked_from_id, created_at
+  forked_from_id, created_at,
+  intent (casual|formal|question|announcement|reaction),
+  emotion (neutral|happy|surprised|frustrated|excited|sad|angry)
+}
+
+Translation {
+  id, post_id, lang (target language),
+  text (translated content),
+  created_at
+  -- UNIQUE(post_id, lang) -- cache key
 }
 
 Follow { follower_id, following_id }
@@ -409,7 +479,12 @@ Analysis {
 ### Phase 3 — Expansion
 - [ ] Multi-LLM support (gpt-4o, llama-3)
 - [ ] Local LLM installation guide (`$ llm --install`)
-- [ ] Multilingual auto-translation
+- [ ] **Metadata extraction**: `intent` + `emotion` fields via JSON-output LLM prompt (section 4.5.1)
+- [ ] **Real-time translation**: tone-aware, cached in `translations` table, uses user's LLM key (section 4.5.2)
+  - DB: `posts.intent`, `posts.emotion` columns + `translations` table
+  - LLM: `packages/llm/prompts/transform.md` (JSON output), `packages/llm/prompts/translate.md`
+  - API: `POST /api/posts/:id/translate` (returns cached or fresh translation)
+  - UI: translation toggle below natural panel when `post.lang ≠ ui_lang`
 - [ ] Explore/trending
 - [ ] Custom LLM connections
 

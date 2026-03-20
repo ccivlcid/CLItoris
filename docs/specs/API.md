@@ -1,6 +1,6 @@
 # API.md — REST API Specification
 
-> **Source of truth** for all 29 REST API endpoints across 6 groups, request/response formats, and error handling.
+> **Source of truth** for all 47 REST API endpoints across 8 groups, request/response formats, and error handling.
 > Base URL: `/api`
 > Content-Type: `application/json`
 > Authentication: Session-based (express-session) via GitHub OAuth
@@ -267,7 +267,9 @@ llmModel:    enum ["claude-sonnet", "gpt-4o", "gemini-2.5-pro", "llama-3", "curs
     "starCount": 0,
     "replyCount": 0,
     "forkCount": 0,
-    "isStarred": false
+    "isStarred": false,
+    "intent": "announcement",
+    "emotion": "excited"
   }
 }
 ```
@@ -317,7 +319,9 @@ Get the global public feed. No authentication required.
       "starCount": 31,
       "replyCount": 9,
       "forkCount": 3,
-      "isStarred": false
+      "isStarred": false,
+      "intent": "announcement",
+      "emotion": "excited"
     }
   ],
   "meta": {
@@ -650,7 +654,11 @@ lang:     string, length 2
   "data": {
     "messageCli": "post --user=0xmitsuki.sh --lang=en --message=\"CLI flags as universal language layer\" --tags=cli-first --visibility=public",
     "model": "claude-sonnet",
-    "tokensUsed": 142
+    "tokensUsed": 142,
+    "lang": "en",
+    "tags": ["cli-first"],
+    "intent": "announcement",
+    "emotion": "excited"
   }
 }
 ```
@@ -665,24 +673,142 @@ lang:     string, length 2
 
 ---
 
+### POST `/posts/:id/translate`
+
+Translate a post into the specified language using the caller's LLM key. Returns cached result if available (no LLM call). Requires authentication.
+
+**Path Parameter:** `id` — post UUID
+
+**Request:**
+```json
+{
+  "targetLang": "ko"
+}
+```
+
+**Validation:**
+```
+targetLang: string, length 2, one of ["en", "ko", "zh", "ja"]
+```
+
+**Response:** `200 OK`
+```json
+{
+  "data": {
+    "translatedText": "ㅋㅋ 나도 완전 공감",
+    "sourceLang": "en",
+    "targetLang": "ko",
+    "cached": false
+  }
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `400` | Validation error or source lang equals target lang |
+| `401` | Not authenticated |
+| `404` | Post not found |
+| `400` | `KEY_NOT_CONFIGURED` — no LLM key saved for user |
+| `500` | LLM API error |
+
+---
+
 ### GET `/llm/providers`
 
-Get available LLM providers with auto-detection status. No authentication required.
+Returns **local runtimes** (Ollama, etc.) plus **providers the logged-in user has configured** in Settings (`user_llm_keys`). **Auth required.** Server `.env` does **not** supply cloud LLM API keys.
 
 **Response:** `200 OK`
 ```json
 {
   "data": [
-    { "provider": "anthropic", "source": "env:ANTHROPIC_API_KEY", "isAvailable": true },
-    { "provider": "gemini", "source": "file:~/.config/gcloud/application_default_credentials.json", "isAvailable": true },
-    { "provider": "openai", "source": null, "isAvailable": false },
     { "provider": "ollama", "source": "localhost:11434", "isAvailable": true },
-    { "provider": "cli:claude", "source": "path:claude", "isAvailable": true }
+    { "provider": "anthropic", "source": "user-settings", "isAvailable": true }
   ]
 }
 ```
 
-> Credential auto-detection logic: see `docs/llm/LLM_INTEGRATION.md` section 7.
+> Local runtime detection: `detectLocalRuntimes()` in `@clitoris/llm`. User keys: Settings → LLM keys.
+
+---
+
+### GET `/llm/models/:provider`
+
+Lists model ids for a cloud provider using the **logged-in user’s** key from Settings (`user_llm_keys`). **Auth required.**
+
+| Path param | Allowed values |
+|------------|------------------|
+| `provider` | `anthropic`, `openai`, `gemini` |
+
+**Response:** `200 OK`
+```json
+{ "data": ["claude-sonnet-4-20250514", "claude-3-5-haiku-20241022"] }
+```
+
+| Status | Meaning |
+|--------|---------|
+| `400` | Unknown `provider`, or no key saved for that provider |
+| `502` | Upstream list API failed (`MODELS_LIST_FAILED`) |
+
+---
+
+### POST `/api/llm/keys`
+
+Save or update a user's API key for a provider. Requires authentication.
+
+**Request:**
+```json
+{
+  "provider": "anthropic",
+  "apiKey": "sk-ant-api03-...",
+  "label": "My personal key",
+  "baseUrl": "https://..."
+}
+```
+
+**Validation:**
+```
+provider:  enum ["anthropic", "openai", "gemini", "api"]
+apiKey:    string, min 1
+label:     string, max 100 (optional)
+baseUrl:   string, valid URL (optional, only for "api" provider)
+```
+
+**Response: `201 Created`**
+```json
+{
+  "data": {
+    "provider": "anthropic",
+    "label": "My personal key"
+  }
+}
+```
+
+If a key for the same provider already exists, it is updated (upsert).
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `400` | Validation error |
+| `401` | Not authenticated |
+
+---
+
+### DELETE `/api/llm/keys/:provider`
+
+Remove a user's saved API key for a provider. Requires authentication.
+
+**Response: `200 OK`**
+```json
+{
+  "data": { "message": "Key removed" }
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `401` | Not authenticated |
 
 ---
 
@@ -705,9 +831,24 @@ Returns locally installed LLM models (Ollama).
 
 ## 6. GitHub
 
-### POST `/api/auth/github/sync`
+### POST `/api/users/sync-profile`
 
-Manually sync profile data from GitHub.
+Re-fetches GitHub public profile data (avatar, bio, repos count) and updates the user record.
+
+**Auth:** Yes
+
+**Response (200):**
+```json
+{
+  "data": { "synced": true }
+}
+```
+
+---
+
+### POST `/api/users/sync-activity`
+
+Imports GitHub public events as posts. Fetches the last 30 events and creates posts for PushEvent, PullRequestEvent, ReleaseEvent, CreateEvent, WatchEvent, ForkEvent. Already-imported events are skipped via the `github_synced_events` dedup table.
 
 **Auth:** Yes
 
@@ -715,38 +856,354 @@ Manually sync profile data from GitHub.
 ```json
 {
   "data": {
-    "synced": true,
-    "syncedAt": "2026-03-20T10:30:00Z",
-    "updated": ["avatarUrl", "bio"]
+    "created": 3,
+    "skipped": 27,
+    "scanned": 30
   }
 }
 ```
 
 ---
 
-### GET `/api/github/trending-repos`
+### GET `/api/github/stars`
 
-Returns repos most mentioned in posts this week.
+Returns repos the authenticated user has starred on GitHub (last 30, sorted by newest).
 
-**Auth:** No
+**Auth:** Yes (token optional — works without for public data)
 
 **Response (200):**
 ```json
 {
   "data": [
     {
-      "owner": "vercel",
-      "name": "next.js",
-      "mentionCount": 12,
-      "topTags": ["framework", "react"]
+      "starredAt": "2026-03-20T10:00:00Z",
+      "repo": {
+        "fullName": "vercel/next.js",
+        "name": "next.js",
+        "owner": "vercel",
+        "ownerAvatar": "https://github.com/vercel.png",
+        "description": "The React Framework",
+        "stars": 128000,
+        "forks": 27000,
+        "language": "TypeScript",
+        "url": "https://github.com/vercel/next.js",
+        "topics": ["react", "nextjs", "ssr"],
+        "pushedAt": "2026-03-19T18:00:00Z"
+      }
     }
   ]
 }
 ```
 
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `404` | User not found |
+| `502` | GitHub API error |
+
 ---
 
-## 7. Analyze
+### GET `/api/github/notifications`
+
+Returns unread GitHub notifications for the authenticated user.
+
+**Auth:** Yes (requires `notifications` scope)
+
+**Response (200):**
+```json
+{
+  "data": [
+    {
+      "id": "123456789",
+      "reason": "assign",
+      "unread": true,
+      "updatedAt": "2026-03-20T09:00:00Z",
+      "title": "Fix: memory leak in event loop",
+      "type": "Issue",
+      "repoFullName": "owner/repo",
+      "repoUrl": "https://github.com/owner/repo",
+      "url": "https://github.com/owner/repo/issues"
+    }
+  ]
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `403` | No GitHub token, or `notifications` scope missing |
+| `502` | GitHub API error |
+
+---
+
+### GET `/api/github/issues`
+
+Returns open issues and pull requests assigned to / created by / mentioning the authenticated user.
+
+**Auth:** Yes (requires `repo` scope)
+
+**Query Parameters:**
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `filter` | string | `assigned` | `assigned`, `created`, or `mentioned` |
+
+**Response (200):**
+```json
+{
+  "data": [
+    {
+      "id": 987654321,
+      "number": 42,
+      "title": "Add dark mode toggle",
+      "state": "open",
+      "type": "issue",
+      "url": "https://github.com/owner/repo/issues/42",
+      "repoFullName": "owner/repo",
+      "labels": [{ "name": "enhancement", "color": "a2eeef" }],
+      "author": "jiyeon_dev",
+      "createdAt": "2026-03-15T12:00:00Z",
+      "updatedAt": "2026-03-20T08:00:00Z"
+    }
+  ]
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `403` | No GitHub token, or `repo` scope missing |
+| `502` | GitHub API error |
+
+---
+
+### POST `/api/github/notifications/:id/mark-read`
+
+Marks a single GitHub notification thread as read.
+
+**Auth:** Yes
+
+**Path Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `id` | string | GitHub notification thread ID |
+
+**Response (200):**
+```json
+{
+  "data": { "ok": true }
+}
+```
+
+---
+
+### GET `/api/github/following`
+
+Returns the list of GitHub users the authenticated user follows, with CLItoris membership status for each.
+
+**Auth:** Yes (requires `read:user` scope)
+
+**Response (200):**
+```json
+{
+  "data": [
+    {
+      "githubLogin": "octocat",
+      "avatarUrl": "https://github.com/octocat.png",
+      "profileUrl": "https://github.com/octocat",
+      "clitorisUser": {
+        "username": "octocat_dev",
+        "displayName": "Octocat"
+      },
+      "isFollowingOnClitoris": false
+    }
+  ]
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `403` | No GitHub token, or `read:user` scope missing |
+| `502` | GitHub API error |
+
+---
+
+### POST `/api/github/sync-follows`
+
+Bulk-follows all GitHub following users who are registered on CLItoris. Skips users already followed. Returns created and skipped counts.
+
+**Auth:** Yes
+
+**Response (200):**
+```json
+{
+  "data": {
+    "followed": 3,
+    "skipped": 12,
+    "total": 15
+  }
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `403` | No GitHub token |
+| `502` | GitHub API error |
+
+---
+
+### GET `/api/github/followers`
+
+Returns the list of GitHub users who follow the authenticated user, with CLItoris membership status and mutual-follow status.
+
+**Auth:** Yes (requires `read:user` scope)
+
+**Response (200):**
+```json
+{
+  "data": [
+    {
+      "githubLogin": "jiyeon-kim",
+      "avatarUrl": "https://github.com/jiyeon-kim.png",
+      "profileUrl": "https://github.com/jiyeon-kim",
+      "clitorisUser": {
+        "username": "jiyeon_dev",
+        "displayName": "Jiyeon Kim"
+      },
+      "isFollowingOnClitoris": true,
+      "isFollowedBackOnClitoris": false
+    }
+  ]
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `403` | No GitHub token, or `read:user` scope missing |
+| `502` | GitHub API error |
+
+---
+
+### GET `/api/github/reviews`
+
+Returns open pull requests where the authenticated user has been requested as a reviewer (uses `review-requested:@me` GitHub search).
+
+**Auth:** Yes (requires `repo` scope)
+
+**Response (200):**
+```json
+{
+  "data": [
+    {
+      "id": 1234567890,
+      "number": 88,
+      "title": "feat: add dark mode",
+      "state": "open",
+      "url": "https://github.com/owner/repo/pull/88",
+      "repoFullName": "owner/repo",
+      "author": "contributor",
+      "createdAt": "2026-03-19T10:00:00Z",
+      "updatedAt": "2026-03-20T08:00:00Z",
+      "labels": [{ "name": "enhancement", "color": "a2eeef" }]
+    }
+  ]
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `403` | No GitHub token, or `repo` scope missing |
+| `502` | GitHub API error |
+
+---
+
+### GET `/api/github/contributions/:username`
+
+Returns the GitHub contribution graph data for any user. Uses GitHub GraphQL API. Authenticated users use their own token; unauthenticated requests use the server `GITHUB_TOKEN` fallback.
+
+**Auth:** Optional (uses `GITHUB_TOKEN` env var as fallback)
+
+**Path Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `username` | string | GitHub username |
+
+**Response (200):**
+```json
+{
+  "data": {
+    "totalContributions": 1247,
+    "weeks": [
+      {
+        "days": [
+          { "date": "2025-03-20", "count": 0, "level": 0 },
+          { "date": "2025-03-21", "count": 3, "level": 1 },
+          { "date": "2025-03-22", "count": 7, "level": 2 }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Level values: `0` = none, `1` = low (1–3), `2` = medium (4–6), `3` = high (7–9), `4` = very high (10+)
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `404` | GitHub user not found |
+| `502` | GitHub GraphQL API error |
+| `403` | No token available (unauthenticated + no `GITHUB_TOKEN`) |
+
+---
+
+## 7. Webhook
+
+### POST `/api/webhook/github`
+
+Receives GitHub webhook events and auto-creates posts for relevant event types. Validates the `X-Hub-Signature-256` HMAC-SHA256 signature using `GITHUB_WEBHOOK_SECRET`.
+
+**Auth:** No (verified via webhook signature header)
+
+**Headers:**
+| Header | Description |
+|--------|-------------|
+| `X-GitHub-Event` | Event type (`push`, `pull_request`, `release`, `create`) |
+| `X-Hub-Signature-256` | HMAC-SHA256 signature of the request body |
+| `X-GitHub-Delivery` | Unique delivery UUID |
+
+**Supported events:**
+| Event | Description | Post created |
+|-------|-------------|--------------|
+| `push` | Code pushed to branch | Yes — includes branch name, commit count, repo |
+| `pull_request` | PR opened/merged/closed | Yes — includes PR title, action, repo |
+| `release` | Release published | Yes — includes tag name, release name |
+| `create` | Branch or tag created | Yes — includes ref type and name |
+
+**Response (200):**
+```json
+{
+  "data": { "ok": true, "postId": "01968a3b-..." }
+}
+```
+
+**Response (204):** Returned for unsupported or ignored event types (no post created).
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `400` | Missing or invalid signature (`X-Hub-Signature-256`) |
+| `400` | Malformed payload |
+| `500` | Post creation failed |
+
+> Setup: In GitHub repository settings → Webhooks, set the Payload URL to `https://yourdomain/api/webhook/github`, Content type to `application/json`, and Secret to the value of `GITHUB_WEBHOOK_SECRET`.
+
+---
+
+## 8. Analyze
 
 ### POST `/api/analyze`
 
@@ -828,6 +1285,49 @@ List user's analyses.
   "meta": { "cursor": "next-cursor", "hasMore": true }
 }
 ```
+
+---
+
+### GET `/api/analyze/:id/download`
+
+Download the analysis result file. For `pptx` output type: returns a `.pptx` file attachment. For `video` output type: serves the animated HTML inline (`Content-Type: text/html`).
+
+**Auth:** Yes
+
+**Response:**
+- PPTX: `200 OK` with `Content-Disposition: attachment; filename="analysis-<id>.pptx"`
+- Video: `200 OK` with `Content-Type: text/html` (inline, opens in browser)
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `404` | Analysis not found or not completed |
+| `403` | Analysis belongs to another user |
+
+---
+
+### POST `/api/analyze/:id/share`
+
+Create a feed post from a completed analysis. The post includes the analysis summary as `messageRaw`, a generated CLI command as `messageCli`, and the repo attached as a `repo_attachment`.
+
+**Auth:** Yes
+
+**Response (201):**
+```json
+{
+  "data": {
+    "postId": "01968a3b-...",
+    "post": { /* full Post object */ }
+  }
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `404` | Analysis not found |
+| `403` | Analysis belongs to another user |
+| `400` | Analysis not yet completed |
 
 ---
 
@@ -924,7 +1424,7 @@ GET /api/posts/feed/global?cursor=2026-03-19T12:15:00Z&limit=20
 
 ## 10. Endpoint Summary
 
-29 endpoints across 6 groups.
+47 endpoints across 8 groups.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
@@ -932,37 +1432,56 @@ GET /api/posts/feed/global?cursor=2026-03-19T12:15:00Z&limit=20
 | `GET` | `/api/auth/github` | No | Initiate GitHub OAuth |
 | `GET` | `/api/auth/github/callback` | No | OAuth callback |
 | `POST` | `/api/auth/setup` | Partial | Complete profile setup |
-| `POST` | `/auth/logout` | Yes | Logout |
-| `GET` | `/auth/me` | Yes | Current user |
-| `PUT` | `/auth/me` | Yes | Update profile |
-| `DELETE` | `/auth/me` | Yes | Delete account |
+| `GET` | `/api/auth/me/pending` | No | Pending GitHub profile in session |
+| `POST` | `/api/auth/logout` | Yes | Logout |
+| `GET` | `/api/auth/me` | Yes | Current user |
+| `PUT` | `/api/auth/me` | Yes | Update profile |
+| `DELETE` | `/api/auth/me` | Yes | Delete account |
 | **Posts** | | | |
-| `POST` | `/posts` | Yes | Create post |
-| `GET` | `/posts/feed/global` | No | Global feed |
-| `GET` | `/posts/feed/local` | Yes | Local feed |
-| `GET` | `/posts/:id` | No | Single post |
-| `POST` | `/posts/:id/reply` | Yes | Reply to post |
-| `POST` | `/posts/:id/fork` | Yes | Fork post |
-| `POST` | `/posts/:id/star` | Yes | Toggle star |
-| `DELETE` | `/posts/:id` | Yes | Delete post |
-| `GET` | `/posts/by-llm/:model` | No | Posts by LLM |
+| `POST` | `/api/posts` | Yes | Create post |
+| `GET` | `/api/posts/feed/global` | No | Global feed |
+| `GET` | `/api/posts/feed/local` | Yes | Local feed |
+| `GET` | `/api/posts/:id` | No | Single post |
+| `POST` | `/api/posts/:id/reply` | Yes | Reply to post |
+| `POST` | `/api/posts/:id/fork` | Yes | Fork post |
+| `POST` | `/api/posts/:id/star` | Yes | Toggle star |
+| `DELETE` | `/api/posts/:id` | Yes | Delete post |
+| `GET` | `/api/posts/by-llm/:model` | No | Posts by LLM model |
 | **Users** | | | |
-| `GET` | `/users/@:username` | No | User profile |
-| `GET` | `/users/@:username/posts` | No | User posts |
-| `GET` | `/users/@:username/starred` | No | User starred |
-| `POST` | `/users/@:username/follow` | Yes | Toggle follow |
+| `GET` | `/api/users/@:username` | No | User profile |
+| `GET` | `/api/users/@:username/posts` | No | User posts |
+| `GET` | `/api/users/@:username/starred` | No | User starred posts |
+| `POST` | `/api/users/@:username/follow` | Yes | Toggle follow |
 | `GET` | `/api/users/@:username/repos` | No | User's GitHub repos |
+| `POST` | `/api/users/sync-profile` | Yes | Re-sync GitHub profile data |
+| `POST` | `/api/users/sync-activity` | Yes | Import GitHub events as posts |
 | **LLM** | | | |
-| `POST` | `/llm/transform` | Yes | LLM transformation |
-| `GET` | `/llm/providers` | No | Available LLM providers |
+| `POST` | `/api/llm/transform` | Yes | LLM transformation |
+| `GET` | `/api/llm/providers` | Yes | Local runtimes + user's configured providers |
+| `GET` | `/api/llm/cli/status` | Yes | CLI install probe + per-user auth/models |
+| `POST` | `/api/llm/keys` | Yes | Save user's LLM API key |
+| `DELETE` | `/api/llm/keys/:provider` | Yes | Remove user's LLM API key |
 | `GET` | `/api/llm/local-models` | Yes | Local Ollama models |
 | **GitHub** | | | |
-| `POST` | `/api/auth/github/sync` | Yes | Sync profile from GitHub |
-| `GET` | `/api/github/trending-repos` | No | Trending repos in posts |
+| `GET` | `/api/github/stars` | Yes | User's GitHub starred repos |
+| `GET` | `/api/github/notifications` | Yes | User's GitHub notifications |
+| `GET` | `/api/github/issues` | Yes | User's open issues & PRs |
+| `POST` | `/api/github/notifications/:id/mark-read` | Yes | Mark notification as read |
+| `GET` | `/api/github/following` | Yes | GitHub following list + CLItoris status |
+| `POST` | `/api/github/sync-follows` | Yes | Bulk-follow GitHub following on CLItoris |
+| `GET` | `/api/github/followers` | Yes | GitHub followers list + CLItoris status |
+| `GET` | `/api/github/reviews` | Yes | PR review requests for authenticated user |
+| `GET` | `/api/github/contributions/:username` | Optional | GitHub contribution graph (heatmap) |
+| **Webhook** | | | |
+| `POST` | `/api/webhook/github` | Signature | GitHub webhook → auto-create post |
 | **Analyze** | | | |
 | `POST` | `/api/analyze` | Yes | Start repo analysis |
-| `GET` | `/api/analyze/:id` | Yes | Get analysis result |
 | `GET` | `/api/analyze` | Yes | List user's analyses |
+| `GET` | `/api/analyze/:id` | Yes | Get analysis result |
+| `GET` | `/api/analyze/:id/download` | Yes | Download PPTX or view HTML video |
+| `POST` | `/api/analyze/:id/share` | Yes | Share analysis result as feed post |
+| **Health** | | | |
+| `GET` | `/api/health` | No | Server health check |
 
 ---
 

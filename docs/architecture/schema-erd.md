@@ -19,6 +19,8 @@ erDiagram
         TEXT github_profile_url "GitHub profile URL (nullable)"
         INTEGER github_repos_count "public repo count"
         TEXT github_connected_at "OAuth first connect timestamp"
+        TEXT github_access_token "OAuth access token (nullable)"
+        TEXT github_token_scope "granted OAuth scopes (nullable)"
         TEXT created_at "ISO 8601 timestamp"
     }
 
@@ -75,11 +77,19 @@ erDiagram
         TEXT created_at "ISO 8601 timestamp"
     }
 
+    github_synced_events {
+        TEXT event_id PK "GitHub event ID"
+        TEXT user_id FK "references users.id"
+        TEXT event_type "PushEvent | PullRequestEvent | etc."
+        TEXT synced_at "ISO 8601 timestamp"
+    }
+
     users ||--o{ posts : "creates"
     users ||--o{ follows : "follower"
     users ||--o{ follows : "following"
     users ||--o{ stars : "stars"
     users ||--o{ analyses : "requests"
+    users ||--o{ github_synced_events : "synced events"
     posts ||--o{ stars : "starred by"
     posts ||--o{ posts : "reply (parent_id)"
     posts ||--o{ posts : "fork (forked_from_id)"
@@ -97,6 +107,7 @@ erDiagram
 | `users` ↔ `posts` (via stars) | Many-to-Many | M:N | Users star posts |
 | `posts` → `repo_attachments` | One-to-One | 1:0..1 | A post can attach one repo |
 | `users` → `analyses` | One-to-Many | 1:N | A user requests many analyses |
+| `users` → `github_synced_events` | One-to-Many | 1:N | A user has many synced GitHub events (dedup log) |
 
 ## Cardinality
 
@@ -108,6 +119,7 @@ posts  1 ──── * posts          (one post has many replies)
 posts  1 ──── * posts          (one post has many forks)
 posts  1 ──── 0..1 repo_attachments  (one post attaches at most one repo)
 users  1 ──── * analyses       (one user requests many analyses)
+users  1 ──── * github_synced_events  (one user has many deduped event records)
 ```
 
 ## Indexes
@@ -146,6 +158,11 @@ graph LR
         A1["idx_analyses_user_id<br/>(user_id)"]
         A2["idx_analyses_status<br/>(status)"]
         A3["idx_analyses_repo<br/>(repo_owner, repo_name)"]
+    end
+
+    subgraph "github_synced_events indexes"
+        G1["PK (event_id)"]
+        G2["idx_github_synced_events_user<br/>(user_id)"]
     end
 ```
 

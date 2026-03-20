@@ -8,6 +8,11 @@
 | Term | Definition |
 |------|-----------|
 | **Analyze** | AI-powered GitHub repo analysis producing reports, PPTX, or video (`/analyze` route) |
+| **GitHub Feed** | Integrated view of the user's GitHub Stars, Notifications, and Issues/PRs (`/github` route) |
+| **GitHub sync** | Two operations: `sync-profile` (re-fetches avatar/bio) and `sync-activity` (imports events as posts) |
+| **github_synced_events** | Dedup table preventing the same GitHub event from being imported multiple times as posts |
+| **g-chord shortcut** | Two-key keyboard shortcut starting with `g` (e.g., `gh` = go home, `gs` = go settings). 600ms timeout |
+| **Seed** | Mock data script (`scripts/seed.ts`) that populates the DB with users, posts, stars, and follows for design preview |
 | **By LLM filter** | Browse posts filtered by which LLM model was used for transformation |
 | **CLI command** | A structured text representation of a post using flags (e.g., `post --user=name --message="text"`) |
 | **Composer** | The input area where users write natural language text to create a post |

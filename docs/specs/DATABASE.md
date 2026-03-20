@@ -95,6 +95,27 @@ CREATE UNIQUE INDEX idx_users_username ON users(username);
 | `github_repos_count` | INTEGER | NO | `0` | Number of public repos on GitHub |
 | `github_connected_at` | TEXT | NO | `datetime('now')` | When GitHub account was linked |
 | `created_at` | TEXT | NO | `datetime('now')` | Account creation timestamp |
+| `github_access_token` | TEXT | YES | NULL | OAuth access token (stored after login, used for GitHub API calls) |
+| `github_token_scope` | TEXT | YES | NULL | Granted OAuth scopes (e.g. `read:user user:email notifications repo`) |
+
+`github_access_token` and `github_token_scope` are added via migration `011_add_github_token.sql`:
+
+```sql
+-- 011_add_github_token.sql
+ALTER TABLE users ADD COLUMN github_access_token TEXT;
+ALTER TABLE users ADD COLUMN github_token_scope TEXT;
+```
+
+`top_languages` is added via migration `012_add_top_languages.sql`:
+
+```sql
+-- 012_add_top_languages.sql
+ALTER TABLE users ADD COLUMN top_languages TEXT NOT NULL DEFAULT '[]';
+```
+
+| Column | Type | Default | Description |
+|--------|------|---------|-------------|
+| `top_languages` | TEXT | `'[]'` | JSON array of top programming languages computed from public repos (e.g. `["TypeScript","Go","Rust"]`). Populated when `POST /api/users/sync-profile` is called. |
 
 ### 2.2 `posts`
 
@@ -138,6 +159,16 @@ CREATE INDEX idx_posts_visibility ON posts(visibility);
 | `parent_id` | TEXT | YES | NULL | FK → `posts.id` (reply chain) |
 | `forked_from_id` | TEXT | YES | NULL | FK → `posts.id` (fork source) |
 | `created_at` | TEXT | NO | `datetime('now')` | Post creation timestamp |
+| `intent` | TEXT | NO | `'neutral'` | LLM-extracted intent: `casual`, `formal`, `question`, `announcement`, `reaction` |
+| `emotion` | TEXT | NO | `'neutral'` | LLM-extracted emotion: `neutral`, `happy`, `surprised`, `frustrated`, `excited`, `sad`, `angry` |
+
+`intent` and `emotion` are added via migration `006_add_intent_emotion_to_posts.sql`:
+
+```sql
+-- 006_add_intent_emotion_to_posts.sql
+ALTER TABLE posts ADD COLUMN intent TEXT NOT NULL DEFAULT 'neutral';
+ALTER TABLE posts ADD COLUMN emotion TEXT NOT NULL DEFAULT 'neutral';
+```
 
 ### 2.3 `follows`
 
@@ -183,7 +214,86 @@ CREATE INDEX idx_stars_post_id ON stars(post_id);
 | `post_id` | TEXT | NO | FK → `posts.id` |
 | `created_at` | TEXT | NO | Timestamp of star action |
 
-### 2.5 `repo_attachments`
+### 2.5 `user_llm_keys`
+
+Stores user-provided API keys for LLM providers. Keys are entered by users in Settings and never stored in environment variables.
+
+```sql
+-- 004_create_llm_keys.sql
+CREATE TABLE IF NOT EXISTS user_llm_keys (
+  id          TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider    TEXT NOT NULL,
+  api_key     TEXT NOT NULL,
+  base_url    TEXT,
+  label       TEXT,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, provider)
+);
+
+CREATE INDEX IF NOT EXISTS idx_llm_keys_user_id ON user_llm_keys(user_id);
+```
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| `id` | TEXT | NO | UUID v7 primary key |
+| `user_id` | TEXT | NO | FK → `users.id` — key owner |
+| `provider` | TEXT | NO | Provider name: `anthropic`, `openai`, `gemini`, `api` |
+| `api_key` | TEXT | NO | User's API key for this provider |
+| `base_url` | TEXT | YES | Custom base URL (for `api` provider only) |
+| `label` | TEXT | YES | Optional user-assigned label |
+| `created_at` | TEXT | NO | When the key was saved |
+
+**Constraint**: One key per user per provider (`UNIQUE(user_id, provider)`). `POST /api/llm/keys` upserts on conflict.
+
+### 2.6 Language columns on `users`
+
+Users have two language preferences stored directly on the `users` table (added in migration `005_add_language_columns.sql`):
+
+```sql
+-- 005_add_language_columns.sql
+ALTER TABLE users ADD COLUMN ui_lang TEXT NOT NULL DEFAULT 'en';
+ALTER TABLE users ADD COLUMN default_post_lang TEXT NOT NULL DEFAULT 'auto';
+```
+
+| Column | Values | Default | Description |
+|--------|--------|---------|-------------|
+| `ui_lang` | `en`, `ko`, `zh`, `ja` | `en` | Interface display language |
+| `default_post_lang` | `auto`, `en`, `ko`, `zh`, `ja` | `auto` | Default language for new posts |
+
+When `default_post_lang` is `auto`, the server detects the language from the post content before calling the LLM.
+
+### 2.7 `translations`
+
+Caches tone-aware post translations. Populated lazily when `post.lang ≠ viewer.ui_lang`. Uses the user's own LLM key — no server-side cost.
+
+```sql
+-- 007_create_translations.sql
+CREATE TABLE IF NOT EXISTS translations (
+  id         TEXT PRIMARY KEY,
+  post_id    TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  lang       TEXT NOT NULL,      -- target language (ISO 639-1)
+  text       TEXT NOT NULL,      -- translated content
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(post_id, lang)          -- cache key: one translation per (post, target lang)
+);
+
+CREATE INDEX IF NOT EXISTS idx_translations_post_id ON translations(post_id);
+```
+
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| `id` | TEXT | NO | UUID v7 primary key |
+| `post_id` | TEXT | NO | FK → `posts.id` (cascade delete) |
+| `lang` | TEXT | NO | Target language code (e.g. `en`, `ko`, `ja`, `zh`) |
+| `text` | TEXT | NO | Translated post content |
+| `created_at` | TEXT | NO | When translation was generated |
+
+**Constraint**: `UNIQUE(post_id, lang)` — one cached translation per post per language. On cache hit, the LLM is never called.
+
+**Translation prompt**: `packages/llm/prompts/translate.md` — preserves `intent` and `emotion` metadata from the source post.
+
+### 2.8 `repo_attachments`
 
 Links GitHub repos to posts.
 
@@ -210,7 +320,7 @@ CREATE TABLE repo_attachments (
 | repo_language | TEXT | nullable | Primary programming language |
 | cached_at | TEXT | NOT NULL | When repo data was last fetched |
 
-### 2.6 `analyses`
+### 2.9 `analyses`
 
 Stores repo analysis requests and results.
 
@@ -247,6 +357,31 @@ CREATE TABLE analyses (
 | status | TEXT | NOT NULL | `pending`, `processing`, `completed`, `failed` |
 | duration_ms | INTEGER | nullable | Time taken in milliseconds |
 | created_at | TEXT | NOT NULL | Creation timestamp |
+
+### 2.10 `github_synced_events`
+
+Tracks GitHub events already imported as posts, preventing duplicate auto-posts on repeated sync calls.
+
+```sql
+-- 010_create_github_synced_events.sql
+CREATE TABLE IF NOT EXISTS github_synced_events (
+  event_id    TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  event_type  TEXT NOT NULL,
+  synced_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_github_synced_events_user ON github_synced_events(user_id);
+```
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| event_id | TEXT | PK | GitHub event ID (from GitHub API) |
+| user_id | TEXT | FK→users ON DELETE CASCADE | User who owns this event |
+| event_type | TEXT | NOT NULL | GitHub event type (e.g. `PushEvent`, `PullRequestEvent`) |
+| synced_at | TEXT | NOT NULL | When the event was imported |
+
+**Usage**: Before creating a post from a GitHub event, `POST /api/users/sync-activity` checks `SELECT 1 FROM github_synced_events WHERE event_id = ?`. If found, the event is skipped. After creation, the `event_id` is inserted here.
 
 ---
 
@@ -632,6 +767,44 @@ CREATE INDEX IF NOT EXISTS idx_analyses_status ON analyses(status);
 CREATE INDEX IF NOT EXISTS idx_analyses_repo ON analyses(repo_owner, repo_name);
 ```
 
+```sql
+-- 007_create_translations.sql
+-- (see section 2.7 above for full content)
+```
+
+```sql
+-- 008_add_intent_emotion_to_posts.sql
+-- (see section 2.2 intent/emotion columns above for full content)
+```
+
+```sql
+-- 009_add_llm_keys_table.sql
+-- (see section 2.5 user_llm_keys above for full content)
+```
+
+```sql
+-- 010_create_github_synced_events.sql
+CREATE TABLE IF NOT EXISTS github_synced_events (
+  event_id    TEXT PRIMARY KEY,
+  user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  event_type  TEXT NOT NULL,
+  synced_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_github_synced_events_user ON github_synced_events(user_id);
+```
+
+```sql
+-- 011_add_github_token.sql
+ALTER TABLE users ADD COLUMN github_access_token TEXT;
+ALTER TABLE users ADD COLUMN github_token_scope TEXT;
+```
+
+```sql
+-- 012_add_top_languages.sql
+ALTER TABLE users ADD COLUMN top_languages TEXT NOT NULL DEFAULT '[]';
+```
+
 ---
 
 ## 7. Access Patterns
@@ -652,6 +825,8 @@ CREATE INDEX IF NOT EXISTS idx_analyses_repo ON analyses(repo_owner, repo_name);
 | Create analysis | `analyses` | Medium | `idx_analyses_user_id` |
 | List user analyses | `analyses` | Medium | `idx_analyses_user_id` |
 | Filter analyses by status | `analyses` | Low | `idx_analyses_status` |
+| Check GitHub event dedup | `github_synced_events` | Medium | PK (`event_id`) |
+| List user's synced events | `github_synced_events` | Low | `idx_github_synced_events_user` |
 
 ---
 

@@ -7,20 +7,16 @@
 ## 1. Post Card (Dual Format)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ @username  domain.dev · 3m ago                    --lang=en │
-├────────────────────────────┬────────────────────────────────┤
-│                            │ CLI — open source        copy  │
-│  Natural language text     │                                │
-│  here. Multiple lines      │  post --user=name \           │
-│  supported.                │    --lang=en \                 │
-│                            │    --message="text" \          │
-│  #hashtag #another         │    --tags=hashtag,another \    │
-│                            │    --visibility=public         │
-│                            │                                │
-├────────────────────────────┴────────────────────────────────┤
-│  ↩ reply 5    ◇ fork 3    ★ star 42                        │
-└─────────────────────────────────────────────────────────────┘
+@jiyeon_dev  jiyeon.kim · 3m ago                               --lang=ko
+┌─────────────────────────┬──────────────────────────────────────┐
+│ ⓘ 자연어                │ ⊡ CLI — open source            copy │
+│                         │                                      │
+│ 바이브코딩하다가...      │ post --user=jiyeon.kim --lang=ko ¶  │
+│ #vibe-coding #thoughts  │   --message="observing AI-lang..." ¶│
+│                         │   --tags=vibe-coding,thoughts ¶      │
+│                         │   --visibility=public                │
+└─────────────────────────┴──────────────────────────────────────┘
+  ↵ reply 14   ○ fork 7   ★ star 42
 ```
 
 **Specifications:**
@@ -35,8 +31,13 @@
 | Panel split | `grid grid-cols-2` (desktop), `grid grid-cols-1` (mobile) |
 | Username | `text-amber-400 font-mono font-semibold` |
 | Timestamp | `text-gray-500 text-xs` |
-| Lang badge | `text-purple-400 text-[11px] border border-purple-400/30 px-1.5 py-0.5` |
-| Hashtags | `text-cyan-400` |
+| Lang badge | `text-purple-400 text-[11px] border border-purple-400/30 px-1.5 py-0.5` (right side of header row) |
+| Natural panel label | `ⓘ 자연어` — info icon + localized label, `text-gray-600 text-xs font-mono` |
+| CLI panel label | `⊡ CLI — open source` — terminal block icon, hyphen separator, `text-gray-600 text-xs font-mono` |
+| Hashtags | `text-cyan-400` (inline in post text) |
+| CLI line continuation | `¶` (pilcrow character), `text-gray-600` |
+| Translated text | `text-gray-400 text-sm italic border-l-2 border-purple-400/30 pl-2 mt-2` |
+| Translated-from badge | `text-purple-400/50 text-[10px] font-mono` (`--translated-from=ko`) |
 
 **JSX Implementation Reference:**
 
@@ -56,16 +57,23 @@
 
   {/* Dual Panel */}
   <div className="grid grid-cols-1 sm:grid-cols-2">
-    <div className="bg-[#16213e] p-4 text-gray-200 font-sans text-sm">{messageRaw}</div>
+    <div className="bg-[#16213e] p-4 text-gray-200 font-sans text-sm">
+      <div className="text-gray-600 text-xs font-mono mb-2">ⓘ 자연어</div>
+      {messageRaw}
+    </div>
     <div className="bg-[#0d1117] p-4 text-green-400 font-mono text-[13px]">
+      <div className="flex items-center justify-between text-gray-600 text-xs font-mono mb-2">
+        <span>⊡ CLI — open source</span>
+        <button className="hover:text-gray-300">copy</button>
+      </div>
       <pre className="whitespace-pre-wrap">{messageCli}</pre>
     </div>
   </div>
 
   {/* Action Bar */}
   <div className="border-t border-gray-700 px-4 py-2 flex gap-6 text-gray-500 text-xs font-mono">
-    <button className="hover:text-green-400">↩ reply {replyCount}</button>
-    <button className="hover:text-blue-400">◇ fork {forkCount}</button>
+    <button className="hover:text-green-400">↵ reply {replyCount}</button>
+    <button className="hover:text-blue-400">○ fork {forkCount}</button>
     <button className="hover:text-yellow-400">{isStarred ? '★' : '☆'} {starCount}</button>
   </div>
 </article>
@@ -75,7 +83,9 @@
 |----------|-------|
 | Action bar | `border-t border-gray-700 px-4 py-2 text-gray-500 text-xs` |
 | Action hover | `hover:text-green-400` (reply), `hover:text-blue-400` (fork), `hover:text-yellow-400` (star) |
-| Copy button | `text-gray-600 hover:text-gray-300 text-xs` |
+| Reply icon | `↵` (not `↩`) |
+| Fork icon | `○` (not `◇`) |
+| Copy button | `text-gray-600 hover:text-gray-300 text-xs` (inside CLI panel header, not action bar) |
 
 ---
 
@@ -85,24 +95,20 @@
 ┌────────────────┐
 │ // navigate    │  ← section label (text-gray-600, text-xs)
 │ $ feed --global│  ← active item (text-green-400, bg-[#0f3460])
-│   feed --local │  ← inactive item (text-gray-400)
-│   following    │
-│   explore      │
+│ $ feed --local │  ← inactive item (text-gray-400)
+│ $ following    │
+│ $ explore      │
 │                │
-│ // by LLM      │
+│ // my LLM      │  ← section name
 │ ● claude-sonnet│  ← dot indicator (green = active)
 │ ○ gpt-4o       │  ← dot indicator (gray = inactive)
 │ ○ llama-3      │
-│ ○ cursor       │
-│ ○ cli          │
-│ ○ api          │
-│ ○ custom       │
+│ + connect LLM  │  ← links to /settings?tab=cli
 │                │
 │ // me          │
-│ → @you.local   │
-│   my posts     │
-│   my posts --raw│
-│   starred      │
+│ ~ @you.local   │  ← tilde prefix
+│ $ my posts --raw│  ← $ prefix, --raw flag
+│ $ starred      │  ← $ prefix
 └────────────────┘
 ```
 
@@ -118,6 +124,10 @@
 | Active item | `text-green-400 bg-[#0f3460] pl-3 border-l-2 border-green-400` |
 | Inactive item | `text-gray-400 hover:text-gray-200 pl-3` |
 | Prompt symbol | `$` in `text-orange-400` (active), `text-gray-600` (inactive) |
+| LLM section name | `// my LLM` (not `// by LLM`) |
+| LLM connect button | `+ connect LLM` at bottom of LLM section; links to `/settings?tab=cli`; `text-gray-500 hover:text-green-400 text-xs font-mono` |
+| Me section username | `~` tilde prefix (not `→` arrow); `text-amber-400 font-mono` |
+| Me section nav items | `$` prefix with flag suffixes where applicable (e.g., `$ my posts --raw`, `$ starred`) |
 | Item padding | `py-1.5 px-3` |
 | Section gap | `mt-6` |
 
@@ -127,13 +137,12 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ > Write in any language. LLM translates to CLI.             │
+│ › 하고 싶은 말을 그냥 쓰세요. LLM이 CLI로 번역하고,         │
+│   둘 다 올라갑니다.                                         │
+│   (italic, dim — textarea placeholder, shown when empty)    │
 │                                                             │
-│ ┌─────────────────────────────────────────────────────────┐ │
-│ │ Type your post here...                              │   │ │
-│ └─────────────────────────────────────────────────────────┘ │
-│                                                             │
-│ Cmd+Enter · save as CLI    [claude-sonnet ▾]   [LLM → CLI ↗]│
+│ Cmd+Enter · 자연어 + CLI 를 포스트로 저장                   │
+│                           [claude-sonnet ▾]  [LLM → CLI ↗] │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -143,12 +152,13 @@
 |----------|-------|
 | Background | `bg-[#16213e]` |
 | Border | `border border-gray-700` |
-| Textarea bg | `bg-[#0d1117]` |
+| Textarea bg | transparent / no visible border when empty |
 | Textarea text | `text-gray-200 font-sans text-sm` |
-| Placeholder | `text-gray-600` |
-| Hint text | `text-gray-500 text-xs font-mono` |
+| Placeholder | `text-gray-600 italic` — localized: `하고 싶은 말을 그냥 쓰세요. LLM이 CLI로 번역하고, 둘 다 올라갑니다.` |
+| Hint text | `text-gray-500 text-xs font-mono` — `Cmd+Enter · 자연어 + CLI 를 포스트로 저장` |
 | Model selector | `bg-[#0d1117] border border-gray-700 text-gray-300 text-xs px-3 py-1.5` |
-| Submit button | `bg-green-400/10 text-green-400 border border-green-400/30 px-4 py-1.5 font-mono text-sm hover:bg-green-400/20` |
+| Transform button | `bg-green-400/10 text-green-400 border border-green-400/30 px-4 py-1.5 font-mono text-sm hover:bg-green-400/20` — label `LLM → CLI ↗`; triggers **transform** action (not submit) |
+| Submit trigger | `Cmd+Enter` keyboard shortcut — posts after transform |
 
 ---
 
@@ -156,9 +166,11 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ terminal.social / feed · CLI · LLM posts   ·  all posts    │
+│ terminal.social / 자연어 + CLI · LLM 공유 · all posts open source │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+The subtitle area shows page-specific context tags separated by `·`. Example shown is for the global feed.
 
 | Property | Value |
 |----------|-------|
@@ -167,6 +179,7 @@
 | Border bottom | `border-b border-gray-700` |
 | Logo | `text-gray-200 font-mono font-bold` |
 | Breadcrumb separator | `/` in `text-gray-600` |
+| Subtitle tags | `text-gray-400 text-sm font-mono` separated by `·` in `text-gray-600` |
 | Breadcrumb item | `text-gray-400 hover:text-gray-200 text-sm font-mono` |
 
 ---
@@ -174,14 +187,14 @@
 ## 5. Action Counters
 
 ```
-↩ reply 5    ◇ fork 3    ★ star 42
+↵ reply 5    ○ fork 3    ★ star 42
 ```
 
 | Property | Default | Hover | Active |
 |----------|---------|-------|--------|
-| Reply | `text-gray-500` | `text-green-400` | `text-green-400` |
-| Fork | `text-gray-500` | `text-blue-400` | `text-blue-400` |
-| Star | `text-gray-500` | `text-yellow-400` | `text-yellow-400` |
+| Reply (`↵`) | `text-gray-500` | `text-green-400` | `text-green-400` |
+| Fork (`○`) | `text-gray-500` | `text-blue-400` | `text-blue-400` |
+| Star (`★`) | `text-gray-500` | `text-yellow-400` | `text-yellow-400` |
 | Font | `text-xs font-mono` | — | — |
 | Spacing | `gap-6` between actions | — | — |
 | Icon | Unicode characters only (no icon library) | — | — |
@@ -214,9 +227,9 @@ Inside the CLI panel, apply these colors to different token types:
 | Flag name | `--user`, `--lang`, `--tags` | `text-sky-400` |
 | Flag value (string) | `"hello world"` | `text-amber-400` |
 | Flag value (enum) | `public`, `true` | `text-purple-400` |
-| Operator | `=`, `\` | `text-gray-500` |
+| Operator | `=` | `text-gray-500` |
 | Comment | `#` | `text-gray-600 italic` |
-| Line continuation | `\` | `text-gray-600` |
+| Line continuation | `¶` (pilcrow) | `text-gray-600` |
 
 ---
 
