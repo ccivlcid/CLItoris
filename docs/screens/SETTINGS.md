@@ -41,6 +41,24 @@
 │ → settings │  │                                                       │   │
 │            │  └───────────────────────────────────────────────────────┘   │
 │            │                                                             │
+│            │  ┌─ GitHub Connection ─────────────────────────────────┐   │
+│            │  │                                                       │   │
+│            │  │  // github integration                                │   │
+│            │  │                                                       │   │
+│            │  │  $ github --status                                    │   │
+│            │  │  > connected: github.com/jiyeon-kim                   │   │
+│            │  │  > scope: read:user, user:email                       │   │
+│            │  │  > synced: 2026-03-20T10:30:00Z                       │   │
+│            │  │                                                       │   │
+│            │  │  $ set --auto-sync=on                                 │   │
+│            │  │  info: profile syncs with github daily.               │   │
+│            │  │                                                       │   │
+│            │  │  ┌──────────────────────────────┐                     │   │
+│            │  │  │ [Enter] sync now             │                     │   │
+│            │  │  └──────────────────────────────┘                     │   │
+│            │  │                                                       │   │
+│            │  └───────────────────────────────────────────────────────┘   │
+│            │                                                             │
 │            │  ┌─ Danger Zone ────────────────────────────────────────┐   │
 │            │  │                                                       │   │
 │            │  │  // danger                                            │   │
@@ -129,6 +147,23 @@ The success toast appears top-right as a brief inline message: `text-emerald-400
 │  │                            │  │
 │  └────────────────────────────┘  │
 │                                 │
+│  ┌─ GitHub ─────────────────┐  │
+│  │                            │  │
+│  │  // github integration    │  │
+│  │                            │  │
+│  │  $ github --status        │  │
+│  │  > connected:             │  │
+│  │  github.com/jiyeon-kim    │  │
+│  │  > synced: 2026-03-20     │  │
+│  │                            │  │
+│  │  $ set --auto-sync=on     │  │
+│  │                            │  │
+│  │  ┌──────────────────────┐  │  │
+│  │  │ [Enter] sync now     │  │  │
+│  │  └──────────────────────┘  │  │
+│  │                            │  │
+│  └────────────────────────────┘  │
+│                                 │
 │  ┌─ Danger Zone ─────────────┐  │
 │  │                            │  │
 │  │  // danger                 │  │
@@ -213,6 +248,17 @@ The success toast appears top-right as a brief inline message: `text-emerald-400
         />
       </SettingsForm>
 
+      <GitHubConnection>              // packages/client/src/components/settings/GitHubConnection.tsx
+        <SectionLabel />              // "// github integration"
+        <GitHubStatus />              // packages/client/src/components/settings/GitHubStatus.tsx
+          ├── connection status (connected/disconnected)
+          ├── GitHub username + link
+          ├── OAuth scope
+          └── last sync timestamp
+        <AutoSyncToggle />            // packages/client/src/components/settings/AutoSyncToggle.tsx
+        <SyncNowButton />             // packages/client/src/components/settings/SyncNowButton.tsx
+      </GitHubConnection>
+
       <DangerZone>                     // packages/client/src/components/settings/DangerZone.tsx
         <SectionLabel />              // "// danger"
         <DeleteAccountButton />       // packages/client/src/components/settings/DeleteAccountButton.tsx
@@ -262,6 +308,17 @@ The success toast appears top-right as a brief inline message: `text-emerald-400
   error: string | null;
   successMessage: string | null;
 
+  // GitHub connection state
+  githubConnected: boolean;
+  githubUsername: string | null;
+  githubSyncedAt: string | null;
+  autoSync: boolean;
+  isSyncing: boolean;
+
+  // GitHub actions
+  syncGitHub: () => Promise<void>;
+  toggleAutoSync: () => Promise<void>;
+
   // Actions
   initFromUser: (user: User) => void;
   setField: (field: string, value: string) => void;
@@ -303,6 +360,8 @@ interface User {
 |----------------------------|-----------------------|---------|----------------------------------|
 | Click "Apply changes"      | `/api/auth/me`        | PUT     | Update user profile settings     |
 | Click "$ confirm" (delete) | `/api/auth/me`        | DELETE  | Delete user account permanently  |
+| Click "sync now"             | `/api/auth/github/sync`  | POST    | Sync profile data from GitHub |
+| Toggle auto-sync             | `/api/auth/me`           | PUT     | Update auto-sync preference   |
 
 **Update request payload (PUT /api/auth/me):**
 ```json
@@ -314,12 +373,38 @@ interface User {
 }
 ```
 
-**Success (200):** Update `authStore.user`, show success toast "Settings updated", set `isDirty` to false.
+**Success response (200):**
+```json
+{
+  "id": "01968a3b-...",
+  "username": "jiyeon_dev",
+  "displayName": "New Name",
+  "domain": "newdomain.dev",
+  "bio": "Updated bio text",
+  "avatarUrl": "https://example.com/avatar.png",
+  "createdAt": "2026-03-01T00:00:00Z"
+}
+```
+Update `authStore.user`, show success toast "Settings updated", set `isDirty` to false.
 
 **Delete request (DELETE /api/auth/me):**
 No body required. Server validates session.
 
 **Success (200):** Clear `authStore.user`, redirect to `/login`.
+```json
+{ "message": "Account deleted successfully" }
+```
+
+**Sync response (POST /api/auth/github/sync, 200):**
+```json
+{
+  "displayName": "Jiyeon Kim",
+  "avatarUrl": "https://avatars.githubusercontent.com/u/...",
+  "bio": "Software Engineer",
+  "syncedAt": "2026-03-20T10:30:00Z"
+}
+```
+Update `authStore.user` with synced fields, update `githubSyncedAt`.
 
 > Note: The PUT and DELETE endpoints on `/api/auth/me` are implied by the architecture but not yet defined in API.md. They should be added to the API spec.
 
@@ -348,6 +433,10 @@ No body required. Server validates session.
 | Keyboard: `Escape`             | Press (in dialog) | Closes confirmation dialog                                      |
 | Success toast                  | Auto              | Appears top-right; auto-dismisses after 3 seconds              |
 | Navigate away (dirty form)     | Route change      | No blocking -- changes are silently discarded                   |
+| "Sync now" button            | Click             | Calls POST `/api/auth/github/sync`; updates synced timestamp   |
+| "Sync now" button            | Click (syncing)   | Button is `opacity-40 cursor-not-allowed`; no API call         |
+| Auto-sync toggle             | Click             | Toggles `autoSync` setting; calls PUT `/api/auth/me`           |
+| GitHub profile link          | Click             | Opens github.com profile in new tab                             |
 
 ### Validation Rules (Client-side)
 
@@ -413,6 +502,48 @@ No body required. Server validates session.
 - Confirm button text changes to `deleting...`
 - Both buttons get `opacity-40 cursor-not-allowed`
 - Confirmation input becomes `disabled`
+
+### GitHub Sync Loading
+
+```
+│  $ github --status                                    │
+│  > connected: github.com/jiyeon-kim                   │
+│  > syncing...                                         │
+│                                                       │
+│  ┌──────────────────────────────┐                     │
+│  │ syncing...                   │  ← disabled          │
+│  └──────────────────────────────┘                     │
+```
+
+- Sync button text changes to `syncing...`
+- Button gets `opacity-40 cursor-not-allowed`
+- Status line shows `> syncing...` with opacity pulse
+
+### GitHub Disconnected State
+
+```
+┌─ GitHub Connection ─────────────────────────────────┐
+│                                                       │
+│  // github integration                                │
+│                                                       │
+│  $ github --status                                    │
+│  > not connected                                      │
+│                                                       │
+│  Connect your GitHub account to sync your profile     │
+│  and enable repo analysis.                            │
+│                                                       │
+│  ┌──────────────────────────────┐                     │
+│  │ $ ssh --connect=github      │                      │
+│  └──────────────────────────────┘                     │
+│                                                       │
+└───────────────────────────────────────────────────────┘
+```
+
+**Styling:**
+- Status text `> not connected`: `text-yellow-400 font-mono text-sm`
+- Description: `text-gray-400 font-sans text-sm`
+- Connect button: Same as primary action button style
+- Clicking connect navigates to GitHub OAuth flow (`/api/auth/github`)
 
 ---
 
@@ -522,6 +653,12 @@ Appears inside the confirmation dialog.
 | Success toast | `settings-success-toast` | E2E: verify save success |
 | Settings error | `settings-error` | E2E: verify error display |
 | Settings form | `settings-form` | E2E: verify form visible |
+| GitHub status section | `github-connection` | E2E: verify GitHub connection info |
+| GitHub sync button | `github-sync-button` | E2E: trigger GitHub sync |
+| GitHub auto-sync toggle | `github-auto-sync` | E2E: toggle auto-sync |
+| GitHub profile link | `github-profile-link` | E2E: verify GitHub link |
+| GitHub connect button | `github-connect-button` | E2E: initiate GitHub OAuth (disconnected state) |
+| GitHub not connected status | `github-not-connected` | E2E: verify disconnected state |
 
 ---
 
@@ -537,12 +674,17 @@ Appears inside the confirmation dialog.
 | Delete confirmation | Input has `aria-label="Type your username to confirm deletion"` |
 | Success toast | `role="status"` with `aria-live="polite"` |
 | Danger zone | `aria-label="Danger zone - account deletion"` on container |
+| GitHub section | `aria-label="GitHub connection settings"` on container |
+| Sync button | `aria-label="Sync profile with GitHub"`, `aria-busy="true"` when syncing |
+| Auto-sync toggle | `role="switch"` with `aria-checked="true/false"` |
+| GitHub connect button | `aria-label="Connect GitHub account"` (disconnected state) |
+| GitHub not connected | `role="status"` with connection status text |
 
 ---
 
 ## See Also
 
-- [DESIGN_GUIDE.md](../guides/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
+- [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
 - [API.md](../specs/API.md) — Endpoint request/response details
 - [CONVENTIONS.md](../guides/CONVENTIONS.md) — Coding rules for implementation
 - [USER_PROFILE.md](./USER_PROFILE.md) — Related screen specification

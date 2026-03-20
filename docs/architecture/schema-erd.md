@@ -1,6 +1,6 @@
 # Schema ERD — Database Entity Relationship Diagram
 
-> **Source of truth** for database entity relationships, cardinality, and design decisions.
+> Relationships diagram only. For full schema with column types, defaults, and indexes, see [`DATABASE.md`](../specs/DATABASE.md).
 
 ## Mermaid Diagram
 
@@ -9,11 +9,16 @@ erDiagram
     users {
         TEXT id PK "UUID v7"
         TEXT username UK "unique handle"
-        TEXT password_hash "bcrypt hash (never exposed)"
         TEXT domain "custom domain (nullable)"
         TEXT display_name "display name (nullable)"
         TEXT bio "profile bio (nullable)"
         TEXT avatar_url "avatar URL (nullable)"
+        TEXT github_id UK "GitHub OAuth ID"
+        TEXT github_username "GitHub username"
+        TEXT github_avatar_url "GitHub avatar (nullable)"
+        TEXT github_profile_url "GitHub profile URL (nullable)"
+        INTEGER github_repos_count "public repo count"
+        TEXT github_connected_at "OAuth first connect timestamp"
         TEXT created_at "ISO 8601 timestamp"
     }
 
@@ -44,13 +49,41 @@ erDiagram
         TEXT created_at "ISO 8601 timestamp"
     }
 
+    repo_attachments {
+        TEXT post_id PK_FK "references posts.id"
+        TEXT repo_owner "GitHub repo owner"
+        TEXT repo_name "GitHub repo name"
+        INTEGER repo_stars "cached star count"
+        INTEGER repo_forks "cached fork count"
+        TEXT repo_language "primary language (nullable)"
+        TEXT cached_at "last cache timestamp"
+    }
+
+    analyses {
+        TEXT id PK "UUID v7"
+        TEXT user_id FK "references users.id"
+        TEXT repo_owner "GitHub repo owner"
+        TEXT repo_name "GitHub repo name"
+        TEXT output_type "report | pptx | video"
+        TEXT llm_model "LLM model used"
+        TEXT lang "output language"
+        TEXT options_json "JSON options"
+        TEXT result_url "download URL (nullable)"
+        TEXT result_summary "brief summary (nullable)"
+        TEXT status "pending | processing | completed | failed"
+        INTEGER duration_ms "time taken (nullable)"
+        TEXT created_at "ISO 8601 timestamp"
+    }
+
     users ||--o{ posts : "creates"
     users ||--o{ follows : "follower"
     users ||--o{ follows : "following"
     users ||--o{ stars : "stars"
+    users ||--o{ analyses : "requests"
     posts ||--o{ stars : "starred by"
     posts ||--o{ posts : "reply (parent_id)"
     posts ||--o{ posts : "fork (forked_from_id)"
+    posts ||--o| repo_attachments : "attaches"
 ```
 
 ## Relationships
@@ -62,6 +95,8 @@ erDiagram
 | `posts` → `posts` (forked_from_id) | Self-referencing | 1:N | A post can be forked many times |
 | `users` ↔ `users` (via follows) | Many-to-Many | M:N | Users follow each other |
 | `users` ↔ `posts` (via stars) | Many-to-Many | M:N | Users star posts |
+| `posts` → `repo_attachments` | One-to-One | 1:0..1 | A post can attach one repo |
+| `users` → `analyses` | One-to-Many | 1:N | A user requests many analyses |
 
 ## Cardinality
 
@@ -71,6 +106,8 @@ users  * ──── * users          (many-to-many via follows)
 users  * ──── * posts          (many-to-many via stars)
 posts  1 ──── * posts          (one post has many replies)
 posts  1 ──── * posts          (one post has many forks)
+posts  1 ──── 0..1 repo_attachments  (one post attaches at most one repo)
+users  1 ──── * analyses       (one user requests many analyses)
 ```
 
 ## Indexes
@@ -79,6 +116,7 @@ posts  1 ──── * posts          (one post has many forks)
 graph LR
     subgraph "users indexes"
         U1["idx_users_username<br/>UNIQUE (username)"]
+        U2["idx_users_github_id<br/>UNIQUE (github_id)"]
     end
 
     subgraph "posts indexes"
@@ -97,6 +135,17 @@ graph LR
     subgraph "stars indexes"
         S1["PK (user_id, post_id)"]
         S2["idx_stars_post_id<br/>(post_id)"]
+    end
+
+    subgraph "repo_attachments indexes"
+        R1["PK (post_id)"]
+        R2["idx_repo_attachments_repo<br/>(repo_owner, repo_name)"]
+    end
+
+    subgraph "analyses indexes"
+        A1["idx_analyses_user_id<br/>(user_id)"]
+        A2["idx_analyses_status<br/>(status)"]
+        A3["idx_analyses_repo<br/>(repo_owner, repo_name)"]
     end
 ```
 

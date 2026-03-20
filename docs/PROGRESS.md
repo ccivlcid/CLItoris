@@ -31,7 +31,7 @@ Phase 0 is **complete**. All documentation, configuration files, and project sca
 - [x] README.md — Public-facing readme
 - [x] Monorepo folder structure (`packages/client`, `server`, `shared`, `llm`)
 - [x] `docs/guides/CONVENTIONS.md` — Strict coding rules
-- [x] `docs/guides/DESIGN_GUIDE.md` — Visual system and component specs
+- [x] `docs/design/DESIGN_GUIDE.md` — Visual system and component specs
 - [x] `docs/guides/PROMPTS.md` — Vibe coding prompt templates
 - [x] `docs/specs/PRD.md` — Product requirements document
 - [x] `docs/specs/DATABASE.md` — Database design and reference
@@ -43,7 +43,7 @@ Phase 0 is **complete**. All documentation, configuration files, and project sca
 - [x] `docs/architecture/frontend-imports.mmd` — Client import graph
 - [x] `docs/architecture/org-chart.mmd` — Monorepo folder hierarchy
 - [x] `docs/architecture/schema-erd.md` — Database ERD and data flows
-- [x] `docs/OVERVIEW.md` — Project overview
+- [x] `docs/GLOSSARY.md` — Unified terminology index (extracted from OVERVIEW.md)
 - [x] `docs/PROGRESS.md` — This file
 
 - [x] `package.json` (root) — pnpm workspace config
@@ -89,7 +89,7 @@ Phase 0 is **complete**. All documentation and configuration files are in place.
 
 | Feature | Acceptance Criteria |
 |---------|-------------------|
-| User registration/login | User can register with username/password, login, and maintain session across page reloads |
+| GitHub OAuth login | User can login with GitHub OAuth, complete profile setup, and maintain session across page reloads |
 | Post creation (dual format) | User writes natural language, LLM transforms to CLI, both display side by side in a post card |
 | LLM transformation | Anthropic provider works with claude-sonnet; transformation completes in < 3 seconds |
 | Global feed | Feed loads 20 posts with cursor-based pagination; infinite scroll works without duplicates |
@@ -162,4 +162,4 @@ Phase 0 is **complete**. All documentation and configuration files are in place.
 
 - [CLAUDE.md](../CLAUDE.md) — Project overview and documentation map
 - [PRD.md](./specs/PRD.md) — Product requirements and MVP phases
-- [OVERVIEW.md](./OVERVIEW.md) — Project vision and glossary
+- [GLOSSARY.md](./GLOSSARY.md) — Unified terminology index

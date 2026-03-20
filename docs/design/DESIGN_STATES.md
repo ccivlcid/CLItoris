@@ -201,6 +201,68 @@ All empty states use terminal-style messaging with monospace font and muted colo
 
 ---
 
+## 5.5. Form Validation States
+
+All form elements follow the same terminal-style validation feedback. Validation messages appear directly below the input with `mt-1`.
+
+### Success State
+
+When a field passes validation after user correction (e.g., settings saved, valid domain entered):
+
+| Property | Value |
+|----------|-------|
+| Border | `border-emerald-400` |
+| Ring | `ring-1 ring-emerald-400/50` |
+| Message | `text-emerald-400 text-xs font-mono mt-1` |
+| Example | `$ ok: display name updated` |
+
+> Success borders appear briefly (1.5s) then revert to default. Do not persist success styling.
+
+### Warning State
+
+When a field value is technically valid but may cause issues (e.g., bio near max length, unusual domain format):
+
+| Property | Value |
+|----------|-------|
+| Border | `border-amber-400` |
+| Ring | `ring-1 ring-amber-400/50` |
+| Message | `text-amber-400 text-xs font-mono mt-1` |
+| Example | `$ warn: 280/300 characters used` |
+
+### Error State
+
+When a field fails validation (documented in DESIGN_UI.md §6, repeated here for completeness):
+
+| Property | Value |
+|----------|-------|
+| Border | `border-red-400` |
+| Ring | `ring-1 ring-red-400/50` |
+| Message | `text-red-400 text-xs font-mono mt-1` |
+| Example | `$ error: username is required` |
+
+### Validation Timing
+
+| Trigger | Behavior |
+|---------|----------|
+| On blur | Validate the field when the user leaves it |
+| On submit | Validate all fields; focus the first invalid field |
+| On keyup (after first error) | Re-validate the errored field as the user types |
+| Reset | Clear validation state when the user modifies the field value |
+
+### Validation Message Format
+
+All validation messages use terminal prompt style:
+
+```
+✅  $ ok: <message>        → text-emerald-400
+⚠️  $ warn: <message>      → text-amber-400
+❌  $ error: <message>     → text-red-400
+```
+
+> The emoji prefixes above are for documentation only. In the actual UI, **do not render emoji**. Use text color alone to distinguish severity.
+
+---
+
 ## 6. Error States
 
 ### 6.1 404 Page

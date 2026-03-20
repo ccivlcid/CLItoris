@@ -440,8 +440,8 @@ logs/
 
 ## See Also
 
-- [docs/OVERVIEW.md](../OVERVIEW.md) -- Project overview and goals
+- [docs/specs/PRD.md](../specs/PRD.md) -- Product requirements and project overview
 - [docs/specs/PRD.md](../specs/PRD.md) -- Product requirements
 - [docs/specs/API.md](../specs/API.md) -- API specification
 - [docs/specs/DATABASE.md](../specs/DATABASE.md) -- Database schema
-- [docs/specs/LLM_INTEGRATION.md](../specs/LLM_INTEGRATION.md) -- LLM transformation logic
+- [docs/llm/LLM_INTEGRATION.md](../llm/LLM_INTEGRATION.md) -- LLM transformation logic

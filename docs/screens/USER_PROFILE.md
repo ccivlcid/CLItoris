@@ -31,16 +31,19 @@
 │            │  │                                                       │   │
 │ // by LLM  │  │  Bio text goes here. One or two lines max.            │   │
 │ ● claude   │  │                                                       │   │
-│ ○ gpt-4o   │  │  42 followers · 18 following · 67 posts               │   │
-│ ○ llama-3  │  │                                                       │   │
-│            │  │  ┌──────────────────┐                                 │   │
-│ // me      │  │  │ $ follow @user   │  ← only if viewing other user  │   │
-│ → @you     │  │  └──────────────────┘                                 │   │
+│ ○ gpt-4o   │  │  // github                                            │   │
+│ ○ llama-3  │  │  ■ github.com/username                                │   │
+│            │  │  repos: 42 · mass-followers: 128 · top: TS, Go        │   │
+│ // me      │  │                                                       │   │
+│ → @you     │  │  42 followers · 18 following · 67 posts               │   │
 │   my posts │  │                                                       │   │
-│   starred  │  └───────────────────────────────────────────────────────┘   │
+│   starred  │  │  ┌──────────────────┐                                 │   │
+│            │  │  │ $ follow @user   │  ← only if viewing other user  │   │
+│            │  │  └──────────────────┘                                 │   │
+│            │  └───────────────────────────────────────────────────────┘   │
 │            │                                                             │
 │            │  ┌─ Tabs ───────────────────────────────────────────────┐   │
-│            │  │  [posts]    [starred]    [posts --raw]                │   │
+│            │  │  [posts]    [starred]    [repos]    [posts --raw]     │   │
 │            │  └──────────────────────────────────────────────────────┘   │
 │            │                                                             │
 │            │  ┌─ Post Card ──────────────────────────────────────────┐   │
@@ -141,11 +144,17 @@
           ├── followerCount
           ├── followingCount
           └── postCount
+        <GitHubInfo />                // packages/client/src/components/profile/GitHubInfo.tsx
+          ├── githubUrl (link to github.com)
+          ├── reposCount
+          ├── githubFollowers
+          └── topLanguages
         <FollowButton />              // packages/client/src/components/profile/FollowButton.tsx
       </ProfileHeader>
       <ProfileTabs>                    // packages/client/src/components/profile/ProfileTabs.tsx
         ├── "posts"
         ├── "starred"
+        ├── "repos"
         └── "posts --raw"
       </ProfileTabs>
       <PostList>                       // packages/client/src/components/post/PostList.tsx
@@ -187,6 +196,12 @@
     displayName: string;
     bio: string | null;
     avatarUrl: string | null;
+    // GitHub fields
+    githubUsername: string | null;
+    githubProfileUrl: string | null;
+    githubReposCount: number;
+    githubFollowers: number;
+    topLanguages: string[];
     createdAt: string;
     followerCount: number;
     followingCount: number;
@@ -200,7 +215,7 @@
   hasMore: boolean;
 
   // Active tab
-  activeTab: "posts" | "starred" | "raw";
+  activeTab: "posts" | "starred" | "repos" | "raw";
 
   // Loading / error
   isLoadingProfile: boolean;
@@ -212,7 +227,7 @@
   fetchPosts: (username: string, tab: string) => Promise<void>;
   fetchMorePosts: () => Promise<void>;
   toggleFollow: (username: string) => Promise<void>;
-  setActiveTab: (tab: "posts" | "starred" | "raw") => void;
+  setActiveTab: (tab: "posts" | "starred" | "repos" | "raw") => void;
   reset: () => void;
 }
 ```
@@ -261,6 +276,7 @@ interface Post {
 | Trigger                 | Endpoint                                   | Method | Purpose                         |
 |-------------------------|---------------------------------------------|--------|---------------------------------|
 | Click "starred" tab     | `/api/users/@:username/starred`             | GET    | Fetch starred posts             |
+| Click "repos" tab       | `/api/users/@:username/repos`               | GET    | Fetch GitHub pinned repos       |
 | Click "posts --raw" tab | `/api/users/@:username/posts?raw=true`      | GET    | Fetch raw (CLI-only) posts      |
 | Click "posts" tab       | `/api/users/@:username/posts`               | GET    | Fetch normal posts              |
 | Click follow/unfollow   | `/api/users/@:username/follow`              | POST   | Toggle follow status            |
@@ -281,6 +297,8 @@ interface Post {
 | Follow button          | Hover              | Border transitions to `border-green-400`                  |
 | Tab: "posts"           | Click              | Fetch and display user's posts; underline active tab      |
 | Tab: "starred"         | Click              | Fetch and display user's starred posts                    |
+| Tab: "repos"           | Click              | Fetch and display user's pinned GitHub repos              |
+| GitHub profile link    | Click              | Open github.com profile in new tab                        |
 | Tab: "posts --raw"     | Click              | Fetch and display posts in CLI-only format (no natural panel) |
 | Post card              | Click on body      | Navigate to `/post/:id` (post detail)                     |
 | Post card: ↩ reply     | Click              | Navigate to `/post/:id` with reply composer focused       |
@@ -316,7 +334,7 @@ interface Post {
 └───────────────────────────────────────────────────────────────────────┘
 
 ┌─ Tabs ───────────────────────────────────────────────────────────────┐
-│  [posts]    [starred]    [posts --raw]                                │
+│  [posts]    [starred]    [repos]    [posts --raw]                     │
 └──────────────────────────────────────────────────────────────────────┘
 
 ┌─ Post Skeleton ──────────────────────────────────────────────────────┐
@@ -455,9 +473,12 @@ Profile header renders normally. Post list area shows:
 | Follower count | `profile-followers` | E2E: verify follower count |
 | Following count | `profile-following` | E2E: verify following count |
 | Post count | `profile-post-count` | E2E: verify post count |
+| GitHub info section | `profile-github-info` | E2E: verify GitHub data displayed |
+| GitHub profile link | `github-profile-link` | E2E: click GitHub link |
 | Follow/unfollow button | `follow-button` | E2E: toggle follow |
 | Tab: posts | `tab-posts` | E2E: switch to posts tab |
 | Tab: starred | `tab-starred` | E2E: switch to starred tab |
+| Tab: repos | `tab-repos` | E2E: switch to repos tab |
 | Tab: posts --raw | `tab-raw` | E2E: switch to raw tab |
 | Load more button | `load-more-button` | E2E: load more posts |
 | Profile 404 error | `profile-not-found` | E2E: verify 404 state |
@@ -475,13 +496,15 @@ Profile header renders normally. Post list area shows:
 | Tab panel | `role="tabpanel"` with `aria-labelledby` pointing to active tab |
 | Follower/following counts | `role="link"` with `aria-label="128 followers"` (future navigation) |
 | Avatar placeholder | `aria-hidden="true"` (decorative) |
+| GitHub info | `aria-label="GitHub profile information"` with link `rel="noopener noreferrer"` |
+| Repos tab panel | Same tabpanel pattern as other tabs |
 | External domain link | `rel="noopener noreferrer"` with `aria-label="Visit jiyeon.kim (opens in new tab)"` |
 
 ---
 
 ## See Also
 
-- [DESIGN_GUIDE.md](../guides/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
+- [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
 - [API.md](../specs/API.md) — Endpoint request/response details
 - [CONVENTIONS.md](../guides/CONVENTIONS.md) — Coding rules for implementation
 - [POST_DETAIL.md](./POST_DETAIL.md) — Related screen specification

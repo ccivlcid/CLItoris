@@ -27,7 +27,7 @@
 │   feed --local │  │ ┌──────────────────────────────────────────────────┐    │   │
 │   explore      │  │ │ Type your post here...                      |    │    │   │
 │                │  │ └──────────────────────────────────────────────────┘    │   │
-│ // by LLM      │  │ Cmd+Enter · save as CLI   [claude-sonnet ▾] [LLM→CLI ↗]│   │
+│ // by LLM      │  │ Cmd+Enter · save as CLI  [claude-sonnet ▾] [📎 repo]   │   │
 │ ● claude-sonnet│  └────────────────────────────────────────────────────────┘   │
 │ ○ gpt-4o       │                                                                │
 │ ○ llama-3      │  ┌─ Post Card ────────────────────────────────────────────┐   │
@@ -131,7 +131,9 @@ GlobalFeedPage                          src/pages/GlobalFeedPage.tsx
 │       ├── ComposerBar                 src/components/composer/ComposerBar.tsx
 │       │   ├── ComposerTextarea        src/components/composer/ComposerTextarea.tsx
 │       │   ├── ModelSelector           src/components/composer/ModelSelector.tsx
-│       │   └── SubmitButton            src/components/composer/SubmitButton.tsx
+│       │   ├── SubmitButton            src/components/composer/SubmitButton.tsx
+│       │   ├── RepoAttachButton       src/components/composer/RepoAttachButton.tsx
+│       │   └── RepoAttachPreview      src/components/composer/RepoAttachPreview.tsx
 │       └── FeedList                    src/components/feed/FeedList.tsx
 │           ├── PostCard                src/components/post/PostCard.tsx
 │           │   ├── PostHeader          src/components/post/PostHeader.tsx
@@ -198,6 +200,11 @@ interface PostState {
   selectedModel: LlmModel;
   isTransforming: boolean;
   isSubmitting: boolean;
+  attachedRepo: { owner: string; name: string } | null;
+
+  // Add to actions
+  attachRepo: (owner: string, name: string) => void;
+  removeRepo: () => void;
 
   setDraft: (text: string) => void;
   setModel: (model: LlmModel) => void;
@@ -222,6 +229,13 @@ interface Post {
   llmModel: LlmModel;
   parentId: string | null;
   forkedFromId: string | null;
+  repoAttachment: {
+    owner: string;
+    name: string;
+    stars: number;
+    forks: number;
+    language: string;
+  } | null;
   createdAt: string;
   user: PostUser;
   starCount: number;
@@ -260,7 +274,7 @@ type LlmModel = 'claude-sonnet' | 'gpt-4o' | 'gemini-2.5-pro' | 'llama-3' | 'cus
 | Scroll to bottom      | `/api/posts/feed/global?cursor=X` | GET    | No   | Load next page (infinite scroll) |
 | Click LLM filter tab  | `/api/posts/by-llm/:model`        | GET    | No   | Filter posts by LLM model     |
 | Press Cmd+Enter       | `/api/llm/transform`              | POST   | Yes  | Transform draft to CLI         |
-| Confirm post          | `/api/posts`                      | POST   | Yes  | Create new post               |
+| Confirm post          | `/api/posts`                      | POST   | Yes  | Create new post (with optional repo attachment) |
 | Click ★ star          | `/api/posts/:id/star`             | POST   | Yes  | Toggle star on post            |
 | Click ◇ fork          | `/api/posts/:id/fork`             | POST   | Yes  | Fork post to own timeline      |
 | Click ↩ reply         | Navigate to `/post/:id`           | —      | —    | Navigate to post detail        |
@@ -286,6 +300,9 @@ type LlmModel = 'claude-sonnet' | 'gpt-4o' | 'gemini-2.5-pro' | 'llama-3' | 'cus
 | Model selector       | Click     | Open dropdown: claude-sonnet, gpt-4o, gemini-2.5-pro, llama-3, custom   |
 | [LLM -> CLI] button  | Click     | Transform draft via LLM, show CLI preview               |
 | User menu            | Click     | Open dropdown: profile, settings, logout                |
+| [📎 repo] button       | Click     | Open repo picker dropdown (search user's GitHub repos)  |
+| Repo picker item       | Click     | Attach repo to post draft; show preview below textarea  |
+| Repo preview [× remove]| Click     | Remove attached repo from draft                         |
 
 ### Keyboard Shortcuts
 
@@ -458,6 +475,9 @@ When the API call to fetch the global feed fails:
 | Error state container | `feed-error` | E2E: verify error state |
 | Retry button | `feed-retry` | E2E: retry failed load |
 | Infinite scroll sentinel | `scroll-sentinel` | E2E: trigger infinite scroll |
+| Repo attach button | `repo-attach-button` | E2E: open repo picker |
+| Repo attach preview | `repo-attach-preview` | E2E: verify attached repo |
+| Repo remove button | `repo-remove-button` | E2E: remove attached repo |
 
 ---
 
@@ -473,12 +493,13 @@ When the API call to fetch the global feed fails:
 | Skeleton cards | `aria-hidden="true"` (decorative, not read by screen readers) |
 | Post card | `role="article"` with `aria-labelledby` pointing to post header |
 | Action buttons | `aria-label="Star post"`, `aria-label="Reply to post"`, `aria-label="Fork post"` |
+| Repo attach | `aria-label="Attach GitHub repository"` on button, `aria-label="Remove attached repository"` on remove |
 
 ---
 
 ## See Also
 
-- [DESIGN_GUIDE.md](../guides/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
+- [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
 - [API.md](../specs/API.md) — Endpoint request/response details
 - [CONVENTIONS.md](../guides/CONVENTIONS.md) — Coding rules for implementation
 - [LOCAL_FEED.md](./LOCAL_FEED.md) — Related screen specification

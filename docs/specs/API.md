@@ -1,9 +1,9 @@
 # API.md — REST API Specification
 
-> **Source of truth** for all REST API endpoints, request/response formats, and error handling.
+> **Source of truth** for all 29 REST API endpoints across 6 groups, request/response formats, and error handling.
 > Base URL: `/api`
 > Content-Type: `application/json`
-> Authentication: Session-based (express-session)
+> Authentication: Session-based (express-session) via GitHub OAuth
 
 ---
 
@@ -45,61 +45,56 @@ All endpoints return a consistent envelope:
 
 ## 2. Authentication
 
-### POST `/auth/register`
+### GET `/api/auth/github`
 
-Create a new user account.
+Redirects to GitHub OAuth consent screen.
 
-**Request:**
-```json
-{
-  "username": "jiyeon_dev",
-  "password": "securepassword123",
-  "displayName": "Jiyeon"
-}
-```
+**Query Parameters:** none
 
-**Response:** `201 Created`
-```json
-{
-  "data": {
-    "id": "01912345-6789-7abc-def0-123456789abc",
-    "username": "jiyeon_dev",
-    "displayName": "Jiyeon",
-    "domain": null,
-    "bio": null,
-    "avatarUrl": null,
-    "createdAt": "2026-03-19T12:00:00Z"
-  }
-}
-```
-
-**Errors:**
-| Code | Condition |
-|------|-----------|
-| `400` | Invalid input (username too short, password too weak) |
-| `409` | Username already taken |
+**Response:** `302 Redirect` to `https://github.com/login/oauth/authorize` with client_id, redirect_uri, scope, state parameters.
 
 ---
 
-### POST `/auth/login`
+### GET `/api/auth/github/callback`
 
-Authenticate and create a session.
+Handles GitHub OAuth callback. Exchanges code for access token, creates/finds user, sets session.
 
-**Request:**
-```json
-{
-  "username": "jiyeon_dev",
-  "password": "securepassword123"
-}
-```
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| code | string | Authorization code from GitHub |
+| state | string | CSRF state parameter |
 
-**Response:** `200 OK`
+**Success (existing user):** `302 Redirect` to `/`
+**Success (new user):** `302 Redirect` to `/setup`
+**Error (denied):** `302 Redirect` to `/login?error=denied`
+**Error (state mismatch):** `302 Redirect` to `/login?error=state_mismatch`
+
+---
+
+### POST `/api/auth/setup`
+
+Complete profile setup for new GitHub users.
+
+**Auth:** Required (partial session from OAuth)
+
+**Request Body:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| username | string | Yes | CLItoris username (3+ chars, [a-z0-9_]) |
+| displayName | string | No | Display name (max 50 chars) |
+| bio | string | No | Bio text (max 300 chars) |
+
+**Success Response (201):**
 ```json
 {
   "data": {
-    "id": "01912345-6789-7abc-def0-123456789abc",
+    "id": "uuid",
     "username": "jiyeon_dev",
-    "displayName": "Jiyeon"
+    "displayName": "Jiyeon Kim",
+    "bio": "full-stack dev",
+    "avatarUrl": "https://github.com/...",
+    "githubUsername": "jiyeon-kim"
   }
 }
 ```
@@ -107,7 +102,8 @@ Authenticate and create a session.
 **Errors:**
 | Code | Condition |
 |------|-----------|
-| `401` | Invalid username or password |
+| 400 | Username too short or invalid characters |
+| 409 | Username already taken |
 
 ---
 
@@ -600,6 +596,31 @@ Toggle follow on a user. Requires authentication.
 
 ---
 
+### GET `/api/users/@:username/repos`
+
+Returns the user's pinned GitHub repositories.
+
+**Auth:** No
+
+**Response (200):**
+```json
+{
+  "data": [
+    {
+      "name": "CLItoris",
+      "owner": "ccivlcid",
+      "description": "CLI-themed SNS",
+      "stars": 42,
+      "forks": 12,
+      "language": "TypeScript",
+      "url": "https://github.com/ccivlcid/CLItoris"
+    }
+  ]
+}
+```
+
+---
+
 ## 5. LLM
 
 ### POST `/llm/transform`
@@ -661,17 +682,163 @@ Get available LLM providers with auto-detection status. No authentication requir
 }
 ```
 
-> Credential auto-detection logic: see `docs/specs/LLM_INTEGRATION.md` section 7.
+> Credential auto-detection logic: see `docs/llm/LLM_INTEGRATION.md` section 7.
 
 ---
 
-## 6. Rate Limits
+### GET `/api/llm/local-models`
+
+Returns locally installed LLM models (Ollama).
+
+**Auth:** Yes
+
+**Response (200):**
+```json
+{
+  "data": [
+    { "name": "llama-3-8b", "size": "4.7GB", "quantization": "Q4", "provider": "ollama" }
+  ]
+}
+```
+
+---
+
+## 6. GitHub
+
+### POST `/api/auth/github/sync`
+
+Manually sync profile data from GitHub.
+
+**Auth:** Yes
+
+**Response (200):**
+```json
+{
+  "data": {
+    "synced": true,
+    "syncedAt": "2026-03-20T10:30:00Z",
+    "updated": ["avatarUrl", "bio"]
+  }
+}
+```
+
+---
+
+### GET `/api/github/trending-repos`
+
+Returns repos most mentioned in posts this week.
+
+**Auth:** No
+
+**Response (200):**
+```json
+{
+  "data": [
+    {
+      "owner": "vercel",
+      "name": "next.js",
+      "mentionCount": 12,
+      "topTags": ["framework", "react"]
+    }
+  ]
+}
+```
+
+---
+
+## 7. Analyze
+
+### POST `/api/analyze`
+
+Start a repo analysis.
+
+**Auth:** Yes
+
+**Request Body:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| repoOwner | string | Yes | GitHub repo owner |
+| repoName | string | Yes | GitHub repo name |
+| outputType | string | Yes | `report`, `pptx`, or `video` |
+| llmModel | string | Yes | LLM model to use |
+| lang | string | No | Output language (default: `en`) |
+| options | object | No | Output-specific options |
+
+**Success Response (202):**
+```json
+{
+  "data": {
+    "id": "analysis-uuid",
+    "status": "processing",
+    "progressUrl": "/api/analyze/analysis-uuid/progress"
+  }
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| 404 | Repository not found |
+| 413 | Repository too large (>500MB) |
+| 429 | Analysis rate limit exceeded |
+
+---
+
+### GET `/api/analyze/:id`
+
+Get analysis result.
+
+**Auth:** Yes
+
+**Response (200):**
+```json
+{
+  "data": {
+    "id": "analysis-uuid",
+    "repoOwner": "vercel",
+    "repoName": "next.js",
+    "outputType": "report",
+    "status": "completed",
+    "resultUrl": "/api/analyze/analysis-uuid/download",
+    "resultSummary": "Production-grade React framework...",
+    "durationMs": 12300,
+    "createdAt": "2026-03-20T10:00:00Z"
+  }
+}
+```
+
+---
+
+### GET `/api/analyze`
+
+List user's analyses.
+
+**Auth:** Yes
+
+**Query Parameters:**
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| cursor | string | - | Pagination cursor |
+| limit | number | 20 | Page size (max 50) |
+
+**Response (200):**
+```json
+{
+  "data": [...],
+  "meta": { "cursor": "next-cursor", "hasMore": true }
+}
+```
+
+---
+
+## 8. Rate Limits
 
 | Endpoint | Limit | Window |
 |----------|-------|--------|
 | `POST /llm/transform` | 30 requests | 1 minute |
-| `POST /auth/login` | 10 requests | 1 minute |
-| `POST /auth/register` | 5 requests | 1 minute |
+| `POST /api/auth/github/callback` | 10 requests | 1 minute |
+| `POST /api/auth/setup` | 5 requests | 1 minute |
+| `POST /api/analyze` | 10 requests | 1 hour |
 | All other endpoints | 120 requests | 1 minute |
 
 Rate limit headers included in every response:
@@ -738,7 +905,7 @@ Standard error responses for each HTTP error code:
 
 ---
 
-## 7. Pagination
+## 9. Pagination
 
 All list endpoints use **cursor-based pagination**:
 
@@ -755,16 +922,21 @@ GET /api/posts/feed/global?cursor=2026-03-19T12:15:00Z&limit=20
 
 ---
 
-## 8. Endpoint Summary
+## 10. Endpoint Summary
+
+29 endpoints across 6 groups.
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| `POST` | `/auth/register` | No | Register new user |
-| `POST` | `/auth/login` | No | Login |
+| **Auth** | | | |
+| `GET` | `/api/auth/github` | No | Initiate GitHub OAuth |
+| `GET` | `/api/auth/github/callback` | No | OAuth callback |
+| `POST` | `/api/auth/setup` | Partial | Complete profile setup |
 | `POST` | `/auth/logout` | Yes | Logout |
 | `GET` | `/auth/me` | Yes | Current user |
 | `PUT` | `/auth/me` | Yes | Update profile |
 | `DELETE` | `/auth/me` | Yes | Delete account |
+| **Posts** | | | |
 | `POST` | `/posts` | Yes | Create post |
 | `GET` | `/posts/feed/global` | No | Global feed |
 | `GET` | `/posts/feed/local` | Yes | Local feed |
@@ -774,12 +946,23 @@ GET /api/posts/feed/global?cursor=2026-03-19T12:15:00Z&limit=20
 | `POST` | `/posts/:id/star` | Yes | Toggle star |
 | `DELETE` | `/posts/:id` | Yes | Delete post |
 | `GET` | `/posts/by-llm/:model` | No | Posts by LLM |
+| **Users** | | | |
 | `GET` | `/users/@:username` | No | User profile |
 | `GET` | `/users/@:username/posts` | No | User posts |
 | `GET` | `/users/@:username/starred` | No | User starred |
 | `POST` | `/users/@:username/follow` | Yes | Toggle follow |
-| `GET` | `/llm/providers` | No | Available LLM providers |
+| `GET` | `/api/users/@:username/repos` | No | User's GitHub repos |
+| **LLM** | | | |
 | `POST` | `/llm/transform` | Yes | LLM transformation |
+| `GET` | `/llm/providers` | No | Available LLM providers |
+| `GET` | `/api/llm/local-models` | Yes | Local Ollama models |
+| **GitHub** | | | |
+| `POST` | `/api/auth/github/sync` | Yes | Sync profile from GitHub |
+| `GET` | `/api/github/trending-repos` | No | Trending repos in posts |
+| **Analyze** | | | |
+| `POST` | `/api/analyze` | Yes | Start repo analysis |
+| `GET` | `/api/analyze/:id` | Yes | Get analysis result |
+| `GET` | `/api/analyze` | Yes | List user's analyses |
 
 ---
 
@@ -788,4 +971,4 @@ GET /api/posts/feed/global?cursor=2026-03-19T12:15:00Z&limit=20
 - [api-schema.json](./api-schema.json) — OpenAPI 3.1 machine-readable schema
 - [DATABASE.md](./DATABASE.md) — Database schema backing these endpoints
 - [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Request lifecycle and error flows
-- [TESTING.md](../guides/TESTING.md) — API route test patterns
+- [TESTING.md](../testing/TESTING.md) — API route test patterns

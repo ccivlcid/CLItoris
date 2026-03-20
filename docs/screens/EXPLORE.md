@@ -35,7 +35,17 @@
 │ // me          │  │                                                        │   │
 │ → @you.local   │  └────────────────────────────────────────────────────────┘   │
 │   my posts     │                                                                │
-│   starred      │  ┌─ Active Tag Filter (conditional) ─────────────────────┐   │
+│   starred      │                                                                │
+│                │  ┌─ Trending Repos ─────────────────────────────────────┐   │
+│                │  │ // repos mentioned this week                         │   │
+│                │  │                                                       │   │
+│                │  │ ■ vercel/next.js        ★ 12 mentions · #framework   │   │
+│                │  │ ■ anthropics/claude-code ★ 8 mentions  · #ai #cli    │   │
+│                │  │ ■ user/project           ★ 5 mentions  · #vibe-coding │   │
+│                │  │                                                       │   │
+│                │  └────────────────────────────────────────────────────────┘   │
+│                │                                                                │
+│                │  ┌─ Active Tag Filter (conditional) ─────────────────────┐   │
 │                │  │ $ explore --tag=cli-first                   [× clear]  │   │
 │                │  └────────────────────────────────────────────────────────┘   │
 │                │                                                                │
@@ -104,6 +114,14 @@
 │ │ #open-source  #thoughts     ││
 │ └─────────────────────────────┘│
 │                                 │
+│ ┌─ Trending Repos ───────────┐│
+│ │ // repos this week          ││
+│ │ ■ vercel/next.js   12 ment.││
+│ │ ■ anthropics/claude-code    ││
+│ │   8 mentions                ││
+│ │ ■ user/project   5 ment.   ││
+│ └─────────────────────────────┘│
+│                                 │
 │ ┌─ Tag Filter (conditional) ─┐│
 │ │ --tag=cli-first       [×]   ││
 │ └─────────────────────────────┘│
@@ -168,6 +186,8 @@ ExplorePage                             src/pages/ExplorePage.tsx
 │       │   └── TabButton[]            (inline: all, claude-sonnet, gpt-4o, gemini-2.5-pro, llama-3)
 │       ├── TrendingTags               src/components/explore/TrendingTags.tsx
 │       │   └── TagBadge[]             src/components/explore/TagBadge.tsx
+│       ├── TrendingRepos              src/components/explore/TrendingRepos.tsx
+│       │   └── RepoCard[]            src/components/explore/RepoCard.tsx
 │       ├── ActiveTagFilter            src/components/explore/ActiveTagFilter.tsx
 │       │   └── (renders only when ?tag= query param is present)
 │       └── FeedList                    src/components/feed/FeedList.tsx
@@ -203,8 +223,13 @@ interface ExploreState {
   trendingTags: string[];
   trendingTagsLoading: boolean;
 
+  // Trending repos
+  trendingRepos: TrendingRepo[];
+  trendingReposLoading: boolean;
+
   // Actions
   fetchTrending: () => Promise<void>;
+  fetchTrendingRepos: () => Promise<void>;
   fetchNextPage: () => Promise<void>;
   fetchTrendingTags: () => Promise<void>;
   setModel: (model: LlmModel | 'all') => void;
@@ -242,6 +267,15 @@ interface TrendingTagsResponse {
 }
 ```
 
+```typescript
+interface TrendingRepo {
+  owner: string;
+  name: string;
+  mentionCount: number;
+  topTags: string[];
+}
+```
+
 ---
 
 ## 6. API Calls
@@ -253,6 +287,7 @@ interface TrendingTagsResponse {
 | Page load     | `/api/posts/feed/global?sort=stars&limit=20`        | GET    | No    | Load trending posts (by star count) |
 | Page load     | `/api/auth/me`                                      | GET    | Yes*  | Check auth status for interactions |
 | Page load     | `/api/posts/trending-tags`                          | GET    | No    | Load trending tag cloud           |
+| Page load     | `/api/github/trending-repos`                        | GET    | No    | Load trending repos this week     |
 
 *Only fires if a session cookie exists.
 
@@ -291,6 +326,8 @@ If the URL contains `?tag=X`, on mount the endpoint becomes:
 | @username              | Click     | Navigate to `/user/@username`                            |
 | #hashtag (in post)     | Click     | Apply tag filter (same as clicking tag badge)            |
 | ⎘ copy (CLI panel)     | Click     | Copy CLI text to clipboard, show "Copied!" flash        |
+| Repo card (trending)   | Click     | Open github.com repo page in new tab                     |
+| Repo card tag          | Click     | Apply tag filter (same as clicking tag badge)            |
 | Nav items (sidebar)    | Click     | Navigate to corresponding route                         |
 
 ### Keyboard Shortcuts
@@ -345,6 +382,7 @@ If the URL contains `?tag=X`, on mount the endpoint becomes:
 
 - LLM filter tabs render immediately (no data dependency). All tabs are clickable from the start.
 - Trending tags section shows 2 rows of skeleton tag badges, pulsing with opacity animation.
+- Trending repos section shows 3 skeleton repo cards with pulsing bars.
 - Show 5 skeleton post cards.
 - Pulsing opacity animation, no shimmer.
 
@@ -380,6 +418,9 @@ When switching LLM tabs or tag filters, the existing posts fade to `opacity-50` 
 │                │  │ No tags trending yet.                                 │   │
 │                │  └────────────────────────────────────────────────────────┘   │
 │                │                                                                │
+
+- Trending repos section: hidden when no repos have been mentioned.
+
 │                │          ┌──────────────────────────────────┐                  │
 │                │          │                                  │                  │
 │                │          │  $ explore --trending            │                  │
@@ -495,6 +536,8 @@ If pagination fails while scrolling:
 | Clear filters CTA | `clear-filters-cta` | E2E: reset all filters |
 | Trending tags container | `trending-tags` | E2E: verify tag cloud |
 | Explore empty state | `explore-empty` | E2E: verify empty state |
+| Trending repos container | `trending-repos` | E2E: verify trending repos |
+| Repo card | `repo-card` | E2E: click repo link |
 | Explore error state | `explore-error` | E2E: verify error state |
 
 Inherits all PostCard test IDs from Global Feed spec.
@@ -509,13 +552,14 @@ Inherits all PostCard test IDs from Global Feed spec.
 | Active tag filter | `aria-label="Filtering by tag: cli-first"` with close button `aria-label="Remove tag filter"` |
 | Trending tags | `role="list"` with `role="listitem"` per tag badge |
 | Sort order | `aria-label="Posts sorted by popularity"` on feed container |
+| Trending repos | `role="list"` with `role="listitem"` per repo card, links have `rel="noopener noreferrer"` |
 | Filter change | `aria-live="polite"` announces "Showing posts filtered by claude-sonnet" |
 
 ---
 
 ## See Also
 
-- [DESIGN_GUIDE.md](../guides/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
+- [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
 - [API.md](../specs/API.md) — Endpoint request/response details
 - [CONVENTIONS.md](../guides/CONVENTIONS.md) — Coding rules for implementation
 - [GLOBAL_FEED.md](./GLOBAL_FEED.md) — Related screen specification

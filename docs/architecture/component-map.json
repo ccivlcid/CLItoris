@@ -1,0 +1,128 @@
+{
+  "layouts": {
+    "AppShell": {
+      "file": "packages/client/src/components/layout/AppShell.tsx",
+      "children": ["HeaderBar", "Sidebar", "MainContent"]
+    },
+    "AuthLayout": {
+      "file": "packages/client/src/components/layout/AuthLayout.tsx",
+      "children": ["HeaderBar"]
+    },
+    "HeaderBar": {
+      "file": "packages/client/src/components/layout/HeaderBar.tsx",
+      "children": ["Logo", "Breadcrumbs", "UserMenu"]
+    },
+    "Sidebar": {
+      "file": "packages/client/src/components/layout/Sidebar.tsx",
+      "children": ["NavSection", "LlmFilterSection", "MeSection"]
+    }
+  },
+  "pages": {
+    "GlobalFeedPage": {
+      "file": "packages/client/src/pages/GlobalFeedPage.tsx",
+      "layout": "AppShell",
+      "children": ["ComposerBar", "FeedList"]
+    },
+    "LocalFeedPage": {
+      "file": "packages/client/src/pages/LocalFeedPage.tsx",
+      "layout": "AppShell",
+      "children": ["ComposerBar", "FeedList"]
+    },
+    "ExplorePage": {
+      "file": "packages/client/src/pages/ExplorePage.tsx",
+      "layout": "AppShell",
+      "children": ["LlmFilterTabs", "TrendingTags", "TrendingRepos", "FeedList"]
+    },
+    "PostDetailPage": {
+      "file": "packages/client/src/pages/PostDetailPage.tsx",
+      "layout": "AppShell",
+      "children": ["PostCard", "ReplyList", "ReplyComposer"]
+    },
+    "UserProfilePage": {
+      "file": "packages/client/src/pages/UserProfilePage.tsx",
+      "layout": "AppShell",
+      "children": ["ProfileHeader", "ProfileTabs", "PostList"]
+    },
+    "LoginPage": {
+      "file": "packages/client/src/pages/LoginPage.tsx",
+      "layout": "AuthLayout",
+      "children": ["ConnectForm"]
+    },
+    "SetupPage": {
+      "file": "packages/client/src/pages/SetupPage.tsx",
+      "layout": "AuthLayout",
+      "children": ["SetupForm"]
+    },
+    "SettingsPage": {
+      "file": "packages/client/src/pages/SettingsPage.tsx",
+      "layout": "AppShell",
+      "children": ["SettingsForm", "GitHubConnection", "DangerZone"]
+    },
+    "AnalyzePage": {
+      "file": "packages/client/src/pages/AnalyzePage.tsx",
+      "layout": "AppShell",
+      "children": ["AnalyzerForm", "AnalysisProgress", "AnalysisResult", "RecentAnalyses"]
+    }
+  },
+  "composer": {
+    "ComposerBar": {
+      "file": "packages/client/src/components/composer/ComposerBar.tsx",
+      "children": ["ComposerTextarea", "ModelSelector", "SubmitButton", "RepoAttachButton", "RepoAttachPreview"]
+    }
+  },
+  "post": {
+    "PostCard": {
+      "file": "packages/client/src/components/post/PostCard.tsx",
+      "children": ["PostHeader", "DualPanel", "ActionBar"]
+    },
+    "DualPanel": {
+      "file": "packages/client/src/components/post/DualPanel.tsx",
+      "children": ["NaturalPanel", "CliPanel"]
+    },
+    "CliPanel": {
+      "file": "packages/client/src/components/post/CliPanel.tsx",
+      "children": ["CliHighlighter"]
+    }
+  },
+  "auth": {
+    "ConnectForm": {
+      "file": "packages/client/src/components/auth/ConnectForm.tsx",
+      "children": ["SshPrompt", "ConnectionStatus", "GitHubConnectButton", "ScopeInfo"]
+    },
+    "SetupForm": {
+      "file": "packages/client/src/components/auth/SetupForm.tsx",
+      "children": ["GitHubImportSummary", "CliInput", "SubmitButton"]
+    }
+  },
+  "profile": {
+    "ProfileHeader": {
+      "file": "packages/client/src/components/profile/ProfileHeader.tsx",
+      "children": ["AvatarPlaceholder", "UserIdentity", "UserBio", "UserStats", "GitHubInfo", "FollowButton"]
+    }
+  },
+  "analyze": {
+    "AnalyzerForm": {
+      "file": "packages/client/src/components/analyze/AnalyzerForm.tsx",
+      "children": ["RepoInput", "OutputTypeSelector", "ModelSelector", "OutputOptions", "SubmitButton"]
+    },
+    "AnalysisProgress": {
+      "file": "packages/client/src/components/analyze/AnalysisProgress.tsx",
+      "children": ["ProgressStep", "ElapsedTimer"]
+    },
+    "AnalysisResult": {
+      "file": "packages/client/src/components/analyze/AnalysisResult.tsx",
+      "children": ["ReportResult", "PptxResult", "VideoResult", "DownloadButton", "PostAttachButton"]
+    }
+  },
+  "stores": {
+    "authStore": "packages/client/src/stores/authStore.ts",
+    "feedStore": "packages/client/src/stores/feedStore.ts",
+    "postStore": "packages/client/src/stores/postStore.ts",
+    "postDetailStore": "packages/client/src/stores/postDetailStore.ts",
+    "replyStore": "packages/client/src/stores/replyStore.ts",
+    "profileStore": "packages/client/src/stores/profileStore.ts",
+    "exploreStore": "packages/client/src/stores/exploreStore.ts",
+    "settingsStore": "packages/client/src/stores/settingsStore.ts",
+    "analyzeStore": "packages/client/src/stores/analyzeStore.ts"
+  }
+}

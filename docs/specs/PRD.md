@@ -15,6 +15,8 @@ All social interactions (post, follow, fork, star) are expressed as CLI commands
 - **"Just write what you want to say. The LLM translates to CLI, and both get posted."**
 - Natural language input → LLM transformation → CLI command + original text displayed side by side (dual-format)
 - All content is open source and forkable
+- **GitHub-native identity**: Login exclusively via GitHub OAuth. Your developer identity is your social identity.
+- **LLM as analysis engine**: Beyond post transformation, LLMs analyze GitHub repos and generate reports, presentations, and videos.
 
 ## 3. User Personas
 
@@ -38,6 +40,15 @@ All social interactions (post, follow, fork, star) are expressed as CLI commands
 | US-8 | User | Filter feed by AI model | I can compare Claude vs GPT vs Llama outputs |
 | US-9 | User | Write in any language | The CLI flags work the same regardless of language |
 | US-10 | Developer | Use keyboard shortcuts | I can navigate without a mouse |
+| US-11 | Developer | Login with my GitHub account | I don't need another password to remember |
+| US-12 | Developer | See my GitHub profile on CLItoris | My developer identity carries over |
+| US-13 | Developer | Attach a repo to my post | I can discuss specific projects |
+| US-14 | Developer | Browse trending repos mentioned in posts | I can discover interesting projects |
+| US-15 | Developer | Analyze a GitHub repo with AI | I can quickly understand unfamiliar codebases |
+| US-16 | Developer | Generate a PPTX from repo analysis | I can present project architecture to my team |
+| US-17 | Developer | Generate a video walkthrough of a repo | I can share visual explanations of code |
+| US-18 | Developer | Install and use local LLMs | I can analyze repos offline with privacy |
+| US-19 | Developer | See other users' repo analyses in the feed | I can discover insights about projects |
 
 ## 4. Key Features
 
@@ -101,12 +112,35 @@ Users select an LLM provider when composing posts to perform natural language �
 - **Local LLM**: Run models locally via Ollama (no API key needed), list installed models
 - **CLI adapter**: Execute CLI coding tools (Claude Code, Codex, Gemini CLI, Cursor, OpenCode)
 - **Generic API**: Connect any OpenAI-compatible endpoint with custom base URL + model name
-- **Auto-detection**: Server scans local env vars, config files (`~/.config/gcloud/`, `~/.anthropic/`), and PATH for available providers. Users already logged into providers on their PC need no additional setup — see `docs/specs/LLM_INTEGRATION.md` section 7
+- **Auto-detection**: Server scans local env vars, config files (`~/.config/gcloud/`, `~/.anthropic/`), and PATH for available providers. Users already logged into providers on their PC need no additional setup — see `docs/llm/LLM_INTEGRATION.md` section 7
 
 **Transformation flow:**
 ```
 Natural language input → [Cmd+Enter] → Select provider → CLI format conversion → Save as dual-format
 ```
+
+#### LLM Execution Modes
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| **Cloud API** | Anthropic, OpenAI, Gemini via API keys | Post transformation, repo analysis |
+| **Local LLM** | Ollama, llama.cpp installed on user's PC | Offline analysis, privacy-sensitive repos |
+| **CLI Tool** | Claude Code, Codex, Gemini CLI | Deep code analysis with tool use |
+
+**Local LLM setup:**
+CLItoris provides in-app guidance for installing and managing local models:
+```
+$ llm --install ollama
+> detecting system: Apple M2 Pro, 32GB RAM
+> recommended model: llama-3-8b-q4
+> downloading... ████████░░ 72%
+
+$ llm --list-local
+> ollama/llama-3-8b     (4.7GB, quantized Q4)
+> ollama/codellama-13b  (7.3GB, quantized Q4)
+```
+
+Users can switch between cloud and local models per task. Local models require no API key and keep all data on-device.
 
 ### 4.5 Multilingual Support
 
@@ -121,13 +155,115 @@ Natural language input → [Cmd+Enter] → Select provider → CLI format conver
 - View own posts (`my posts`, `my posts --raw`)
 - Starred posts (`starred`)
 
-### 4.7 "by LLM" Filter
+### 4.7 GitHub Integration
+
+All authentication flows through GitHub OAuth. No username/password registration exists.
+
+**Authentication flow:**
+```
+/login (Connect) → GitHub OAuth → Callback → Existing user? → / (feed)
+                                            → New user? → /setup (profile config)
+```
+
+**GitHub data imported on connect:**
+- Avatar URL (synced as profile picture)
+- Display name
+- Bio
+- Public repos count
+- GitHub username (used as default CLItoris username suggestion)
+
+**Repo attachment:**
+Posts can reference GitHub repositories via `--repo=owner/name` flag. Attached repos display as mini cards within post cards showing repo name, stars, forks, and primary language.
+
+**Trending repos:**
+The Explore page includes a "repos mentioned this week" section showing the most-referenced repositories across all posts.
+
+**GitHub scopes requested:**
+- `read:user` — Public profile information
+- `user:email` — Email for account linking
+
+No repository access is requested. CLItoris reads public profile data only.
+
+### 4.8 "by LLM" Filter
 
 Browse content filtered by the LLM model that generated it:
 - claude-sonnet
 - gpt-4o
 - gemini-2.5-pro
 - llama-3
+
+### 4.9 Repo Analysis (`$ analyze`)
+
+LLMs can analyze GitHub repositories and produce structured outputs. Analysis results can be shared as posts.
+
+**Command format:**
+```
+$ analyze --repo=owner/name --output=<type> --model=<model> --lang=<lang>
+```
+
+#### Output Types
+
+**Report** (`--output=report`):
+Structured analysis of repo architecture, tech stack, complexity metrics, key patterns, and AI-generated summary. Displayed as a terminal-style report card.
+
+```
+$ analyze --repo=vercel/next.js --output=report
+
+┌─ Analysis Report ──────────────────────────────────────┐
+│  repo: vercel/next.js                                   │
+│  stars: 128k · forks: 27k · contributors: 3,200        │
+│                                                         │
+│  // architecture                                        │
+│  type: monorepo (turborepo)                             │
+│  primary-lang: TypeScript (87%)                         │
+│  build: turbopack + webpack                             │
+│                                                         │
+│  // complexity                                          │
+│  files: 2,847 · avg-depth: 4.2 · circular-deps: 3     │
+│  test-coverage: ~72% (estimated)                        │
+│                                                         │
+│  // ai summary                                          │
+│  "Next.js is a production-grade React framework         │
+│   with hybrid rendering strategies..."                  │
+│                                                         │
+│  generated by: claude-sonnet · 12.3s                    │
+└─────────────────────────────────────────────────────────┘
+```
+
+**PPTX Presentation** (`--output=pptx`):
+Auto-generated slide deck covering architecture, data flow, tech stack, and roadmap. Downloadable or attachable to posts.
+
+Options:
+- `--slides=N` — Number of slides (default 10)
+- `--style=minimal|corporate|terminal` — Slide design style
+- `--focus=architecture|api|security|overview` — Analysis focus area
+
+**Video Walkthrough** (`--output=video`):
+AI-generated video with terminal-style animations walking through repo structure. Includes AI narration.
+
+Options:
+- `--duration=30s|60s|120s` — Video length
+- `--type=walkthrough|demo|pitch` — Video style
+- `--format=mp4|webm` — Output format
+
+#### Analysis Flow
+
+```
+Select repo → Choose output type → Pick LLM model → Start analysis
+    ↓              ↓                    ↓                ↓
+GitHub API    report|pptx|video    cloud|local|cli    Progress display
+    ↓                                                    ↓
+Clone (shallow) → LLM analysis → Generate output → Preview
+                                                      ↓
+                                          Download or Post to feed
+```
+
+#### Sharing Analysis Results
+
+Analysis outputs can be:
+1. **Downloaded** — `.md` report, `.pptx` file, `.mp4` video
+2. **Posted to feed** — Shared as a special analysis post with preview card
+3. **Attached to existing post** — Referenced in a regular post via `--attach=analysis:<id>`
 
 ## 5. UI/UX Design
 
@@ -193,6 +329,9 @@ Browse content filtered by the LLM model that generated it:
 /@:username/posts       → User posts
 /@:username/starred     → Starred posts
 /post/:id               → Single post + thread
+/setup                  → First-time profile setup (after GitHub OAuth)
+/@:username/repos       → User's pinned GitHub repos
+/analyze                → Repo analysis tool
 ```
 
 ### 6.2 Data Model
@@ -200,7 +339,10 @@ Browse content filtered by the LLM model that generated it:
 ```
 User {
   id, username, domain, display_name,
-  bio, avatar_url, created_at
+  bio, avatar_url, created_at,
+  github_id, github_username,
+  github_avatar_url, github_profile_url,
+  github_repos_count, github_connected_at
 }
 
 Post {
@@ -213,6 +355,21 @@ Post {
 Follow { follower_id, following_id }
 Star   { user_id, post_id }
 Fork   { user_id, original_post_id, forked_post_id }
+
+RepoAttachment {
+  post_id, repo_owner, repo_name,
+  repo_stars, repo_forks, repo_language,
+  cached_at
+}
+
+Analysis {
+  id, user_id, repo_owner, repo_name,
+  output_type (report | pptx | video),
+  llm_model, lang, options_json,
+  result_url, result_summary,
+  status (pending | processing | completed | failed),
+  duration_ms, created_at
+}
 ```
 
 ## 7. Monorepo & Tech Stack
@@ -222,11 +379,13 @@ Fork   { user_id, original_post_id, forked_post_id }
 
 ## 9. API Endpoints
 
-18 REST endpoints organized into 4 groups:
-- **Auth** (4): register, login, logout, me
+24 REST endpoints organized into 6 groups:
+- **Auth** (4): github (OAuth start), github/callback, logout, me
 - **Posts** (8): create, feed/global, feed/local, get, reply, fork, star, delete, by-llm
-- **Users** (4): profile, posts, starred, follow
-- **LLM** (1): transform
+- **Users** (5): profile, posts, starred, repos, follow
+- **LLM** (2): transform, list-local
+- **GitHub** (2): sync profile, trending repos
+- **Analyze** (3): start analysis, get analysis, list user analyses
 
 > Full API documentation with request/response examples: see `docs/specs/API.md`
 > OpenAPI 3.1 schema: see `docs/specs/api-schema.json`
@@ -234,7 +393,8 @@ Fork   { user_id, original_post_id, forked_post_id }
 ## 10. MVP Scope
 
 ### Phase 1 — Core
-- [ ] User registration/login
+- [ ] GitHub OAuth login
+- [ ] First-time profile setup (/setup)
 - [ ] Post creation (dual format)
 - [ ] LLM transformation (claude-sonnet first)
 - [ ] Global feed
@@ -244,13 +404,29 @@ Fork   { user_id, original_post_id, forked_post_id }
 - [ ] Follow/following
 - [ ] Local feed
 - [ ] Fork functionality
-- [ ] User profile page
+- [ ] User profile page with GitHub info
 
 ### Phase 3 — Expansion
 - [ ] Multi-LLM support (gpt-4o, llama-3)
+- [ ] Local LLM installation guide (`$ llm --install`)
 - [ ] Multilingual auto-translation
 - [ ] Explore/trending
 - [ ] Custom LLM connections
+
+### Phase 4 — GitHub Deep Integration
+- [ ] Repo attachment on posts
+- [ ] Trending repos on Explore page
+- [ ] GitHub activity → auto-posts
+- [ ] GitHub profile sync (daily)
+- [ ] User profile repos tab
+- [ ] Repo analysis — report output (`$ analyze --output=report`)
+
+### Phase 5 — Analysis & Generation
+- [ ] Repo analysis — PPTX generation (`$ analyze --output=pptx`)
+- [ ] Repo analysis — Video generation (`$ analyze --output=video`)
+- [ ] `/analyze` dedicated page
+- [ ] Analysis results as feed posts
+- [ ] Analysis history per user
 
 ## 11. Vibe Coding Development Approach
 
@@ -269,7 +445,7 @@ This project is built through **vibe coding** (AI-driven development).
 CLAUDE.md                          → Project summary (first thing AI reads)
 docs/
 ├── guides/CONVENTIONS.md          → Coding rules (naming, patterns, prohibitions)
-├── guides/DESIGN_GUIDE.md         → Visual system, component specs
+├── design/DESIGN_GUIDE.md         → Visual system, component specs
 ├── guides/PROMPTS.md              → Vibe coding prompt templates
 ├── specs/PRD.md                   → Product requirements
 ├── specs/DATABASE.md              → DB schema, queries, migrations
@@ -305,6 +481,9 @@ docs/
 | Page initial load | < 2s | Time from navigation to interactive (LCP) |
 | Bundle size (client) | < 500KB | Gzipped JS + CSS total |
 | SQLite query | < 50ms | Any single query execution time (p95) |
+| Repo analysis (report) | < 30s | Time from start to report rendered (p95) |
+| Repo analysis (pptx) | < 60s | Time from start to download available (p95) |
+| Repo analysis (video) | < 180s | Time from start to video playback ready (p95) |
 
 ### Accessibility
 
@@ -331,7 +510,7 @@ docs/
 | SQL injection | Prepared statements only (better-sqlite3) |
 | CSRF protection | Session-based with SameSite cookies |
 | Rate limiting | express-rate-limit per endpoint (see API.md section 6) |
-| Password storage | bcrypt with cost factor 10 |
+| OAuth security | GitHub OAuth 2.0 with PKCE, state parameter for CSRF |
 | Input validation | zod schemas at API boundary |
 | Session security | httpOnly, secure, SameSite=Lax cookies |
 
@@ -348,5 +527,5 @@ docs/
 
 - [API.md](./API.md) — Full REST API documentation
 - [DATABASE.md](./DATABASE.md) — Database schema and queries
-- [Screen specs](../screens/) — Page-by-page UI specifications
-- [DESIGN_GUIDE.md](../guides/DESIGN_GUIDE.md) — Visual design system
+- [Screen specs](../screens/) — Page-by-page UI specifications (LOGIN, SETUP, GLOBAL_FEED, etc.)
+- [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual design system

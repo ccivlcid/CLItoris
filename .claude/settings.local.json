@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(grep -c \"^| \\\\`\")",
+      "Bash(wc -l /c/aitsgproject/CLItoris/docs/specs/*.md)",
+      "Bash(grep -r \"password\\\\|bcrypt\\\\|POST /auth/register\\\\|POST /auth/login\" /c/aitsgproject/CLItoris/docs --include=*.md)",
+      "Bash(git mv:*)",
+      "Bash(git add:*)",
+      "Bash(mv /c/aitsgproject/CLItoris/docs/specs/LLM_PROVIDERS.md /c/aitsgproject/CLItoris/docs/llm/)",
+      "Bash(mv /c/aitsgproject/CLItoris/docs/specs/LLM_DETECTION.md /c/aitsgproject/CLItoris/docs/llm/)",
+      "Bash(grep -E \"\\(^[^/]*\\\\.md$|/docs/|package\\\\.json\\)\")",
+      "Bash(sort -k2)",
+      "Bash(wc -l /c/aitsgproject/CLItoris/docs/**/*.md)",
+      "Bash(ls -lh /c/aitsgproject/CLItoris/docs/**/*)",
+      "Bash(wc:*)"
+    ]
+  }
+}

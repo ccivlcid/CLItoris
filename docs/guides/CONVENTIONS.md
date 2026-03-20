@@ -334,7 +334,7 @@ import { something } from '../../../utils/helper';   // forbidden → use packag
 
 ### Design Tokens & Fonts
 
-> Full color system, typography, and spacing: see `docs/guides/DESIGN_GUIDE.md` (sections 2-3).
+> Full color system, typography, and spacing: see `docs/design/DESIGN_GUIDE.md` (sections 2-3).
 
 Quick reference for code reviews:
 - Backgrounds: `bg-[#1a1a2e]` (primary), `bg-[#16213e]` (secondary), `bg-[#0f3460]` (surface)
@@ -509,6 +509,6 @@ AI-generated code is **immediately rejected** if any of the following apply:
 
 ## See Also
 
-- [DESIGN_GUIDE.md](./DESIGN_GUIDE.md) — Visual design tokens and component specs
-- [TESTING.md](./TESTING.md) — Testing patterns and examples
+- [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual design tokens and component specs
+- [TESTING.md](../testing/TESTING.md) — Testing patterns and examples
 - [PROMPTS.md](./PROMPTS.md) — Vibe coding prompt templates

@@ -277,15 +277,13 @@ test.describe('Global Feed', () => {
 });
 
 test.describe('Authentication', () => {
-  test('login flow', async ({ page }) => {
-    await page.goto('/login');
+  test('github oauth login flow', async ({ page }) => {
+    // Mock GitHub OAuth callback
+    await page.goto('/login?code=mock_code&state=mock_state');
 
-    await page.fill('[data-testid="username-input"]', 'testuser');
-    await page.fill('[data-testid="password-input"]', 'password123');
-    await page.click('[data-testid="login-submit"]');
-
+    // Should redirect to feed after successful OAuth
     await expect(page).toHaveURL('/');
-    await expect(page.locator('[data-testid="composer-bar"]')).toBeVisible();
+    await expect(page.getByTestId('composer-input')).toBeVisible();
   });
 });
 ```
@@ -297,25 +295,26 @@ test.describe('Authentication', () => {
 import { test, expect } from '@playwright/test';
 
 test.describe('Authentication Flow', () => {
-  test('register → login → create post → logout', async ({ page }) => {
-    // Register
-    await page.goto('/register');
-    await page.fill('[data-testid="username-input"]', 'e2euser');
-    await page.fill('[data-testid="password-input"]', 'testpass123');
-    await page.fill('[data-testid="displayname-input"]', 'E2E User');
-    await page.click('[data-testid="register-submit"]');
+  test('github oauth → setup → create post → logout', async ({ page }) => {
+    // 1. OAuth callback (new user)
+    await page.goto('/login?code=new_user_code&state=mock_state');
+
+    // 2. Should redirect to /setup for new users
+    await expect(page).toHaveURL('/setup');
+
+    // 3. Complete setup
+    await page.fill('[data-testid="username-input"]', 'testuser');
+    await page.click('[data-testid="setup-submit"]');
+
+    // 4. Should redirect to feed
     await expect(page).toHaveURL('/');
 
-    // Create post
-    await page.fill('[data-testid="composer-input"]', 'Hello from E2E test');
+    // 5. Create post
+    await page.fill('[data-testid="composer-input"]', 'Hello world');
     await page.click('[data-testid="composer-submit"]');
-    await expect(page.locator('[data-testid="post-card"]').first()).toContainText('Hello from E2E test');
+    await expect(page.getByTestId('post-card')).toHaveCount(1);
 
-    // Star the post
-    await page.click('[data-testid="star-button"]');
-    await expect(page.locator('[data-testid="star-button"]')).toHaveClass(/active/);
-
-    // Logout
+    // 6. Logout
     await page.click('[data-testid="user-menu"]');
     await page.click('[data-testid="logout-button"]');
     await expect(page).toHaveURL('/login');
@@ -335,7 +334,7 @@ test.describe('Authentication Flow', () => {
 // tests/e2e/post-interactions.spec.ts
 test.describe('Post Interactions', () => {
   test.beforeEach(async ({ page }) => {
-    await loginAs(page, 'testuser', 'testpass123');
+    await loginAs(page, 'testuser');
   });
 
   test('star and unstar a post', async ({ page }) => {
@@ -372,7 +371,8 @@ function seedTestData(): void {
   const db = new Database('clitoris-test.db');
   // Run migrations
   // Insert test user
-  db.prepare('INSERT INTO users (id, username, password_hash) VALUES (?, ?, ?)').run(randomUUID(), 'testuser', '$2b$10$hashedpassword');
+  db.prepare(`INSERT INTO users (id, username, github_id, github_username, display_name)
+  VALUES (?, ?, ?, ?, ?)`).run('test-id', 'testuser', 'gh-123', 'testuser', 'Test User');
   // Insert test posts
   for (let i = 0; i < 5; i++) {
     db.prepare('INSERT INTO posts (id, user_id, message_raw, message_cli, llm_model) VALUES (?, ?, ?, ?, ?)').run(randomUUID(), userId, `Test post ${i}`, `post --message="Test ${i}"`, 'claude-sonnet');

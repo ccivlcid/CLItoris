@@ -9,8 +9,8 @@
 | Property        | Value                                                        |
 |-----------------|--------------------------------------------------------------|
 | **Route**       | `/login`                                                     |
-| **Title**       | `login -- terminal.social`                                   |
-| **Description** | Terminal-style login page. Looks like a CLI prompt where the user types credentials into command flags. No sidebar -- full-width centered layout. Redirects to `/` if already authenticated. |
+| **Title**       | `connect -- terminal.social`                                 |
+| **Description** | Terminal-style connection page using SSH metaphor. Single button to authenticate via GitHub OAuth. No username/password fields. No sidebar -- full-width centered layout. Redirects to `/` if already authenticated. |
 | **Auth Required** | No. Redirects to `/` (global feed) if session already exists. |
 
 ---
@@ -24,31 +24,31 @@
 │                                                                          │
 │                                                                          │
 │                                                                          │
-│                                                                          │
-│         ┌─ Login ────────────────────────────────────────────┐           │
-│         │                                                     │           │
-│         │  // authenticate                                    │           │
-│         │                                                     │           │
-│         │  $ login --user=█                                   │           │
-│         │                                                     │           │
-│         │  --password=████████                                │           │
-│         │                                                     │           │
-│         │                                                     │           │
-│         │  ┌──────────────────────────────┐                   │           │
-│         │  │ [Enter] submit               │                   │           │
-│         │  └──────────────────────────────┘                   │           │
-│         │                                                     │           │
-│         │  No account? $ register                             │           │
-│         │                                                     │           │
-│         └─────────────────────────────────────────────────────┘           │
-│                                                                          │
-│                                                                          │
+│         ┌─ Connect ────────────────────────────────────────────┐         │
+│         │                                                       │         │
+│         │  // establish connection                              │         │
+│         │                                                       │         │
+│         │  $ ssh terminal.social                                │         │
+│         │                                                       │         │
+│         │  > key not found. authenticate via provider.          │         │
+│         │                                                       │         │
+│         │  ┌─────────────────────────────────────────────┐      │         │
+│         │  │  ■ connect --provider=github    [Enter]     │      │         │
+│         │  └─────────────────────────────────────────────┘      │         │
+│         │                                                       │         │
+│         │  // available permissions                              │         │
+│         │  --scope=read:user,user:email                         │         │
+│         │                                                       │         │
+│         │  info: we only read your public profile.              │         │
+│         │  info: no repo access requested.                      │         │
+│         │                                                       │         │
+│         └───────────────────────────────────────────────────────┘         │
 │                                                                          │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Desktop with Error
+### Desktop — Connecting (OAuth in progress)
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
@@ -56,23 +56,48 @@
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
 │                                                                          │
-│         ┌─ Login ────────────────────────────────────────────┐           │
-│         │                                                     │           │
-│         │  // authenticate                                    │           │
-│         │                                                     │           │
-│         │  $ login --user=jiyeon_dev                          │           │
-│         │                                                     │           │
-│         │  --password=████████                                │           │
-│         │                                                     │           │
-│         │  error: invalid credentials (401)                   │           │
-│         │                                                     │           │
-│         │  ┌──────────────────────────────┐                   │           │
-│         │  │ [Enter] submit               │                   │           │
-│         │  └──────────────────────────────┘                   │           │
-│         │                                                     │           │
-│         │  No account? $ register                             │           │
-│         │                                                     │           │
-│         └─────────────────────────────────────────────────────┘           │
+│         ┌─ Connect ────────────────────────────────────────────┐         │
+│         │                                                       │         │
+│         │  // establish connection                              │         │
+│         │                                                       │         │
+│         │  $ ssh terminal.social                                │         │
+│         │                                                       │         │
+│         │  > redirecting to github.com...                       │         │
+│         │  > waiting for authorization ░░░░░░░░░░               │         │
+│         │                                                       │         │
+│         │  ┌─────────────────────────────────────────────┐      │         │
+│         │  │  ■ connecting...                             │      │         │
+│         │  └─────────────────────────────────────────────┘      │         │
+│         │                                                       │         │
+│         └───────────────────────────────────────────────────────┘         │
+│                                                                          │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+### Desktop — Authentication Success (returning user)
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│ terminal.social                                                          │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│                                                                          │
+│         ┌─ Connect ────────────────────────────────────────────┐         │
+│         │                                                       │         │
+│         │  // establish connection                              │         │
+│         │                                                       │         │
+│         │  $ ssh terminal.social                                │         │
+│         │                                                       │         │
+│         │  > authenticated via github                           │         │
+│         │  > welcome back, @jiyeon_dev                          │         │
+│         │                                                       │         │
+│         │  session: active                                      │         │
+│         │  last-login: 2026-03-18T14:22:00Z                     │         │
+│         │                                                       │         │
+│         │  redirecting to feed...                               │         │
+│         │                                                       │         │
+│         └───────────────────────────────────────────────────────┘         │
 │                                                                          │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
@@ -86,30 +111,29 @@
 ┌─────────────────────────────────┐
 │ terminal.social                  │
 ├─────────────────────────────────┤
-│                                 │
-│                                 │
-│                                 │
-│  ┌─ Login ──────────────────┐   │
-│  │                           │   │
-│  │  // authenticate          │   │
-│  │                           │   │
-│  │  $ login                  │   │
-│  │  --user=█                 │   │
-│  │                           │   │
-│  │  --password=████████      │   │
-│  │                           │   │
-│  │                           │   │
-│  │  ┌────────────────────┐   │   │
-│  │  │ [Enter] submit     │   │   │
-│  │  └────────────────────┘   │   │
-│  │                           │   │
-│  │  No account?              │   │
-│  │  $ register               │   │
-│  │                           │   │
-│  └───────────────────────────┘   │
-│                                 │
-│                                 │
-│                                 │
+│                                  │
+│                                  │
+│                                  │
+│  ┌─ Connect ─────────────────┐  │
+│  │                            │  │
+│  │  // establish connection   │  │
+│  │                            │  │
+│  │  $ ssh terminal.social     │  │
+│  │                            │  │
+│  │  > authenticate via        │  │
+│  │    provider.               │  │
+│  │                            │  │
+│  │  ┌──────────────────────┐  │  │
+│  │  │ ■ connect --github   │  │  │
+│  │  │          [Enter]     │  │  │
+│  │  └──────────────────────┘  │  │
+│  │                            │  │
+│  │  info: read-only access.  │  │
+│  │  no repo permissions.     │  │
+│  │                            │  │
+│  └────────────────────────────┘  │
+│                                  │
+│                                  │
 └─────────────────────────────────┘
 ```
 
@@ -123,26 +147,16 @@
     <HeaderBar />                      // packages/client/src/components/layout/HeaderBar.tsx
       └── (logo only, no sidebar, no breadcrumbs)
     <main>                             // centered vertically and horizontally
-      <LoginForm>                      // packages/client/src/components/auth/LoginForm.tsx
-        <SectionLabel />              // "// authenticate"
-        <CliInput                      // packages/client/src/components/auth/CliInput.tsx
-          prefix="$ login --user="
-          type="text"
-        />
-        <CliInput
-          prefix="--password="
-          type="password"
-        />
-        <ErrorMessage />              // packages/client/src/components/auth/ErrorMessage.tsx
-        <SubmitButton                  // packages/client/src/components/auth/SubmitButton.tsx
-          label="[Enter] submit"
-        />
-        <AuthLink                      // packages/client/src/components/auth/AuthLink.tsx
-          text="No account?"
-          command="$ register"
-          to="/register"
-        />
-      </LoginForm>
+      <ConnectForm>                    // packages/client/src/components/auth/ConnectForm.tsx
+        <SectionLabel />              // "// establish connection"
+        <SshPrompt />                 // "$ ssh terminal.social" static text
+        <ConnectionStatus />          // packages/client/src/components/auth/ConnectionStatus.tsx
+          └── status message (key not found / redirecting / authenticated)
+        <GitHubConnectButton />       // packages/client/src/components/auth/GitHubConnectButton.tsx
+          └── "■ connect --provider=github [Enter]"
+        <ScopeInfo />                 // packages/client/src/components/auth/ScopeInfo.tsx
+          └── scope display + info messages
+      </ConnectForm>
     </main>
   </AuthLayout>
 </LoginPage>
@@ -154,14 +168,16 @@
 
 ### Zustand Stores
 
-**`authStore`** (existing)
+**`authStore`** (updated)
 ```typescript
 {
   user: User | null;
   isLoading: boolean;
   error: string | null;
+  connectionStatus: 'idle' | 'redirecting' | 'callback' | 'success' | 'error';
 
-  login: (credentials: { username: string; password: string }) => Promise<void>;
+  initiateGitHubOAuth: () => void;          // redirect to /api/auth/github
+  handleOAuthCallback: (code: string, state: string) => Promise<void>;
   checkSession: () => Promise<void>;
   clearError: () => void;
 }
@@ -170,15 +186,13 @@
 ### Local Component State (React useState)
 
 ```typescript
-// LoginForm local state
+// ConnectForm local state
 {
-  username: string;      // bound to --user= input
-  password: string;      // bound to --password= input
-  isSubmitting: boolean; // disables form during API call
+  isRedirecting: boolean;     // true after clicking connect, before redirect
 }
 ```
 
-No new Zustand store is needed. The `authStore` handles authentication state and errors.
+No registration form state needed. GitHub handles all credential collection.
 
 ---
 
@@ -192,81 +206,77 @@ No new Zustand store is needed. The `authStore` handles authentication state and
 
 ### On User Interaction
 
-| Trigger              | Endpoint          | Method | Purpose                          |
-|----------------------|-------------------|--------|----------------------------------|
-| Submit form          | `/api/auth/login` | POST   | Authenticate user                |
+| Trigger              | Endpoint              | Method | Purpose                                     |
+|----------------------|-----------------------|--------|---------------------------------------------|
+| Click connect button | `/api/auth/github`    | GET    | Redirect to GitHub OAuth consent screen     |
 
-**Request payload:**
-```json
-{
-  "username": "jiyeon_dev",
-  "password": "securepassword123"
-}
-```
+### On OAuth Callback (automatic)
 
-**Success:** Store user in `authStore`, redirect to `/` (global feed).
+| Trigger              | Endpoint                        | Method | Purpose                                |
+|----------------------|---------------------------------|--------|----------------------------------------|
+| GitHub redirect back | `/api/auth/github/callback`     | GET    | Exchange code for token, create session |
 
-**Failure:** Set `authStore.error` to error message from response.
+**Callback success (existing user):** Store user in `authStore`, set `connectionStatus` to `'success'`, show welcome message, redirect to `/` after 1.5s.
+
+**Callback success (new user):** Store partial user in `authStore`, redirect to `/setup` for profile configuration.
+
+**Callback failure:** Set `authStore.error`, set `connectionStatus` to `'error'`.
 
 ---
 
 ## 7. User Interactions
 
-| Element                  | Action            | Result                                                   |
-|--------------------------|-------------------|----------------------------------------------------------|
-| Username input           | Type              | Updates local `username` state; cursor blinks at end     |
-| Username input           | Focus             | Border changes to `border-green-400`                     |
-| Password input           | Type              | Updates local `password` state; renders as `████` blocks |
-| Password input           | Focus             | Border changes to `border-green-400`                     |
-| Submit button            | Click             | Validates inputs, calls POST `/api/auth/login`           |
-| Keyboard: `Enter`        | Press (any input) | Submits the form (same as clicking submit)               |
-| Keyboard: `Cmd+Enter`    | Press             | Submits the form                                         |
-| Keyboard: `Tab`          | Press             | Moves focus: username -> password -> submit button       |
-| "$ register" link        | Click             | Navigate to `/register`                                  |
-| Error message            | Displayed         | Automatically clears after 5 seconds or on next input    |
+| Element                    | Action            | Result                                                          |
+|----------------------------|-------------------|-----------------------------------------------------------------|
+| GitHub connect button      | Click             | Sets `isRedirecting=true`, redirects to `/api/auth/github`     |
+| GitHub connect button      | Hover             | Border transitions to `border-green-400`, subtle glow           |
+| Keyboard: `Enter`          | Press             | Triggers GitHub connect (same as clicking button)               |
+| Keyboard: `Escape`         | Press             | No action (single action page)                                  |
+| Scope info text            | Displayed         | Static display, not interactive                                 |
 
-### Validation Rules (Client-side)
-
-| Field    | Rule                          | Error Message                     |
-|----------|-------------------------------|-----------------------------------|
-| Username | Required, non-empty           | `error: --user is required`       |
-| Password | Required, non-empty           | `error: --password is required`   |
+No form validation needed — there are no input fields.
 
 ---
 
 ## 8. Loading State
 
-### Submit Loading (while POST /auth/login is in-flight)
+### OAuth Redirect (after clicking connect)
 
 ```
-┌─ Login ────────────────────────────────────────────┐
-│                                                     │
-│  // authenticate                                    │
-│                                                     │
-│  $ login --user=jiyeon_dev                          │
-│                                                     │
-│  --password=████████                                │
-│                                                     │
-│                                                     │
-│  ┌──────────────────────────────┐                   │
-│  │ authenticating...            │  ← disabled       │
-│  └──────────────────────────────┘                   │
-│                                                     │
-│  No account? $ register                             │
-│                                                     │
-└─────────────────────────────────────────────────────┘
+┌─ Connect ────────────────────────────────────────────┐
+│                                                       │
+│  // establish connection                              │
+│                                                       │
+│  $ ssh terminal.social                                │
+│                                                       │
+│  > redirecting to github.com...                       │
+│  > waiting for authorization ░░░░░░░░░░               │
+│                                                       │
+│  ┌─────────────────────────────────────────────┐      │
+│  │  ■ connecting...                             │      │
+│  └─────────────────────────────────────────────┘      │
+│                                                       │
+└───────────────────────────────────────────────────────┘
 ```
 
 **Implementation:**
-- Submit button text changes from `[Enter] submit` to `authenticating...`
+- Button text changes from `■ connect --provider=github [Enter]` to `■ connecting...`
 - Button gets `opacity-40 cursor-not-allowed` styling
-- All inputs become `disabled`
-- No skeleton needed -- the form is always rendered immediately (no data to fetch)
+- Status messages update with typing animation effect
+- The `░` progress bar pulses with opacity animation
+
+### OAuth Callback Processing
+
+When returning from GitHub (on `/login?code=X&state=Y`):
+- Show the "connecting..." state immediately
+- Status text: `> verifying github authorization...`
+- On success, transition to success state with welcome message
+- On failure, transition to error state
 
 ### Initial Session Check
 
 While checking `/api/auth/me` on mount:
-- Show the login form normally (no skeleton)
+- Show the connect form normally (no skeleton)
 - If session exists, redirect happens before user interacts
 - Brief flash is acceptable; no full-page loader needed
 
@@ -274,30 +284,50 @@ While checking `/api/auth/me` on mount:
 
 ## 9. Empty State
 
-Not applicable for the login page. The form is always displayed. There is no data-dependent empty state.
+Not applicable for the login page. The connect form is always displayed. There is no data-dependent empty state.
 
 ---
 
 ## 10. Error State
 
-### Invalid Credentials (401)
+### OAuth Denied (user cancelled on GitHub)
 
 ```
-┌─ Login ────────────────────────────────────────────┐
-│                                                     │
-│  // authenticate                                    │
-│                                                     │
-│  $ login --user=jiyeon_dev                          │
-│                                                     │
-│  --password=████████                                │
-│                                                     │
-│  error: invalid credentials (401)                   │
-│                                                     │
-│  ┌──────────────────────────────┐                   │
-│  │ [Enter] submit               │                   │
-│  └──────────────────────────────┘                   │
-│                                                     │
-└─────────────────────────────────────────────────────┘
+┌─ Connect ────────────────────────────────────────────┐
+│                                                       │
+│  // establish connection                              │
+│                                                       │
+│  $ ssh terminal.social                                │
+│                                                       │
+│  error: github authorization denied (403)             │
+│  hint: click connect to try again.                    │
+│                                                       │
+│  ┌─────────────────────────────────────────────┐      │
+│  │  ■ connect --provider=github    [Enter]     │      │
+│  └─────────────────────────────────────────────┘      │
+│                                                       │
+└───────────────────────────────────────────────────────┘
+```
+
+### GitHub Account Already Linked (409)
+
+```
+  error: this github account is already linked to @other_user (409)
+  hint: login with the linked account or contact support.
+```
+
+### GitHub API Unreachable (502)
+
+```
+  error: github api unreachable (502)
+  hint: try again in a few moments.
+```
+
+### OAuth State Mismatch (security error)
+
+```
+  error: authorization state mismatch (400)
+  hint: this may be a security issue. please try again.
 ```
 
 ### Rate Limited (429)
@@ -312,21 +342,12 @@ Not applicable for the login page. The form is always displayed. There is no dat
   error: connection failed. please try again (500)
 ```
 
-### Client-side Validation Error
-
-```
-  error: --user is required
-```
-
-```
-  error: --password is required
-```
-
 **Styling for all errors:**
 - Error text: `text-red-400 font-mono text-sm`
-- Appears directly below the password input, above the submit button
+- Hint text: `text-yellow-400/70 font-mono text-sm`
+- Appears above the connect button
 - No border or background on the error line (bare terminal output style)
-- Error clears when user starts typing again or after 5 seconds
+- Error clears when user clicks connect again
 
 ---
 
@@ -334,12 +355,12 @@ Not applicable for the login page. The form is always displayed. There is no dat
 
 | Element | `data-testid` | Purpose |
 |---------|---------------|---------|
-| Username input | `username-input` | E2E: type username |
-| Password input | `password-input` | E2E: type password |
-| Submit button | `login-submit` | E2E: submit login form |
+| GitHub connect button | `github-connect-button` | E2E: initiate OAuth flow |
+| Connection status text | `connection-status` | E2E: verify status messages |
 | Error message | `login-error` | E2E: verify error display |
-| Register link | `register-link` | E2E: navigate to register |
-| Login form container | `login-form` | E2E: verify form visible |
+| Hint message | `login-hint` | E2E: verify hint text |
+| Connect form container | `connect-form` | E2E: verify form visible |
+| Scope info section | `scope-info` | E2E: verify permissions display |
 
 ---
 
@@ -347,19 +368,18 @@ Not applicable for the login page. The form is always displayed. There is no dat
 
 | Requirement | Implementation |
 |-------------|---------------|
-| Form | `role="form"` with `aria-label="Login to terminal.social"` |
-| Username input | `aria-label="Username"` with `autocomplete="username"` |
-| Password input | `aria-label="Password"` with `autocomplete="current-password"` |
+| Form | `role="form"` with `aria-label="Connect to terminal.social via GitHub"` |
+| Connect button | `aria-label="Connect with GitHub"`, `aria-disabled="true"` when connecting |
+| Status messages | `role="status"` with `aria-live="polite"` for connection updates |
 | Error message | `role="alert"` with `aria-live="assertive"` for immediate announcement |
-| Submit button | `aria-label="Submit login"`, `aria-disabled="true"` when submitting |
-| Register link | `aria-label="Create a new account"` |
-| Loading state | Submit button text changes to "authenticating..." with `aria-busy="true"` |
+| Scope info | `aria-label="OAuth permissions: read-only profile access"` |
+| Loading state | Button text changes to "connecting..." with `aria-busy="true"` |
 
 ---
 
 ## See Also
 
-- [DESIGN_GUIDE.md](../guides/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
+- [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
 - [API.md](../specs/API.md) — Endpoint request/response details
 - [CONVENTIONS.md](../guides/CONVENTIONS.md) — Coding rules for implementation
-- [REGISTER.md](./REGISTER.md) — Related screen specification
+- [SETUP.md](./SETUP.md) — First-time profile setup (replaces REGISTER.md)

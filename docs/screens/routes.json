@@ -1,0 +1,85 @@
+{
+  "routes": [
+    {
+      "path": "/",
+      "page": "GlobalFeedPage",
+      "file": "packages/client/src/pages/GlobalFeedPage.tsx",
+      "title": "terminal.social / feed --global",
+      "auth": false,
+      "layout": "AppShell",
+      "spec": "docs/screens/GLOBAL_FEED.md"
+    },
+    {
+      "path": "/feed/local",
+      "page": "LocalFeedPage",
+      "file": "packages/client/src/pages/LocalFeedPage.tsx",
+      "title": "terminal.social / feed --local",
+      "auth": true,
+      "layout": "AppShell",
+      "spec": "docs/screens/LOCAL_FEED.md"
+    },
+    {
+      "path": "/explore",
+      "page": "ExplorePage",
+      "file": "packages/client/src/pages/ExplorePage.tsx",
+      "title": "terminal.social / explore",
+      "auth": false,
+      "layout": "AppShell",
+      "spec": "docs/screens/EXPLORE.md"
+    },
+    {
+      "path": "/post/:id",
+      "page": "PostDetailPage",
+      "file": "packages/client/src/pages/PostDetailPage.tsx",
+      "title": "terminal.social / post --id=:id",
+      "auth": false,
+      "layout": "AppShell",
+      "spec": "docs/screens/POST_DETAIL.md"
+    },
+    {
+      "path": "/@:username",
+      "page": "UserProfilePage",
+      "file": "packages/client/src/pages/UserProfilePage.tsx",
+      "title": "@:username -- terminal.social",
+      "auth": false,
+      "layout": "AppShell",
+      "spec": "docs/screens/USER_PROFILE.md"
+    },
+    {
+      "path": "/login",
+      "page": "LoginPage",
+      "file": "packages/client/src/pages/LoginPage.tsx",
+      "title": "connect -- terminal.social",
+      "auth": false,
+      "layout": "AuthLayout",
+      "spec": "docs/screens/LOGIN.md"
+    },
+    {
+      "path": "/setup",
+      "page": "SetupPage",
+      "file": "packages/client/src/pages/SetupPage.tsx",
+      "title": "setup -- terminal.social",
+      "auth": "partial",
+      "layout": "AuthLayout",
+      "spec": "docs/screens/SETUP.md"
+    },
+    {
+      "path": "/settings",
+      "page": "SettingsPage",
+      "file": "packages/client/src/pages/SettingsPage.tsx",
+      "title": "settings -- terminal.social",
+      "auth": true,
+      "layout": "AppShell",
+      "spec": "docs/screens/SETTINGS.md"
+    },
+    {
+      "path": "/analyze",
+      "page": "AnalyzePage",
+      "file": "packages/client/src/pages/AnalyzePage.tsx",
+      "title": "terminal.social / analyze",
+      "auth": true,
+      "layout": "AppShell",
+      "spec": "docs/screens/ANALYZE.md"
+    }
+  ]
+}

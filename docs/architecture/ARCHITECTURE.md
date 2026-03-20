@@ -87,8 +87,9 @@ feedStore: {
 
 authStore: {
   user: User | null
-  login(credentials)
+  loginWithGitHub()
   logout()
+  fetchMe()
 }
 
 postStore: {
@@ -179,7 +180,7 @@ No Redis or external cache for MVP. SQLite WAL mode + 20MB page cache is suffici
 - **XSS**: React auto-escaping + DOMPurify (for CLI rendering)
 - **CSRF**: SameSite=Lax cookies + httpOnly flag
 - **Rate limiting**: express-rate-limit per endpoint — see `docs/specs/API.md` section 6 for exact values
-- **Password**: bcrypt with cost factor 10
+- **Auth**: GitHub OAuth 2.0 with PKCE, state parameter for CSRF protection
 - **Credential storage**: API keys in env vars only, never in DB or client bundle
 - **Content Security Policy**: `script-src 'self'` in production
 
@@ -188,49 +189,64 @@ No Redis or external cache for MVP. SQLite WAL mode + 20MB page cache is suffici
 ## Authentication Flow
 
 ```
-1. POST /api/auth/register → Create user → Set session → Redirect to /
-2. POST /api/auth/login    → Verify credentials → Set session → Redirect to /
-3. GET  /api/auth/me       → Return session user (or 401)
-4. POST /api/auth/logout   → Destroy session → Redirect to /login
-5. Protected routes        → auth middleware checks session → 401 if missing
+1. GET  /api/auth/github          → Redirect to GitHub OAuth consent
+2. GET  /api/auth/github/callback → Exchange code, create/find user, set session
+3. POST /api/auth/setup           → Complete profile (new users only)
+4. GET  /api/auth/me              → Return session user (or 401)
+5. POST /api/auth/logout          → Destroy session → Redirect to /login
+6. Protected routes               → auth middleware checks session → 401 if missing
 ```
 
 ### Flow Diagram
 
 ```
-┌──────────┐     POST /auth/register      ┌──────────────┐
+┌──────────┐     GET /auth/github         ┌──────────────┐
 │  Client  │ ──────────────────────────▶  │  Express API  │
-│ (React)  │     { username, password }    │              │
-└──────────┘                               └──────┬───────┘
-     ▲                                            │
-     │                                            ▼
-     │                                     ┌──────────────┐
-     │                                     │  Validate    │
-     │                                     │  (zod)       │
-     │                                     └──────┬───────┘
-     │                                            │
-     │                                            ▼
-     │                                     ┌──────────────┐
-     │                                     │  Hash pwd    │
-     │                                     │  Insert user │
-     │                                     │  (SQLite)    │
-     │                                     └──────┬───────┘
-     │                                            │
-     │                                            ▼
-     │                                     ┌──────────────┐
-     │    Set-Cookie: session=xxx          │  Create      │
-     │ ◀──────────────────────────────────│  Session     │
-     │    200 OK { user }                  └──────────────┘
-     │
-     │         Subsequent requests
-     │    ─────────────────────────▶
-     │    Cookie: session=xxx
-     │                                     ┌──────────────┐
-     │                                     │ Auth         │
-     │                                     │ Middleware   │
-     │                                     │ req.session  │
-     │    ◀────────────────────────────── │ → req.user   │
-     │    200 OK (or 401 Unauthorized)     └──────────────┘
+│ (React)  │                              │              │
+└──────────┘                              └──────┬───────┘
+     ▲                                           │
+     │                                           ▼
+     │                                    ┌──────────────┐
+     │                                    │  Redirect to │
+     │                                    │  github.com  │
+     │                                    │  /oauth      │
+     │                                    └──────┬───────┘
+     │                                           │
+     │         User authorizes on GitHub          │
+     │                                           ▼
+     │                                    ┌──────────────┐
+     │        GET /auth/github/callback   │  Exchange    │
+     │  ◀──────────────────────────────   │  code for    │
+     │         with code + state          │  access token│
+     │                                    └──────┬───────┘
+     │                                           │
+     │                                           ▼
+     │                                    ┌──────────────┐
+     │                                    │  Fetch GitHub │
+     │                                    │  user profile │
+     │                                    └──────┬───────┘
+     │                                           │
+     │                                    ┌──────┴───────┐
+     │                                    │ User exists?  │
+     │                                    └──┬────────┬──┘
+     │                                  Yes  │        │  No
+     │                                       ▼        ▼
+     │                                ┌─────────┐ ┌─────────┐
+     │       Set session cookie       │ Find    │ │ Create  │
+     │  ◀──────────────────────────── │ user    │ │ partial │
+     │       Redirect to /            │         │ │ user    │
+     │       (or /setup for new)      └─────────┘ └─────────┘
+     │                                       │        │
+     │                                       ▼        ▼
+     │                                   Redirect  Redirect
+     │                                   to /      to /setup
+     ▼
+┌──────────┐
+│  Global  │
+│  Feed    │
+│  or      │
+│  Setup   │
+└──────────┘
 ```
 
 ---
@@ -345,7 +361,7 @@ Step-by-step flow from user action to database and back:
 ## Environment Configuration
 
 > Full env var reference: see `docs/guides/ENV.md`.
-> Credential auto-detection: see `docs/specs/LLM_INTEGRATION.md` section 7.
+> Credential auto-detection: see `docs/llm/LLM_INTEGRATION.md` section 7.
 
 ---
 

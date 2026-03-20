@@ -33,7 +33,7 @@
 | `API_CUSTOM_API_KEY` | string | — | No | Generic API authentication key |
 | `API_CUSTOM_MODEL` | string | — | No | Generic API model name |
 
-*Required for default LLM provider (claude-sonnet). If unset, credential auto-detection will attempt to find keys from local config files. See `docs/specs/LLM_INTEGRATION.md` section 7.
+*Required for default LLM provider (claude-sonnet). If unset, credential auto-detection will attempt to find keys from local config files. See `docs/llm/LLM_INTEGRATION.md` section 7.
 
 ### Client (`@clitoris/client`)
 
@@ -150,5 +150,5 @@ pnpm dev
 ## See Also
 
 - [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — How env vars flow through the system
-- [TESTING.md](./TESTING.md) — Test environment setup
+- [TESTING.md](../testing/TESTING.md) — Test environment setup
 - [CONVENTIONS.md](./CONVENTIONS.md) — Never expose server env vars to client

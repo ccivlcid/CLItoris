@@ -1,0 +1,346 @@
+{
+  "users": {
+    "default": {
+      "id": "01JTEST000000000000000001",
+      "username": "testuser",
+      "domain": null,
+      "displayName": "Test User",
+      "bio": "A test user for E2E tests",
+      "avatarUrl": "https://github.com/identicons/testuser.png",
+      "githubId": "gh-test-001",
+      "githubUsername": "testuser-gh",
+      "githubAvatarUrl": "https://avatars.githubusercontent.com/u/1",
+      "githubProfileUrl": "https://github.com/testuser-gh",
+      "githubReposCount": 10,
+      "githubConnectedAt": "2026-01-01T00:00:00Z",
+      "createdAt": "2026-01-01T00:00:00Z"
+    },
+    "jiyeon": {
+      "id": "01JTEST000000000000000002",
+      "username": "jiyeon_dev",
+      "domain": "jiyeon.kim",
+      "displayName": "Jiyeon Kim",
+      "bio": "full-stack dev. open source lover.",
+      "avatarUrl": "https://github.com/identicons/jiyeon.png",
+      "githubId": "gh-test-002",
+      "githubUsername": "jiyeon-kim",
+      "githubAvatarUrl": "https://avatars.githubusercontent.com/u/2",
+      "githubProfileUrl": "https://github.com/jiyeon-kim",
+      "githubReposCount": 42,
+      "githubConnectedAt": "2026-01-15T00:00:00Z",
+      "createdAt": "2026-01-15T00:00:00Z"
+    },
+    "mitsuki": {
+      "id": "01JTEST000000000000000003",
+      "username": "0xmitsuki",
+      "domain": "mitsuki.sh",
+      "displayName": "Mitsuki",
+      "bio": "CLI is the new lingua franca.",
+      "avatarUrl": null,
+      "githubId": "gh-test-003",
+      "githubUsername": "0xmitsuki",
+      "githubAvatarUrl": "https://avatars.githubusercontent.com/u/3",
+      "githubProfileUrl": "https://github.com/0xmitsuki",
+      "githubReposCount": 28,
+      "githubConnectedAt": "2026-02-01T00:00:00Z",
+      "createdAt": "2026-02-01T00:00:00Z"
+    },
+    "newUser": {
+      "id": "01JTEST000000000000000004",
+      "username": "fresh_user",
+      "domain": null,
+      "displayName": "",
+      "bio": "",
+      "avatarUrl": null,
+      "githubId": "gh-test-004",
+      "githubUsername": "freshuser-gh",
+      "githubAvatarUrl": "https://avatars.githubusercontent.com/u/4",
+      "githubProfileUrl": "https://github.com/freshuser-gh",
+      "githubReposCount": 0,
+      "githubConnectedAt": "2026-03-20T00:00:00Z",
+      "createdAt": "2026-03-20T00:00:00Z"
+    }
+  },
+  "posts": {
+    "default": {
+      "id": "01JTEST000000000000000101",
+      "userId": "01JTEST000000000000000002",
+      "messageRaw": "While vibe-coding, I realized we might be adapting to AI, not the other way around.",
+      "messageCli": "post --user=jiyeon.kim --lang=ko --message=\"observing AI language convergence\" --tags=vibe-coding,thoughts --visibility=public",
+      "lang": "ko",
+      "tags": ["vibe-coding", "thoughts"],
+      "mentions": [],
+      "visibility": "public",
+      "llmModel": "claude-sonnet",
+      "parentId": null,
+      "forkedFromId": null,
+      "createdAt": "2026-03-19T12:00:00Z"
+    },
+    "withRepo": {
+      "id": "01JTEST000000000000000102",
+      "userId": "01JTEST000000000000000002",
+      "messageRaw": "This project structure is pretty good. #open-source",
+      "messageCli": "post --user=jiyeon.kim --repo=ccivlcid/CLItoris --tags=open-source --visibility=public",
+      "lang": "ko",
+      "tags": ["open-source"],
+      "mentions": [],
+      "visibility": "public",
+      "llmModel": "gpt-4o",
+      "parentId": null,
+      "forkedFromId": null,
+      "createdAt": "2026-03-19T14:00:00Z",
+      "repoAttachment": {
+        "repoOwner": "ccivlcid",
+        "repoName": "CLItoris",
+        "repoStars": 42,
+        "repoForks": 12,
+        "repoLanguage": "TypeScript"
+      }
+    },
+    "reply": {
+      "id": "01JTEST000000000000000103",
+      "userId": "01JTEST000000000000000003",
+      "messageRaw": "Totally agree! CLI is the universal language.",
+      "messageCli": "reply --to=01JTEST000000000000000101 --message=\"CLI universal language\" --lang=en",
+      "lang": "en",
+      "tags": [],
+      "mentions": ["jiyeon_dev"],
+      "visibility": "public",
+      "llmModel": "claude-sonnet",
+      "parentId": "01JTEST000000000000000101",
+      "forkedFromId": null,
+      "createdAt": "2026-03-19T12:30:00Z"
+    },
+    "forked": {
+      "id": "01JTEST000000000000000104",
+      "userId": "01JTEST000000000000000003",
+      "messageRaw": "While vibe-coding, I realized we might be adapting to AI, not the other way around.",
+      "messageCli": "post --user=jiyeon.kim --lang=ko --message=\"observing AI language convergence\" --tags=vibe-coding,thoughts --visibility=public",
+      "lang": "ko",
+      "tags": ["vibe-coding", "thoughts"],
+      "mentions": [],
+      "visibility": "public",
+      "llmModel": "claude-sonnet",
+      "parentId": null,
+      "forkedFromId": "01JTEST000000000000000101",
+      "createdAt": "2026-03-19T13:00:00Z"
+    },
+    "private": {
+      "id": "01JTEST000000000000000105",
+      "userId": "01JTEST000000000000000002",
+      "messageRaw": "Draft idea: terminal-based dating app",
+      "messageCli": "post --user=jiyeon.kim --message=\"draft: terminal dating\" --visibility=private",
+      "lang": "en",
+      "tags": [],
+      "mentions": [],
+      "visibility": "private",
+      "llmModel": "claude-sonnet",
+      "parentId": null,
+      "forkedFromId": null,
+      "createdAt": "2026-03-19T15:00:00Z"
+    },
+    "unlisted": {
+      "id": "01JTEST000000000000000106",
+      "userId": "01JTEST000000000000000001",
+      "messageRaw": "Testing unlisted visibility",
+      "messageCli": "post --user=testuser --message=\"unlisted test\" --visibility=unlisted",
+      "lang": "en",
+      "tags": ["test"],
+      "mentions": [],
+      "visibility": "unlisted",
+      "llmModel": "gpt-4o",
+      "parentId": null,
+      "forkedFromId": null,
+      "createdAt": "2026-03-19T16:00:00Z"
+    },
+    "withMentions": {
+      "id": "01JTEST000000000000000107",
+      "userId": "01JTEST000000000000000001",
+      "messageRaw": "Hey @jiyeon_dev and @0xmitsuki, check this out!",
+      "messageCli": "post --user=testuser --mention=jiyeon_dev,0xmitsuki --message=\"check this out\" --lang=en",
+      "lang": "en",
+      "tags": [],
+      "mentions": ["jiyeon_dev", "0xmitsuki"],
+      "visibility": "public",
+      "llmModel": "gemini-2.5-pro",
+      "parentId": null,
+      "forkedFromId": null,
+      "createdAt": "2026-03-19T17:00:00Z"
+    },
+    "maxTags": {
+      "id": "01JTEST000000000000000108",
+      "userId": "01JTEST000000000000000003",
+      "messageRaw": "Testing all the tags",
+      "messageCli": "post --user=0xmitsuki.sh --tags=t1,t2,t3,t4,t5,t6,t7,t8,t9,t10 --lang=en",
+      "lang": "en",
+      "tags": ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10"],
+      "mentions": [],
+      "visibility": "public",
+      "llmModel": "llama-3",
+      "parentId": null,
+      "forkedFromId": null,
+      "createdAt": "2026-03-19T18:00:00Z"
+    }
+  },
+  "follows": {
+    "jiyeonFollowsMitsuki": {
+      "followerId": "01JTEST000000000000000002",
+      "followingId": "01JTEST000000000000000003",
+      "createdAt": "2026-02-10T00:00:00Z"
+    },
+    "mitsukiFollowsJiyeon": {
+      "followerId": "01JTEST000000000000000003",
+      "followingId": "01JTEST000000000000000002",
+      "createdAt": "2026-02-11T00:00:00Z"
+    },
+    "testFollowsJiyeon": {
+      "followerId": "01JTEST000000000000000001",
+      "followingId": "01JTEST000000000000000002",
+      "createdAt": "2026-03-01T00:00:00Z"
+    }
+  },
+  "stars": {
+    "mitsukiStarsDefault": {
+      "userId": "01JTEST000000000000000003",
+      "postId": "01JTEST000000000000000101",
+      "createdAt": "2026-03-19T12:10:00Z"
+    },
+    "testStarsDefault": {
+      "userId": "01JTEST000000000000000001",
+      "postId": "01JTEST000000000000000101",
+      "createdAt": "2026-03-19T12:15:00Z"
+    },
+    "jiyeonStarsReply": {
+      "userId": "01JTEST000000000000000002",
+      "postId": "01JTEST000000000000000103",
+      "createdAt": "2026-03-19T12:35:00Z"
+    }
+  },
+  "repoAttachments": {
+    "clitorisRepo": {
+      "postId": "01JTEST000000000000000102",
+      "repoOwner": "ccivlcid",
+      "repoName": "CLItoris",
+      "repoStars": 42,
+      "repoForks": 12,
+      "repoLanguage": "TypeScript",
+      "cachedAt": "2026-03-19T14:00:00Z"
+    }
+  },
+  "analyses": {
+    "completedReport": {
+      "id": "01JTEST000000000000000201",
+      "userId": "01JTEST000000000000000002",
+      "repoOwner": "vercel",
+      "repoName": "next.js",
+      "outputType": "report",
+      "llmModel": "claude-sonnet",
+      "lang": "en",
+      "optionsJson": { "focus": "architecture" },
+      "resultUrl": "/api/analyze/01JTEST000000000000000201/download",
+      "resultSummary": "Production-grade React framework with hybrid rendering strategies",
+      "status": "completed",
+      "durationMs": 12300,
+      "createdAt": "2026-03-19T10:00:00Z"
+    },
+    "processingPptx": {
+      "id": "01JTEST000000000000000202",
+      "userId": "01JTEST000000000000000002",
+      "repoOwner": "ccivlcid",
+      "repoName": "CLItoris",
+      "outputType": "pptx",
+      "llmModel": "gpt-4o",
+      "lang": "ko",
+      "optionsJson": { "slides": 15 },
+      "resultUrl": null,
+      "resultSummary": null,
+      "status": "processing",
+      "durationMs": null,
+      "createdAt": "2026-03-20T09:00:00Z"
+    },
+    "failedVideo": {
+      "id": "01JTEST000000000000000203",
+      "userId": "01JTEST000000000000000003",
+      "repoOwner": "torvalds",
+      "repoName": "linux",
+      "outputType": "video",
+      "llmModel": "claude-sonnet",
+      "lang": "en",
+      "optionsJson": { "duration": 60 },
+      "resultUrl": null,
+      "resultSummary": null,
+      "status": "failed",
+      "durationMs": 45000,
+      "createdAt": "2026-03-18T08:00:00Z"
+    },
+    "pendingReport": {
+      "id": "01JTEST000000000000000204",
+      "userId": "01JTEST000000000000000001",
+      "repoOwner": "facebook",
+      "repoName": "react",
+      "outputType": "report",
+      "llmModel": "gemini-2.5-pro",
+      "lang": "en",
+      "optionsJson": {},
+      "resultUrl": null,
+      "resultSummary": null,
+      "status": "pending",
+      "durationMs": null,
+      "createdAt": "2026-03-20T10:00:00Z"
+    }
+  },
+  "githubOAuth": {
+    "mockCode": "mock_auth_code_12345",
+    "mockState": "mock_csrf_state_abcde",
+    "mockAccessToken": "gho_mock_access_token",
+    "mockGitHubUser": {
+      "id": 12345,
+      "login": "testuser-gh",
+      "name": "Test User",
+      "bio": "A test user",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1",
+      "html_url": "https://github.com/testuser-gh",
+      "public_repos": 10
+    },
+    "mockNewGitHubUser": {
+      "id": 99999,
+      "login": "brand-new-user",
+      "name": "Brand New",
+      "bio": null,
+      "avatar_url": "https://avatars.githubusercontent.com/u/99999",
+      "html_url": "https://github.com/brand-new-user",
+      "public_repos": 0
+    }
+  },
+  "edgeCases": {
+    "emptyFeed": {
+      "$comment": "Use when testing empty state UI — no posts match the query",
+      "data": [],
+      "meta": { "cursor": null, "hasMore": false }
+    },
+    "maxLengthPost": {
+      "messageRaw": "A".repeat(2000),
+      "messageCli": "B".repeat(4000),
+      "$comment": "Use string repetition in test code: 'A'.repeat(2000)"
+    },
+    "unicodePost": {
+      "messageRaw": "한글 테스트 🎉 日本語テスト العربية",
+      "messageCli": "post --lang=ko --message=\"multilingual unicode test\" --tags=i18n",
+      "lang": "ko"
+    },
+    "selfFollowAttempt": {
+      "followerId": "01JTEST000000000000000001",
+      "followingId": "01JTEST000000000000000001",
+      "$comment": "Should return 400 — cannot follow yourself"
+    },
+    "duplicateStarAttempt": {
+      "userId": "01JTEST000000000000000003",
+      "postId": "01JTEST000000000000000101",
+      "$comment": "Already starred — toggle should unstar"
+    },
+    "deletedPostReply": {
+      "parentId": "nonexistent-post-id",
+      "$comment": "Should return 404 — parent post not found"
+    }
+  }
+}

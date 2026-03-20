@@ -10,6 +10,7 @@
 Update the UI immediately for a responsive feel, then revert if the API call fails.
 
 ```typescript
+// File: packages/client/src/stores/feedStore.ts
 // Pattern: Update UI immediately, revert on error
 async function toggleStar(postId: string): Promise<void> {
   // 1. Save current state
@@ -56,6 +57,7 @@ async function toggleStar(postId: string): Promise<void> {
 Full infinite scroll pattern using cursor-based pagination. Never use OFFSET-based pagination.
 
 ```typescript
+// File: packages/client/src/stores/feedStore.ts
 interface PaginatedState<T> {
   items: T[];
   cursor: string | null;
@@ -111,6 +113,7 @@ async function fetchNextPage(): Promise<void> {
 Standard fetch wrapper that handles common HTTP error codes consistently.
 
 ```typescript
+// File: packages/client/src/lib/apiFetch.ts
 interface ApiError {
   code: string;
   message: string;
@@ -177,6 +180,7 @@ async function apiFetch<T>(
 Complete template for a typical feature store with loading, error, data, and actions.
 
 ```typescript
+// File: packages/client/src/stores/feedStore.ts
 import { create } from 'zustand';
 
 interface Post {
@@ -293,6 +297,7 @@ export const useFeedStore = create<FeedState>((set, get) => ({
 Terminal-style form flow: validate, submit, handle error/success, show toast.
 
 ```typescript
+// File: packages/client/src/stores/composerStore.ts
 import { z } from 'zod';
 
 const postSchema = z.object({
@@ -356,6 +361,7 @@ async function handleSubmitPost(formData: unknown): Promise<void> {
 Hook that redirects unauthenticated users to `/login`.
 
 ```typescript
+// File: packages/client/src/hooks/useAuthGuard.ts
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
@@ -423,6 +429,7 @@ const ProtectedLocalFeed = withAuth(LocalFeedPage);
 Toast notification on API error with a retry button.
 
 ```typescript
+// File: packages/client/src/stores/feedStore.ts (error recovery in store actions)
 interface Toast {
   id: string;
   type: 'success' | 'error' | 'info';
@@ -502,6 +509,7 @@ async function fetchFeedWithRecovery(): Promise<void> {
 Reusable hook that connects the IntersectionObserver to the store's `fetchNextPage` action.
 
 ```typescript
+// File: packages/client/src/hooks/useInfiniteScroll.ts
 import { useEffect, useRef, useCallback } from 'react';
 
 interface UseInfiniteScrollOptions {
@@ -578,6 +586,7 @@ function FeedList(): JSX.Element {
 Centralized toast system using a Zustand store and a fixed-position container.
 
 ```typescript
+// File: packages/client/src/stores/toastStore.ts
 import { create } from 'zustand';
 
 interface Toast {
@@ -638,6 +647,7 @@ function showError(message: string, retryFn?: () => void): void {
 ### Toast Container Component
 
 ```typescript
+// File: packages/client/src/components/layout/ToastContainer.tsx
 function ToastContainer(): JSX.Element {
   const { toasts, removeToast } = useToastStore();
 
@@ -688,6 +698,7 @@ function ToastContainer(): JSX.Element {
 Consistent relative time display across the application.
 
 ```typescript
+// File: packages/client/src/lib/timeAgo.ts
 function timeAgo(dateString: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
 
@@ -723,6 +734,7 @@ function timeAgo(dateString: string): string {
 Handles LLM-specific errors: timeout, invalid response, rate limit, provider unavailable.
 
 ```typescript
+// File: packages/llm/src/transform.ts
 async function transformWithRetry(
   input: TransformRequest,
   maxRetries: number = 1,
@@ -766,6 +778,7 @@ async function transformWithRetry(
 Prevents rapid duplicate actions (e.g., double-click star, rapid form submit).
 
 ```typescript
+// File: packages/client/src/hooks/useDebounce.ts
 import { useRef, useCallback } from 'react';
 
 function useDebounce<T extends (...args: unknown[]) => unknown>(
@@ -800,6 +813,112 @@ const debouncedSearch = useDebounce((query: string) => {
 
 ---
 
+## 13. Race Condition Prevention (isSubmitting Guard)
+
+Prevents duplicate API calls from rapid clicks on toggle actions (star, follow, fork) and form submissions.
+
+```typescript
+// File: packages/client/src/stores/feedStore.ts
+// Apply this guard to any action that mutates server state
+
+interface StoreWithSubmitGuard {
+  isSubmitting: boolean;
+  // ... other fields
+}
+
+async function guardedAction(get: () => StoreWithSubmitGuard, set: (s: Partial<StoreWithSubmitGuard>) => void, action: () => Promise<void>): Promise<void> {
+  if (get().isSubmitting) return;
+  set({ isSubmitting: true });
+  try {
+    await action();
+  } finally {
+    set({ isSubmitting: false });
+  }
+}
+
+// Usage in toggleStar:
+toggleStar: async (postId: string) => {
+  if (get().isSubmitting) return;
+  set({ isSubmitting: true });
+
+  const prevPosts = get().posts;
+  // ... optimistic update ...
+
+  try {
+    await apiFetch(`/posts/${postId}/star`, { method: 'POST' });
+  } catch {
+    set({ posts: prevPosts });
+  } finally {
+    set({ isSubmitting: false });
+  }
+},
+```
+
+**When to use:**
+- Star/follow/fork toggles (prevents double-toggle)
+- Form submissions (prevents duplicate posts)
+- Any action that calls a mutating API endpoint
+
+**When NOT to use:**
+- Read-only fetches (use `isLoading` guard instead)
+- Debounced search inputs (use `useDebounce` pattern instead)
+
+**Key rules:**
+- Always set `isSubmitting: false` in `finally` block
+- Check `isSubmitting` at the top of the action and return early if true
+- One `isSubmitting` flag per independent action group (e.g., `isStarring`, `isForking` if they can happen concurrently)
+
+---
+
+## 14. Store Naming Convention
+
+Consistent naming for all Zustand stores across the project.
+
+| Item | Convention | Example |
+|------|-----------|---------|
+| File name | `camelCase` + `Store.ts` | `feedStore.ts`, `authStore.ts`, `postDetailStore.ts` |
+| File path | `packages/client/src/stores/` | `packages/client/src/stores/feedStore.ts` |
+| Export name | `use` + `PascalCase` + `Store` | `useFeedStore`, `useAuthStore`, `usePostDetailStore` |
+| Interface | `PascalCase` + `State` | `FeedState`, `AuthState`, `PostDetailState` |
+| Initial state | `const initialState` | Extracted as a const for `reset()` |
+
+**All stores in the project:**
+
+| Store | File | Purpose |
+|-------|------|---------|
+| `useFeedStore` | `feedStore.ts` | Global/local feed posts, pagination, star/fork |
+| `useAuthStore` | `authStore.ts` | Current user session, login/logout |
+| `useComposerStore` | `composerStore.ts` | Post creation form state, LLM model selection |
+| `usePostDetailStore` | `postDetailStore.ts` | Single post view, replies |
+| `useProfileStore` | `profileStore.ts` | User profile, user's posts |
+| `useExploreStore` | `exploreStore.ts` | Trending, search, discover |
+| `useSettingsStore` | `settingsStore.ts` | User settings |
+| `useAnalyzeStore` | `analyzeStore.ts` | Repo analysis state |
+| `useToastStore` | `toastStore.ts` | Toast notification queue |
+
+---
+
+## 15. Performance Targets
+
+All features must meet these performance targets. Measure with browser DevTools Network/Performance tabs.
+
+| Metric | Target | Measurement | Notes |
+|--------|--------|-------------|-------|
+| Feed load (first 10 posts) | < 500ms | Time from navigation to first paint | Includes API + render |
+| LLM transformation | < 3s total | Time from submit to CLI output | Streaming: first token < 500ms |
+| DB query (p95) | < 50ms | Server-side query execution time | Must use indexes. Log slow queries with pino |
+| Page transition | < 200ms | Time between route changes | Use React Router lazy loading + Suspense |
+| Time to Interactive (TTI) | < 2s | Lighthouse audit | Code-split per route |
+| Bundle size (initial) | < 200KB gzipped | `vite build` output | Lazy-load heavy deps (@xyflow/react) |
+
+**When a target is missed:**
+1. Check if the correct index exists (DB queries)
+2. Profile with React DevTools (component renders)
+3. Check network waterfall (API calls)
+4. Consider denormalization if DB query > 50ms despite indexes
+
+---
+
 ## Ownership
 
 This document is maintained alongside the CLItoris codebase. All implementation code must conform to these patterns. When adding a new pattern, include a full TypeScript example, a "When to use" note, and a "Key rules" checklist.
@@ -809,7 +928,7 @@ This document is maintained alongside the CLItoris codebase. All implementation 
 ## See Also
 
 - [CONVENTIONS.md](./CONVENTIONS.md) — Code style and naming conventions
-- [TESTING.md](./TESTING.md) — Test patterns and utilities
+- [TESTING.md](../testing/TESTING.md) — Test patterns and utilities
 - [API.md](../specs/API.md) — REST API specification
 - [DATABASE.md](../specs/DATABASE.md) — Database schema and queries
 - [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — System architecture overview

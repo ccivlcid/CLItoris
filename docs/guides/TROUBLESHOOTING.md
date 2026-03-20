@@ -262,5 +262,5 @@ pnpm dev
 
 - [ENV.md](./ENV.md) — Environment variables reference
 - [CONFIGS.md](../setup/CONFIGS.md) — Config files for bootstrapping
-- [TESTING.md](./TESTING.md) — Test commands and configuration
+- [TESTING.md](../testing/TESTING.md) — Test commands and configuration
 - [CONVENTIONS.md](./CONVENTIONS.md) — Coding rules to avoid common issues

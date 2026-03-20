@@ -171,11 +171,13 @@ afterEach(() => {
 // tests/e2e/helpers.ts
 import { Page } from '@playwright/test';
 
-async function loginAs(page: Page, username: string, password: string): Promise<void> {
-  await page.goto('/login');
-  await page.fill('[data-testid="username-input"]', username);
-  await page.fill('[data-testid="password-input"]', password);
-  await page.click('[data-testid="login-submit"]');
+/**
+ * Simulate GitHub OAuth login for E2E tests.
+ * Sets session cookie directly via API mock.
+ */
+export async function loginAs(page: Page, username: string): Promise<void> {
+  // Mock the OAuth callback to create a session
+  await page.goto(`/login?code=mock_${username}&state=mock_state`);
   await page.waitForURL('/');
 }
 ```

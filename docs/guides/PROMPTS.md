@@ -21,7 +21,7 @@ Requirements:
 - Props: {list required props}
 - Style with Tailwind CSS (dark theme, terminal aesthetic)
 - Follow docs/guides/CONVENTIONS.md rules
-- Reference docs/guides/DESIGN_GUIDE.md for colors and spacing
+- Reference docs/design/DESIGN_GUIDE.md for colors and spacing
 ```
 
 ### Worked Example
@@ -78,7 +78,7 @@ Implement the {screen name} screen.
 
 Refer to: docs/screens/{SCREEN_NAME}.md for the full specification.
 Follow: docs/guides/CONVENTIONS.md for coding rules.
-Use: docs/guides/DESIGN_GUIDE.md for visual tokens.
+Use: docs/design/DESIGN_GUIDE.md for visual tokens.
 
 Create:
 1. Page component at packages/client/src/pages/{page-name}.tsx
@@ -94,7 +94,7 @@ Implement the Login screen.
 
 Refer to: docs/screens/LOGIN.md for the full specification.
 Follow: docs/guides/CONVENTIONS.md for coding rules.
-Use: docs/guides/DESIGN_GUIDE.md for visual tokens.
+Use: docs/design/DESIGN_GUIDE.md for visual tokens.
 
 Create:
 1. Page component at packages/client/src/pages/login.tsx
@@ -200,69 +200,14 @@ State:
 - user: User | null
 - isLoading: boolean
 - error: string | null
+- connectionStatus: 'idle' | 'redirecting' | 'callback' | 'success' | 'error'
 
 Actions:
-- login(username, password) — POST /api/auth/login
+- initiateGitHubOAuth() — redirect to /api/auth/github
+- handleOAuthCallback(code, state) — POST /api/auth/github/callback
+- completeSetup(username, displayName?, bio?) — POST /api/auth/setup
 - logout() — POST /api/auth/logout
 - fetchMe() — GET /api/auth/me
-```
-
-**Expected AI output:**
-```typescript
-// packages/client/src/stores/auth-store.ts
-import { create } from 'zustand';
-import type { User } from '@clitoris/shared';
-
-interface AuthState {
-  user: User | null;
-  isLoading: boolean;
-  error: string | null;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  fetchMe: () => Promise<void>;
-}
-
-export const useAuthStore = create<AuthState>()((set) => ({
-  user: null,
-  isLoading: false,
-  error: null,
-
-  login: async (username, password): Promise<void> => {
-    set({ isLoading: true, error: null });
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-      });
-      if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error.message);
-      }
-      const { data } = await res.json();
-      set({ user: data, isLoading: false });
-    } catch (err) {
-      set({ error: (err as Error).message, isLoading: false });
-    }
-  },
-
-  logout: async (): Promise<void> => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    set({ user: null });
-  },
-
-  fetchMe: async (): Promise<void> => {
-    try {
-      const res = await fetch('/api/auth/me');
-      if (res.ok) {
-        const { data } = await res.json();
-        set({ user: data });
-      }
-    } catch {
-      set({ user: null });
-    }
-  },
-}));
 ```
 
 ---
@@ -361,7 +306,7 @@ Identify the root cause and fix it. Add a test to prevent regression.
 Write tests for {target}.
 
 Test tool: Vitest (unit) / Playwright (E2E)
-Follow patterns in docs/guides/TESTING.md.
+Follow patterns in docs/testing/TESTING.md.
 
 Cases to cover:
 - {happy path}
@@ -422,7 +367,7 @@ Investigation checklist:
 4. Add console.log or breakpoints as needed
 
 Fix the root cause and add a regression test.
-Follow docs/guides/CONVENTIONS.md and docs/guides/TESTING.md.
+Follow docs/guides/CONVENTIONS.md and docs/testing/TESTING.md.
 ```
 
 ### Worked Example
@@ -497,7 +442,7 @@ Check against:
 4. Color contrast (4.5:1 minimum ratio)
 5. Focus management (focus-visible rings, focus trapping in modals)
 
-Reference: docs/guides/DESIGN_GUIDE.md section 11 (Accessibility).
+Reference: docs/design/DESIGN_GUIDE.md section 11 (Accessibility).
 Fix any issues found. Add aria attributes where missing.
 ```
 
@@ -550,6 +495,6 @@ Round 4: "Ship it." ✅
 ## See Also
 
 - [CONVENTIONS.md](./CONVENTIONS.md) — Rules AI must follow when generating code
-- [TESTING.md](./TESTING.md) — Testing patterns for test-writing prompts
-- [DESIGN_GUIDE.md](./DESIGN_GUIDE.md) — Visual specs for UI component prompts
+- [TESTING.md](../testing/TESTING.md) — Testing patterns for test-writing prompts
+- [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual specs for UI component prompts
 - [Screen specs](../screens/) — Page-by-page specifications for screen implementation prompts

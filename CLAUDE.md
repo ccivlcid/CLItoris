@@ -18,6 +18,7 @@ All social interactions (post, follow, fork, star) are expressed as CLI commands
 |------|-----------|
 | Frontend | React 19 + TypeScript + Vite + Tailwind CSS |
 | State management | Zustand |
+| Routing | React Router v7 (`react-router-dom`) |
 | Flow diagrams | `@xyflow/react` v12 |
 | Backend | Node.js + Express + tsx (TypeScript direct execution) |
 | DB | SQLite (`better-sqlite3`) + versioned migrations |
@@ -114,41 +115,52 @@ All documentation lives under `docs/` organized by category.
 
 ```
 docs/
-├── OVERVIEW.md                        # Project overview, core concepts, glossary
+├── GLOSSARY.md                        # Unified terminology index (24 terms)
 ├── PROGRESS.md                        # Development status and decision log
 ├── setup/                             # Project bootstrapping
 │   └── CONFIGS.md                     # All config files (package.json, tsconfig, vite, tailwind)
 ├── guides/                            # Development guides
 │   ├── CONVENTIONS.md                 # Strict coding rules, naming, prohibitions
-│   ├── DESIGN_GUIDE.md                # Visual system index — colors, typography, layout
-│   ├── DESIGN_COMPONENTS.md           # Component specs (Post Card, Sidebar, Composer, etc.)
-│   ├── DESIGN_STATES.md               # Interaction states, animations, loading/empty/error
-│   ├── DESIGN_UI.md                   # Icons, responsive, accessibility, modals, forms
 │   ├── PATTERNS.md                    # Implementation patterns (optimistic updates, pagination, auth)
-│   ├── TESTING.md                     # Testing overview, config, commands, coverage, rules
-│   ├── TESTING_PATTERNS.md            # Component/store/API/E2E/LLM test patterns
-│   ├── TESTING_SETUP.md               # Mock patterns, test factories, environment setup
-│   ├── TROUBLESHOOTING.md             # Common issues & solutions for local development
+│   ├── PROMPTS.md                     # Vibe coding prompt templates
 │   ├── ENV.md                         # Environment variables reference
-│   └── PROMPTS.md                     # Vibe coding prompt templates
+│   └── TROUBLESHOOTING.md            # Common issues & solutions for local development
+├── design/                            # Visual design system
+│   ├── DESIGN_GUIDE.md               # Visual system index — colors, typography, layout
+│   ├── DESIGN_COMPONENTS.md          # Component specs (Post Card, Sidebar, Composer, etc.)
+│   ├── DESIGN_STATES.md              # Interaction states, animations, loading/empty/error
+│   ├── DESIGN_UI.md                  # Icons, responsive, accessibility, modals, forms
+│   └── tokens.json                    # Design token definitions
+├── testing/                           # Test documentation
+│   ├── TESTING.md                     # Testing overview, config, commands, coverage, rules
+│   ├── TESTING_PATTERNS.md           # Component/store/API/E2E/LLM test patterns
+│   ├── TESTING_SETUP.md              # Mock patterns, test factories, environment setup
+│   └── fixtures.json                  # Test fixture data
 ├── screens/                           # Page-by-page UI screen specifications
+│   ├── routes.json                    # Route definitions
 │   ├── GLOBAL_FEED.md                 # / — Main feed with composer
 │   ├── LOCAL_FEED.md                  # /feed/local — Following feed
 │   ├── EXPLORE.md                     # /explore — Trending/discover
 │   ├── POST_DETAIL.md                 # /post/:id — Single post + replies
 │   ├── USER_PROFILE.md               # /@:username — User profile
-│   ├── LOGIN.md                       # /login — Terminal-style login
-│   ├── REGISTER.md                    # /register — Terminal-style registration
-│   └── SETTINGS.md                    # /settings — User settings
+│   ├── LOGIN.md                       # /login — GitHub OAuth connect (SSH metaphor)
+│   ├── SETUP.md                       # /setup — First-time profile setup (replaces REGISTER.md)
+│   ├── SETTINGS.md                    # /settings — User settings
+│   └── ANALYZE.md                     # /analyze — Repo analysis tool (report, pptx, video)
 ├── specs/                             # Technical specifications
 │   ├── PRD.md                         # Product requirements document
 │   ├── DATABASE.md                    # DB schema, queries, migrations, migration files
-│   ├── API.md                         # REST API documentation (21 endpoints, error formats, rate limits)
-│   ├── LLM_INTEGRATION.md            # LLM transformation logic, prompts, 7 providers, credential auto-detection
-│   └── api-schema.json                # OpenAPI 3.1 schema (machine-readable)
+│   ├── API.md                         # REST API documentation (29 endpoints, error formats, rate limits)
+│   ├── api-schema.json                # OpenAPI 3.1 schema (machine-readable)
+│   └── types.ts                       # Shared type definitions
+├── llm/                               # LLM integration documentation
+│   ├── LLM_INTEGRATION.md            # LLM overview, system prompt, provider interface, execution modes
+│   ├── LLM_PROVIDERS.md              # 7 provider implementations (Anthropic, OpenAI, Gemini, Ollama, etc.)
+│   └── LLM_DETECTION.md              # Credential auto-detection, response parsing, error handling
 └── architecture/                      # Architecture diagrams
     ├── ARCHITECTURE.md                # System architecture, data flows, auth, errors
     ├── architecture.json              # Full system config (JSON)
+    ├── component-map.json             # Component dependency map
     ├── backend-dependencies.mmd       # Server module dependency graph (Mermaid)
     ├── frontend-imports.mmd           # Client component import graph (Mermaid)
     ├── org-chart.mmd                  # Monorepo folder hierarchy (Mermaid)
@@ -159,18 +171,19 @@ docs/
 1. `CLAUDE.md` — Project summary (this file)
 2. `docs/setup/CONFIGS.md` — Config files to bootstrap the project
 3. `docs/guides/CONVENTIONS.md` — Coding rules, naming, prohibitions
-4. `docs/guides/DESIGN_GUIDE.md` — Visual system index (colors, typography, layout)
-5. `docs/guides/DESIGN_COMPONENTS.md` — Component specifications
-6. `docs/guides/DESIGN_STATES.md` — Interaction states, loading/empty/error
-7. `docs/guides/DESIGN_UI.md` — Icons, responsive, accessibility, forms
-8. `docs/guides/PATTERNS.md` — Implementation patterns (optimistic updates, pagination, auth)
-9. `docs/screens/*` — Page-by-page UI screen specifications
-10. `docs/specs/LLM_INTEGRATION.md` — LLM transformation logic and provider code
-11. `docs/architecture/ARCHITECTURE.md` — System architecture, auth, error flows
-12. `docs/specs/DATABASE.md` — DB schema, queries, migrations
-13. `docs/specs/API.md` — REST API documentation with error formats
-14. `docs/guides/TESTING.md` — Testing overview, config, rules
-15. `docs/guides/TESTING_PATTERNS.md` — Test code examples
-16. `docs/guides/TESTING_SETUP.md` — Mocks, factories, environment setup
-17. `docs/guides/TROUBLESHOOTING.md` — Common issues & solutions
-18. `docs/guides/ENV.md` — Environment variables reference
+4. `docs/GLOSSARY.md` — Unified terminology index (domain-specific terms)
+5. `docs/design/DESIGN_GUIDE.md` — Visual system index (colors, typography, layout)
+6. `docs/design/DESIGN_COMPONENTS.md` — Component specifications
+7. `docs/design/DESIGN_STATES.md` — Interaction states, loading/empty/error
+8. `docs/design/DESIGN_UI.md` — Icons, responsive, accessibility, forms
+9. `docs/guides/PATTERNS.md` — Implementation patterns (optimistic updates, pagination, auth, performance)
+10. `docs/screens/*` — Page-by-page UI screen specifications
+11. `docs/llm/LLM_INTEGRATION.md` — LLM overview, system prompt, provider interface
+12. `docs/architecture/ARCHITECTURE.md` — System architecture, auth, error flows
+13. `docs/specs/DATABASE.md` — DB schema, queries, migrations
+14. `docs/specs/API.md` — REST API documentation with error formats
+15. `docs/testing/TESTING.md` — Testing overview, config, rules
+16. `docs/testing/TESTING_PATTERNS.md` — Test code examples
+17. `docs/testing/TESTING_SETUP.md` — Mocks, factories, environment setup
+18. `docs/guides/TROUBLESHOOTING.md` — Common issues & solutions
+19. `docs/guides/ENV.md` — Environment variables reference

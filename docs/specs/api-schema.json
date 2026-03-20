@@ -23,6 +23,7 @@
           "displayName": { "type": "string", "nullable": true, "maxLength": 50 },
           "bio": { "type": "string", "nullable": true, "maxLength": 300 },
           "avatarUrl": { "type": "string", "format": "uri", "nullable": true },
+          "githubUsername": { "type": "string", "description": "GitHub login username" },
           "createdAt": { "type": "string", "format": "date-time" }
         }
       },
@@ -113,7 +114,8 @@
             "required": ["code", "message"],
             "properties": {
               "code": { "type": "string", "description": "Machine-readable error code" },
-              "message": { "type": "string", "description": "Human-readable error message" }
+              "message": { "type": "string", "description": "Human-readable error message" },
+              "retryAfter": { "type": "integer", "description": "Seconds until retry (rate limit errors only)" }
             }
           }
         }
@@ -123,6 +125,24 @@
         "properties": {
           "cursor": { "type": "string", "format": "date-time", "nullable": true, "description": "Cursor for next page" },
           "hasMore": { "type": "boolean" }
+        }
+      },
+      "SetupRequest": {
+        "type": "object",
+        "required": ["username"],
+        "properties": {
+          "username": { "type": "string", "minLength": 3, "maxLength": 30, "pattern": "^[a-z0-9_]+$" },
+          "displayName": { "type": "string", "maxLength": 50 },
+          "bio": { "type": "string", "maxLength": 300 }
+        }
+      },
+      "UpdateProfileRequest": {
+        "type": "object",
+        "properties": {
+          "displayName": { "type": "string", "minLength": 1, "maxLength": 50 },
+          "domain": { "type": "string", "nullable": true },
+          "bio": { "type": "string", "maxLength": 300 },
+          "avatarUrl": { "type": "string", "format": "uri", "nullable": true }
         }
       },
       "CreatePostRequest": {
@@ -172,21 +192,73 @@
           "followerCount": { "type": "integer", "minimum": 0 }
         }
       },
-      "RegisterRequest": {
+      "LlmProvider": {
         "type": "object",
-        "required": ["username", "password"],
+        "required": ["provider", "isAvailable"],
         "properties": {
-          "username": { "type": "string", "minLength": 2, "maxLength": 30, "pattern": "^[a-zA-Z0-9_]+$" },
-          "password": { "type": "string", "minLength": 8, "maxLength": 128 },
-          "displayName": { "type": "string", "maxLength": 50 }
+          "provider": { "type": "string" },
+          "source": { "type": "string", "nullable": true },
+          "isAvailable": { "type": "boolean" }
         }
       },
-      "LoginRequest": {
+      "LocalModel": {
         "type": "object",
-        "required": ["username", "password"],
+        "required": ["name", "size", "provider"],
         "properties": {
-          "username": { "type": "string" },
-          "password": { "type": "string" }
+          "name": { "type": "string" },
+          "size": { "type": "string" },
+          "quantization": { "type": "string" },
+          "provider": { "type": "string" }
+        }
+      },
+      "GitHubRepo": {
+        "type": "object",
+        "required": ["name", "owner"],
+        "properties": {
+          "name": { "type": "string" },
+          "owner": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "stars": { "type": "integer" },
+          "forks": { "type": "integer" },
+          "language": { "type": "string", "nullable": true },
+          "url": { "type": "string", "format": "uri" }
+        }
+      },
+      "AnalyzeRequest": {
+        "type": "object",
+        "required": ["repoOwner", "repoName", "outputType", "llmModel"],
+        "properties": {
+          "repoOwner": { "type": "string" },
+          "repoName": { "type": "string" },
+          "outputType": { "type": "string", "enum": ["report", "pptx", "video"] },
+          "llmModel": { "$ref": "#/components/schemas/LlmModel" },
+          "lang": { "type": "string", "default": "en" },
+          "options": { "type": "object" }
+        }
+      },
+      "Analysis": {
+        "type": "object",
+        "required": ["id", "repoOwner", "repoName", "outputType", "status", "createdAt"],
+        "properties": {
+          "id": { "type": "string" },
+          "repoOwner": { "type": "string" },
+          "repoName": { "type": "string" },
+          "outputType": { "type": "string", "enum": ["report", "pptx", "video"] },
+          "status": { "type": "string", "enum": ["pending", "processing", "completed", "failed"] },
+          "resultUrl": { "type": "string", "nullable": true },
+          "resultSummary": { "type": "string", "nullable": true },
+          "durationMs": { "type": "integer", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "TrendingRepo": {
+        "type": "object",
+        "required": ["owner", "name", "mentionCount"],
+        "properties": {
+          "owner": { "type": "string" },
+          "name": { "type": "string" },
+          "mentionCount": { "type": "integer" },
+          "topTags": { "type": "array", "items": { "type": "string" } }
         }
       }
     },
@@ -225,6 +297,13 @@
         "description": "LLM model identifier",
         "required": true,
         "schema": { "$ref": "#/components/schemas/LlmModel" }
+      },
+      "analysisId": {
+        "name": "id",
+        "in": "path",
+        "description": "Analysis UUID",
+        "required": true,
+        "schema": { "type": "string" }
       }
     },
     "securitySchemes": {
@@ -232,26 +311,51 @@
         "type": "apiKey",
         "in": "cookie",
         "name": "connect.sid",
-        "description": "Express session cookie"
+        "description": "Express session cookie (set after GitHub OAuth)"
       }
     }
   },
   "paths": {
-    "/auth/register": {
-      "post": {
-        "summary": "Register a new user",
+    "/auth/github": {
+      "get": {
+        "summary": "Initiate GitHub OAuth",
+        "description": "Redirects to GitHub OAuth consent screen with client_id, redirect_uri, scope, state parameters.",
         "tags": ["Auth"],
+        "responses": {
+          "302": { "description": "Redirect to GitHub OAuth consent screen" }
+        }
+      }
+    },
+    "/auth/github/callback": {
+      "get": {
+        "summary": "Handle GitHub OAuth callback",
+        "description": "Exchanges code for access token, creates/finds user, sets session.",
+        "tags": ["Auth"],
+        "parameters": [
+          { "name": "code", "in": "query", "required": true, "schema": { "type": "string" }, "description": "Authorization code from GitHub" },
+          { "name": "state", "in": "query", "required": true, "schema": { "type": "string" }, "description": "CSRF state parameter" }
+        ],
+        "responses": {
+          "302": { "description": "Redirect to / (existing user) or /setup (new user) or /login?error=... (failure)" }
+        }
+      }
+    },
+    "/auth/setup": {
+      "post": {
+        "summary": "Complete profile setup for new GitHub users",
+        "tags": ["Auth"],
+        "security": [{ "session": [] }],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/RegisterRequest" }
+              "schema": { "$ref": "#/components/schemas/SetupRequest" }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "User created",
+            "description": "Profile created",
             "content": {
               "application/json": {
                 "schema": {
@@ -263,38 +367,8 @@
               }
             }
           },
-          "400": { "description": "Validation error" },
+          "400": { "description": "Username too short or invalid characters" },
           "409": { "description": "Username already taken" }
-        }
-      }
-    },
-    "/auth/login": {
-      "post": {
-        "summary": "Login and create session",
-        "tags": ["Auth"],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/LoginRequest" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Login successful",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": { "$ref": "#/components/schemas/UserSummary" }
-                  }
-                }
-              }
-            }
-          },
-          "401": { "description": "Invalid credentials" }
         }
       }
     },
@@ -304,7 +378,19 @@
         "tags": ["Auth"],
         "security": [{ "session": [] }],
         "responses": {
-          "200": { "description": "Logged out" }
+          "200": {
+            "description": "Logged out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "object", "properties": { "message": { "type": "string" } } }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },
@@ -322,6 +408,88 @@
                   "type": "object",
                   "properties": {
                     "data": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated" }
+        }
+      },
+      "put": {
+        "summary": "Update current user's profile",
+        "tags": ["Auth"],
+        "security": [{ "session": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UpdateProfileRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Validation error" },
+          "401": { "description": "Not authenticated" }
+        }
+      },
+      "delete": {
+        "summary": "Delete current user's account permanently",
+        "tags": ["Auth"],
+        "security": [{ "session": [] }],
+        "responses": {
+          "200": {
+            "description": "Account deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "type": "object", "properties": { "message": { "type": "string" } } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated" },
+          "500": { "description": "Deletion failed" }
+        }
+      }
+    },
+    "/auth/github/sync": {
+      "post": {
+        "summary": "Manually sync profile data from GitHub",
+        "tags": ["GitHub"],
+        "security": [{ "session": [] }],
+        "responses": {
+          "200": {
+            "description": "Profile synced",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "synced": { "type": "boolean" },
+                        "syncedAt": { "type": "string", "format": "date-time" },
+                        "updated": { "type": "array", "items": { "type": "string" } }
+                      }
+                    }
                   }
                 }
               }
@@ -595,6 +763,31 @@
         }
       }
     },
+    "/users/@{username}/repos": {
+      "get": {
+        "summary": "Get user's pinned GitHub repositories",
+        "tags": ["Users"],
+        "parameters": [{ "$ref": "#/components/parameters/username" }],
+        "responses": {
+          "200": {
+            "description": "User's GitHub repos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/GitHubRepo" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/llm/transform": {
       "post": {
         "summary": "Transform natural language to CLI format",
@@ -628,12 +821,183 @@
           "500": { "description": "LLM API error" }
         }
       }
+    },
+    "/llm/providers": {
+      "get": {
+        "summary": "Get available LLM providers with auto-detection status",
+        "tags": ["LLM"],
+        "responses": {
+          "200": {
+            "description": "Provider list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/LlmProvider" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/llm/local-models": {
+      "get": {
+        "summary": "Get locally installed LLM models (Ollama)",
+        "tags": ["LLM"],
+        "security": [{ "session": [] }],
+        "responses": {
+          "200": {
+            "description": "Local model list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/LocalModel" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated" }
+        }
+      }
+    },
+    "/github/trending-repos": {
+      "get": {
+        "summary": "Get repos most mentioned in posts this week",
+        "tags": ["GitHub"],
+        "responses": {
+          "200": {
+            "description": "Trending repos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/TrendingRepo" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analyze": {
+      "post": {
+        "summary": "Start a repo analysis",
+        "tags": ["Analyze"],
+        "security": [{ "session": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/AnalyzeRequest" }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Analysis started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "status": { "type": "string" },
+                        "progressUrl": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated" },
+          "404": { "description": "Repository not found" },
+          "413": { "description": "Repository too large (>500MB)" },
+          "429": { "description": "Analysis rate limit exceeded" }
+        }
+      },
+      "get": {
+        "summary": "List user's analyses",
+        "tags": ["Analyze"],
+        "security": [{ "session": [] }],
+        "parameters": [
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Analysis list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Analysis" }
+                    },
+                    "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated" }
+        }
+      }
+    },
+    "/analyze/{id}": {
+      "get": {
+        "summary": "Get analysis result",
+        "tags": ["Analyze"],
+        "security": [{ "session": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/analysisId" }],
+        "responses": {
+          "200": {
+            "description": "Analysis result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/Analysis" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Not authenticated" },
+          "404": { "description": "Analysis not found" }
+        }
+      }
     }
   },
   "tags": [
-    { "name": "Auth", "description": "Authentication endpoints" },
+    { "name": "Auth", "description": "GitHub OAuth authentication and profile management" },
     { "name": "Posts", "description": "Post CRUD and feed operations" },
     { "name": "Users", "description": "User profiles and social operations" },
-    { "name": "LLM", "description": "LLM transformation endpoints" }
+    { "name": "LLM", "description": "LLM transformation and provider endpoints" },
+    { "name": "GitHub", "description": "GitHub integration endpoints" },
+    { "name": "Analyze", "description": "Repository analysis endpoints" }
   ]
 }

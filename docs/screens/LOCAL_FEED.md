@@ -446,7 +446,7 @@ Inherits all accessibility requirements from Global Feed. Additional:
 
 ## See Also
 
-- [DESIGN_GUIDE.md](../guides/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
+- [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
 - [API.md](../specs/API.md) — Endpoint request/response details
 - [CONVENTIONS.md](../guides/CONVENTIONS.md) — Coding rules for implementation
 - [GLOBAL_FEED.md](./GLOBAL_FEED.md) — Related screen specification

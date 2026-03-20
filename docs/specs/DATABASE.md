@@ -2,6 +2,7 @@
 
 > **Source of truth** for database schema, queries, migrations, and data integrity rules.
 > SQLite with `better-sqlite3`. No ORM. Raw SQL only. Prepared statements only.
+> This file is the single source of truth for the database schema. No separate SQL file is maintained.
 
 ---
 
@@ -61,14 +62,19 @@ Stores registered user accounts.
 ```sql
 -- 001_create_users.sql
 CREATE TABLE users (
-  id            TEXT PRIMARY KEY,          -- UUID v7
-  username      TEXT UNIQUE NOT NULL,      -- @handle (unique)
-  password_hash TEXT NOT NULL,             -- bcrypt hashed password
-  domain        TEXT,                      -- custom domain (e.g. "jiyeon.kim")
-  display_name  TEXT,                      -- display name
-  bio           TEXT,                      -- profile bio
-  avatar_url    TEXT,                      -- avatar image URL
-  created_at    TEXT DEFAULT (datetime('now'))
+  id            TEXT PRIMARY KEY,
+  username      TEXT NOT NULL UNIQUE,
+  domain        TEXT,
+  display_name  TEXT NOT NULL DEFAULT '',
+  bio           TEXT DEFAULT '',
+  avatar_url    TEXT,
+  github_id            TEXT NOT NULL UNIQUE,
+  github_username      TEXT NOT NULL,
+  github_avatar_url    TEXT,
+  github_profile_url   TEXT,
+  github_repos_count   INTEGER DEFAULT 0,
+  github_connected_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE UNIQUE INDEX idx_users_username ON users(username);
@@ -78,11 +84,16 @@ CREATE UNIQUE INDEX idx_users_username ON users(username);
 |--------|------|----------|---------|-------------|
 | `id` | TEXT | NO | — | UUID v7 primary key |
 | `username` | TEXT | NO | — | Unique handle (e.g. `jiyeon_dev`) |
-| `password_hash` | TEXT | NO | — | Bcrypt hashed password (never exposed via API) |
 | `domain` | TEXT | YES | NULL | Custom domain link |
-| `display_name` | TEXT | YES | NULL | Display name |
-| `bio` | TEXT | YES | NULL | Profile biography |
+| `display_name` | TEXT | NO | `''` | Display name |
+| `bio` | TEXT | NO | `''` | Profile biography |
 | `avatar_url` | TEXT | YES | NULL | Avatar image URL |
+| `github_id` | TEXT | NO | — | GitHub user ID (unique, used for OAuth lookup) |
+| `github_username` | TEXT | NO | — | GitHub login username |
+| `github_avatar_url` | TEXT | YES | NULL | GitHub avatar image URL |
+| `github_profile_url` | TEXT | YES | NULL | GitHub profile page URL |
+| `github_repos_count` | INTEGER | NO | `0` | Number of public repos on GitHub |
+| `github_connected_at` | TEXT | NO | `datetime('now')` | When GitHub account was linked |
 | `created_at` | TEXT | NO | `datetime('now')` | Account creation timestamp |
 
 ### 2.2 `posts`
@@ -172,30 +183,125 @@ CREATE INDEX idx_stars_post_id ON stars(post_id);
 | `post_id` | TEXT | NO | FK → `posts.id` |
 | `created_at` | TEXT | NO | Timestamp of star action |
 
+### 2.5 `repo_attachments`
+
+Links GitHub repos to posts.
+
+```sql
+CREATE TABLE repo_attachments (
+  post_id       TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  repo_owner    TEXT NOT NULL,
+  repo_name     TEXT NOT NULL,
+  repo_stars    INTEGER DEFAULT 0,
+  repo_forks    INTEGER DEFAULT 0,
+  repo_language TEXT,
+  cached_at     TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (post_id)
+);
+```
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| post_id | TEXT | PK, FK→posts | Post that references the repo |
+| repo_owner | TEXT | NOT NULL | GitHub repo owner |
+| repo_name | TEXT | NOT NULL | GitHub repo name |
+| repo_stars | INTEGER | DEFAULT 0 | Cached star count |
+| repo_forks | INTEGER | DEFAULT 0 | Cached fork count |
+| repo_language | TEXT | nullable | Primary programming language |
+| cached_at | TEXT | NOT NULL | When repo data was last fetched |
+
+### 2.6 `analyses`
+
+Stores repo analysis requests and results.
+
+```sql
+CREATE TABLE analyses (
+  id            TEXT PRIMARY KEY,
+  user_id       TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  repo_owner    TEXT NOT NULL,
+  repo_name     TEXT NOT NULL,
+  output_type   TEXT NOT NULL CHECK (output_type IN ('report', 'pptx', 'video')),
+  llm_model     TEXT NOT NULL,
+  lang          TEXT NOT NULL DEFAULT 'en',
+  options_json  TEXT DEFAULT '{}',
+  result_url    TEXT,
+  result_summary TEXT,
+  status        TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  duration_ms   INTEGER,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+```
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| id | TEXT | PK | ULID |
+| user_id | TEXT | FK→users | User who requested the analysis |
+| repo_owner | TEXT | NOT NULL | GitHub repo owner |
+| repo_name | TEXT | NOT NULL | GitHub repo name |
+| output_type | TEXT | NOT NULL | `report`, `pptx`, or `video` |
+| llm_model | TEXT | NOT NULL | LLM model used for analysis |
+| lang | TEXT | NOT NULL | Output language |
+| options_json | TEXT | DEFAULT '{}' | JSON string of output-specific options |
+| result_url | TEXT | nullable | URL to download result file |
+| result_summary | TEXT | nullable | Brief summary of the analysis |
+| status | TEXT | NOT NULL | `pending`, `processing`, `completed`, `failed` |
+| duration_ms | INTEGER | nullable | Time taken in milliseconds |
+| created_at | TEXT | NOT NULL | Creation timestamp |
+
 ---
 
 ## 3. Entity Relationship Diagram
 
 ```
-┌──────────┐       ┌──────────────┐       ┌──────────┐
-│  users   │       │    posts     │       │  stars   │
-├──────────┤       ├──────────────┤       ├──────────┤
-│ id (PK)  │◄──┐   │ id (PK)      │◄──┐   │ user_id  │──→ users.id
-│ username │   │   │ user_id (FK) │──→│   │ post_id  │──→ posts.id
-│ domain   │   │   │ message_raw  │   │   │ created_at│
-│ display_ │   │   │ message_cli  │   │   └──────────┘
-│ bio      │   │   │ lang         │   │
-│ avatar_  │   │   │ tags (JSON)  │   │   ┌──────────┐
-│ created_ │   │   │ mentions(JSON│   │   │ follows  │
-└──────────┘   │   │ visibility   │   │   ├──────────┤
-               │   │ llm_model    │   │   │follower_ │──→ users.id
-               │   │ parent_id(FK)│───┘   │following_│──→ users.id
-               │   │ forked_from_ │───┘   │ created_ │
-               │   │ created_at   │       └──────────┘
-               │   └──────────────┘
-               │          │
-               └──────────┘
-                 user_id FK
+┌──────────────────┐       ┌──────────────┐       ┌──────────┐
+│      users       │       │    posts     │       │  stars   │
+├──────────────────┤       ├──────────────┤       ├──────────┤
+│ id (PK)          │◄──┐   │ id (PK)      │◄──┐   │ user_id  │──→ users.id
+│ username         │   │   │ user_id (FK) │──→│   │ post_id  │──→ posts.id
+│ domain           │   │   │ message_raw  │   │   │ created_at│
+│ display_name     │   │   │ message_cli  │   │   └──────────┘
+│ bio              │   │   │ lang         │   │
+│ avatar_url       │   │   │ tags (JSON)  │   │   ┌──────────┐
+│ github_id (UQ)   │   │   │ mentions(JSON│   │   │ follows  │
+│ github_username  │   │   │ visibility   │   │   ├──────────┤
+│ github_avatar_url│   │   │ llm_model    │   │   │follower_ │──→ users.id
+│ github_profile_  │   │   │ parent_id(FK)│───┘   │following_│──→ users.id
+│ github_repos_cnt │   │   │ forked_from_ │───┘   │ created_ │
+│ github_connected │   │   │ created_at   │       └──────────┘
+│ created_at       │   │   └──────────────┘
+└──────────────────┘   │          │
+        │              └──────────┘
+        │                user_id FK
+        │
+        │         ┌─────────────────┐
+        │         │ repo_attachments│
+        │         ├─────────────────┤
+        │         │ post_id (PK,FK) │──→ posts.id
+        │         │ repo_owner      │    Post 1──0..1 RepoAttachment
+        │         │ repo_name       │
+        │         │ repo_stars      │
+        │         │ repo_forks      │
+        │         │ repo_language   │
+        │         │ cached_at       │
+        │         └─────────────────┘
+        │
+        │         ┌─────────────────┐
+        └────────→│    analyses     │
+     user_id FK   ├─────────────────┤
+                  │ id (PK)         │    User 1──* Analysis
+                  │ user_id (FK)    │──→ users.id
+                  │ repo_owner      │
+                  │ repo_name       │
+                  │ output_type     │
+                  │ llm_model       │
+                  │ lang            │
+                  │ options_json    │
+                  │ result_url      │
+                  │ result_summary  │
+                  │ status          │
+                  │ duration_ms     │
+                  │ created_at      │
+                  └─────────────────┘
 ```
 
 ---
@@ -212,6 +318,11 @@ CREATE INDEX idx_stars_post_id ON stars(post_id);
 | `posts` | `idx_posts_visibility` | `visibility` | Public feed filter |
 | `follows` | `idx_follows_following` | `following_id` | Follower count / lookup |
 | `stars` | `idx_stars_post_id` | `post_id` | Star count per post |
+| `users` | `idx_users_github_id` | `github_id` | GitHub OAuth lookup |
+| `repo_attachments` | `idx_repo_attachments_repo` | `repo_owner, repo_name` | Repo lookup across posts |
+| `analyses` | `idx_analyses_user_id` | `user_id` | User's analysis history |
+| `analyses` | `idx_analyses_status` | `status` | Filter by processing status |
+| `analyses` | `idx_analyses_repo` | `repo_owner, repo_name` | Repo analysis lookup |
 
 ---
 
@@ -295,6 +406,35 @@ SELECT ?, ?, message_raw, message_cli, lang, tags, mentions,
 FROM posts WHERE id = ?;
 ```
 
+### Get User by GitHub ID
+
+```sql
+SELECT * FROM users WHERE github_id = ?;
+```
+
+### Attach Repo to Post
+
+```sql
+INSERT INTO repo_attachments (post_id, repo_owner, repo_name, repo_stars, repo_forks, repo_language)
+VALUES (?, ?, ?, ?, ?, ?);
+```
+
+### Create Analysis
+
+```sql
+INSERT INTO analyses (id, user_id, repo_owner, repo_name, output_type, llm_model, lang, options_json, status)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending');
+```
+
+### List User Analyses
+
+```sql
+SELECT * FROM analyses
+WHERE user_id = ?
+ORDER BY created_at DESC
+LIMIT ? OFFSET ?;
+```
+
 ---
 
 ## 6. Migration Rules
@@ -357,16 +497,22 @@ The following are the actual migration files used to bootstrap the database. Eac
 -- 001_create_users.sql
 CREATE TABLE IF NOT EXISTS users (
   id            TEXT PRIMARY KEY,
-  username      TEXT UNIQUE NOT NULL,
-  password_hash TEXT NOT NULL,
+  username      TEXT NOT NULL UNIQUE,
   domain        TEXT,
-  display_name  TEXT,
-  bio           TEXT,
+  display_name  TEXT NOT NULL DEFAULT '',
+  bio           TEXT DEFAULT '',
   avatar_url    TEXT,
-  created_at    TEXT DEFAULT (datetime('now'))
+  github_id            TEXT NOT NULL UNIQUE,
+  github_username      TEXT NOT NULL,
+  github_avatar_url    TEXT,
+  github_profile_url   TEXT,
+  github_repos_count   INTEGER DEFAULT 0,
+  github_connected_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_github_id ON users(github_id);
 ```
 
 ```sql
@@ -414,6 +560,78 @@ CREATE TABLE IF NOT EXISTS stars (
 CREATE INDEX IF NOT EXISTS idx_stars_post_id ON stars(post_id);
 ```
 
+```sql
+-- 004_add_github_fields.sql
+-- Remove password_hash and add GitHub OAuth fields to users table.
+-- NOTE: SQLite does not support DROP COLUMN before 3.35.0;
+-- this migration recreates the table to remove password_hash.
+
+CREATE TABLE IF NOT EXISTS users_new (
+  id            TEXT PRIMARY KEY,
+  username      TEXT NOT NULL UNIQUE,
+  domain        TEXT,
+  display_name  TEXT NOT NULL DEFAULT '',
+  bio           TEXT DEFAULT '',
+  avatar_url    TEXT,
+  github_id            TEXT NOT NULL UNIQUE,
+  github_username      TEXT NOT NULL,
+  github_avatar_url    TEXT,
+  github_profile_url   TEXT,
+  github_repos_count   INTEGER DEFAULT 0,
+  github_connected_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+INSERT INTO users_new (id, username, domain, display_name, bio, avatar_url, created_at)
+  SELECT id, username, domain, COALESCE(display_name, ''), COALESCE(bio, ''), avatar_url, created_at
+  FROM users;
+
+DROP TABLE users;
+ALTER TABLE users_new RENAME TO users;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_github_id ON users(github_id);
+```
+
+```sql
+-- 005_create_repo_attachments.sql
+CREATE TABLE IF NOT EXISTS repo_attachments (
+  post_id       TEXT NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  repo_owner    TEXT NOT NULL,
+  repo_name     TEXT NOT NULL,
+  repo_stars    INTEGER DEFAULT 0,
+  repo_forks    INTEGER DEFAULT 0,
+  repo_language TEXT,
+  cached_at     TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (post_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_repo_attachments_repo ON repo_attachments(repo_owner, repo_name);
+```
+
+```sql
+-- 006_create_analyses.sql
+CREATE TABLE IF NOT EXISTS analyses (
+  id            TEXT PRIMARY KEY,
+  user_id       TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  repo_owner    TEXT NOT NULL,
+  repo_name     TEXT NOT NULL,
+  output_type   TEXT NOT NULL CHECK (output_type IN ('report', 'pptx', 'video')),
+  llm_model     TEXT NOT NULL,
+  lang          TEXT NOT NULL DEFAULT 'en',
+  options_json  TEXT DEFAULT '{}',
+  result_url    TEXT,
+  result_summary TEXT,
+  status        TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+  duration_ms   INTEGER,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_analyses_user_id ON analyses(user_id);
+CREATE INDEX IF NOT EXISTS idx_analyses_status ON analyses(status);
+CREATE INDEX IF NOT EXISTS idx_analyses_repo ON analyses(repo_owner, repo_name);
+```
+
 ---
 
 ## 7. Access Patterns
@@ -428,6 +646,12 @@ CREATE INDEX IF NOT EXISTS idx_stars_post_id ON stars(post_id);
 | Follow/unfollow | `follows` | Low | PK (`follower_id`, `following_id`) |
 | Filter by LLM | `posts` + `users` | Medium | `idx_posts_llm_model` |
 | Star count | `stars` | Very high | `idx_stars_post_id` |
+| GitHub OAuth login | `users` | High | `idx_users_github_id` |
+| Post repo attachment | `repo_attachments` | Medium | PK (`post_id`) |
+| Repo lookup | `repo_attachments` | Low | `idx_repo_attachments_repo` |
+| Create analysis | `analyses` | Medium | `idx_analyses_user_id` |
+| List user analyses | `analyses` | Medium | `idx_analyses_user_id` |
+| Filter analyses by status | `analyses` | Low | `idx_analyses_status` |
 
 ---
 
@@ -438,6 +662,9 @@ CREATE INDEX IF NOT EXISTS idx_stars_post_id ON stars(post_id);
 - `parent_id` and `forked_from_id` must reference valid posts or be NULL
 - `visibility` constrained to: `public`, `private`, `unlisted`
 - `llm_model` constrained to: `claude-sonnet`, `gpt-4o`, `gemini-2.5-pro`, `llama-3`, `cursor`, `cli`, `api`, `custom`
+- `output_type` in analyses constrained to: `report`, `pptx`, `video`
+- `status` in analyses constrained to: `pending`, `processing`, `completed`, `failed`
+- `github_id` on users must be unique (GitHub OAuth identity)
 - Self-follow prevented at application level
 - Self-star prevented at application level
 - Duplicate follow/star prevented by composite primary keys
@@ -446,14 +673,16 @@ CREATE INDEX IF NOT EXISTS idx_stars_post_id ON stars(post_id);
 
 | Action | Cascade Behavior |
 |--------|-----------------|
-| Delete user | Delete all user's posts, stars, follows (application-level cascade in transaction) |
-| Delete post | Delete all stars on the post, set `parent_id = NULL` on child replies (orphan replies remain visible) |
+| Delete user | Delete all user's posts, stars, follows, analyses (application-level cascade in transaction) |
+| Delete post | Delete all stars on the post, delete repo_attachment, set `parent_id = NULL` on child replies (orphan replies remain visible) |
 | Delete forked post | Original post unaffected; forked_from_id references become dangling (application handles gracefully) |
 
 ```sql
 -- Application-level cascade for user deletion (in a transaction)
+DELETE FROM analyses WHERE user_id = ?;
 DELETE FROM stars WHERE user_id = ?;
 DELETE FROM follows WHERE follower_id = ? OR following_id = ?;
+DELETE FROM repo_attachments WHERE post_id IN (SELECT id FROM posts WHERE user_id = ?);
 DELETE FROM stars WHERE post_id IN (SELECT id FROM posts WHERE user_id = ?);
 DELETE FROM posts WHERE user_id = ?;
 DELETE FROM users WHERE id = ?;

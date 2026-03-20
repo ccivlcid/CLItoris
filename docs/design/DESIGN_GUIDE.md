@@ -25,6 +25,8 @@ This guide is split into focused sub-documents for easier navigation:
 
 ## 2. Color System
 
+> Canonical values live in [`tokens.json`](./tokens.json). Tables below are human-readable references.
+
 ### Base Palette
 
 | Token | Hex | Tailwind | Usage |
@@ -172,9 +174,10 @@ This guide is split into focused sub-documents for easier navigation:
 
 ## See Also
 
+- [tokens.json](./tokens.json) — Machine-readable design tokens (colors, typography, spacing, breakpoints, animations)
 - [DESIGN_COMPONENTS.md](./DESIGN_COMPONENTS.md) — Component specifications
 - [DESIGN_STATES.md](./DESIGN_STATES.md) — Interaction states, loading/empty/error
 - [DESIGN_UI.md](./DESIGN_UI.md) — Icons, responsive, accessibility, forms
-- [CONVENTIONS.md](./CONVENTIONS.md) — Tailwind-only rule, naming conventions
+- [CONVENTIONS.md](../guides/CONVENTIONS.md) — Tailwind-only rule, naming conventions
 - [Screen specs](../screens/) — Page-by-page wireframes using these design tokens
-- [PROMPTS.md](./PROMPTS.md) — Component creation prompt templates
+- [PROMPTS.md](../guides/PROMPTS.md) — Component creation prompt templates
