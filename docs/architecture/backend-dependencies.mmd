@@ -41,9 +41,8 @@ graph TD
 
     subgraph "@clitoris/llm"
         LLM_INDEX["index.ts<br/>(provider factory)"]
-        PROVIDERS["providers/<br/>anthropic, openai, gemini,<br/>ollama, cursor, cli, api"]
+        PROVIDERS["providers/<br/>anthropic, openai, gemini,<br/>ollama, api"]
         PROMPT["prompt.ts + parser.ts"]
-        DETECT["credential-detector.ts"]
     end
 
     subgraph "External Packages"
@@ -100,7 +99,6 @@ graph TD
 
     %% Routes use LLM
     LLM_R --> LLM_INDEX
-    LLM_R --> DETECT
     LLM_INDEX --> PROVIDERS
     LLM_INDEX --> PROMPT
     POSTS_R --> LLM_INDEX
@@ -132,5 +130,5 @@ graph TD
 
     class INDEX,AUTH_R,POSTS_R,USERS_R,LLM_R,GITHUB_R,ANALYZE_R,WEBHOOK_R,ACTIVITY_R,NOTIF_R,AUTH_M,ERROR_M,DB,MIGRATIONS,ID_LIB,LANG_LIB,PPTX_LIB,VIDEO_LIB server
     class TYPES shared
-    class LLM_INDEX,PROVIDERS,PROMPT,DETECT llm
+    class LLM_INDEX,PROVIDERS,PROMPT llm
     class EXPRESS,BETTER_SQLITE,PINO,ZOD,SESSION,PPTXGEN,ANTHROPIC_SDK,OPENAI_SDK,GEMINI_SDK external

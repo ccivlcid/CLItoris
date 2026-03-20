@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/client.js';
+import { useUiStore } from '../../stores/uiStore.js';
 import { toastError } from '../../stores/toastStore.js';
 import type { ApiResponse } from '@clitoris/shared';
 
@@ -22,8 +23,13 @@ interface FollowerEntry {
 
 type SubTab = 'following' | 'followers';
 
-export default function GithubFollowSync({ onToast }: { onToast?: (msg: string) => void }) {
-  const [subTab, setSubTab] = useState<SubTab>('following');
+export default function GithubFollowSync({ onToast, defaultTab = 'following' }: { onToast?: (msg: string) => void; defaultTab?: SubTab }) {
+  const { t } = useUiStore();
+  const [subTab, setSubTab] = useState<SubTab>(defaultTab);
+
+  useEffect(() => {
+    setSubTab(defaultTab);
+  }, [defaultTab]);
   const [following, setFollowing] = useState<FollowingEntry[]>([]);
   const [followers, setFollowers] = useState<FollowerEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -36,7 +42,7 @@ export default function GithubFollowSync({ onToast }: { onToast?: (msg: string) 
       const res = await api.get<ApiResponse<FollowingEntry[]>>('/github/following');
       setFollowing(res.data);
     } catch {
-      toastError('Failed to load GitHub following');
+      toastError(t('ghSync.loadFollowingFailed'));
     }
     finally { setIsLoading(false); }
   }, []);
@@ -47,7 +53,7 @@ export default function GithubFollowSync({ onToast }: { onToast?: (msg: string) 
       const res = await api.get<ApiResponse<FollowerEntry[]>>('/github/followers');
       setFollowers(res.data);
     } catch {
-      toastError('Failed to load GitHub followers');
+      toastError(t('ghSync.loadFollowersFailed'));
     }
     finally { setIsLoading(false); }
   }, []);
@@ -65,7 +71,7 @@ export default function GithubFollowSync({ onToast }: { onToast?: (msg: string) 
       onToast?.(`Followed ${followed} users (already following: ${alreadyFollowing})`);
       setFollowing((prev) => prev.map((e) => e.clitorisUsername ? { ...e, isFollowing: true } : e));
     } catch {
-      toastError('Sync failed');
+      toastError(t('ghSync.syncFailed'));
     } finally { setIsSyncing(false); }
   };
 
@@ -80,7 +86,7 @@ export default function GithubFollowSync({ onToast }: { onToast?: (msg: string) 
     try {
       await api.post(`/users/@${username}/follow`);
     } catch {
-      toastError('Failed to update follow status');
+      toastError(t('ghSync.followFailed'));
       if (src === 'following') {
         setFollowing((p) => p.map((e) => e.clitorisUsername === username ? { ...e, isFollowing: !next } : e));
       } else {
@@ -101,35 +107,35 @@ export default function GithubFollowSync({ onToast }: { onToast?: (msg: string) 
       {/* Header */}
       <div className="px-5 py-3 flex items-center justify-between border-b border-[var(--border)]">
         <div>
-          <span className="text-[var(--text-muted)] font-mono text-[12px]">github follows</span>
+          <span className="text-[var(--text-muted)] font-mono text-[12px]">{t('ghSync.title')}</span>
           <span className="text-[var(--text-faint)] font-mono text-[11px] ml-2">
-            {following.filter((e) => e.clitorisUsername).length} on CLItoris
+            {t('ghSync.onPlatform', { n: String(following.filter((e) => e.clitorisUsername).length) })}
           </span>
         </div>
         {subTab === 'following' && !isLoading && unsynced.length > 0 && (
           <button
             onClick={() => void handleSyncAll()}
             disabled={isSyncing}
-            className="font-mono text-[11px] px-3 py-1 bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20 hover:bg-[var(--accent-green)]/20 disabled:opacity-30 transition-colors"
+            className="font-mono text-[11px] px-3 py-1 bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20 hover:bg-[var(--accent-green)]/20 disabled:opacity-40 transition-colors"
           >
-            {isSyncing ? 'syncing...' : `sync all (${unsynced.length})`}
+            {isSyncing ? t('ghSync.syncing') : t('ghSync.syncAll', { n: String(unsynced.length) })}
           </button>
         )}
       </div>
 
       {/* Sub-tabs */}
       <div className="flex border-b border-[var(--border)]">
-        {(['following', 'followers'] as const).map((t) => (
+        {(['following', 'followers'] as const).map((tab) => (
           <button
-            key={t}
-            onClick={() => setSubTab(t)}
+            key={tab}
+            onClick={() => setSubTab(tab)}
             className={`px-4 py-2 font-mono text-[11px] border-b-2 -mb-px transition-colors ${
-              subTab === t
+              subTab === tab
                 ? 'text-[var(--accent-green)] border-[var(--accent-green)]'
                 : 'text-[var(--text-muted)] border-transparent hover:text-[var(--text)]'
             }`}
           >
-            {t === 'following' ? `following (${following.length})` : `followers (${followers.length})`}
+            {tab === 'following' ? t('ghSync.following', { n: String(following.length) }) : t('ghSync.followers', { n: String(followers.length) })}
           </button>
         ))}
       </div>
@@ -146,7 +152,7 @@ export default function GithubFollowSync({ onToast }: { onToast?: (msg: string) 
       {/* On CLItoris */}
       {!isLoading && onClit.length > 0 && (
         <div>
-          <p className="text-[var(--text-faint)] font-mono text-[10px] px-4 pt-2 pb-1">on CLItoris ({onClit.length})</p>
+          <p className="text-[var(--text-faint)] font-mono text-[10px] px-4 pt-2 pb-1">{t('ghSync.onClit', { n: String(onClit.length) })}</p>
           {onClit.map((entry) => {
             const isFollowing = subTab === 'following'
               ? (entry as FollowingEntry).isFollowing
@@ -169,7 +175,7 @@ export default function GithubFollowSync({ onToast }: { onToast?: (msg: string) 
                       : 'text-[var(--accent-green)] border-[var(--accent-green)]/20 bg-[var(--accent-green)]/5 hover:bg-[var(--accent-green)]/15'
                   }`}
                 >
-                  {inFlight.has(entry.clitorisUsername!) ? '...' : isFollowing ? 'unfollow' : 'follow'}
+                  {inFlight.has(entry.clitorisUsername!) ? '...' : isFollowing ? t('ghSync.unfollow') : t('ghSync.follow')}
                 </button>
               </div>
             );
@@ -180,7 +186,7 @@ export default function GithubFollowSync({ onToast }: { onToast?: (msg: string) 
       {/* Not on CLItoris */}
       {!isLoading && notOnClit.length > 0 && (
         <div>
-          <p className="text-[var(--text-faint)] font-mono text-[10px] px-4 pt-2 pb-1">not on CLItoris ({notOnClit.length})</p>
+          <p className="text-[var(--text-faint)] font-mono text-[10px] px-4 pt-2 pb-1">{t('ghSync.notOnClit', { n: String(notOnClit.length) })}</p>
           {notOnClit.slice(0, 5).map((entry) => (
             <div key={entry.githubUsername} className="flex items-center gap-3 px-4 py-2 border-b border-[var(--bg-surface)] opacity-40">
               <img src={entry.avatarUrl} alt={entry.githubUsername} className="w-6 h-6 rounded-sm shrink-0 object-cover" />
@@ -191,14 +197,14 @@ export default function GithubFollowSync({ onToast }: { onToast?: (msg: string) 
             </div>
           ))}
           {notOnClit.length > 5 && (
-            <p className="text-[var(--text-faint)] font-mono text-[10px] px-4 py-2">+{notOnClit.length - 5} more</p>
+            <p className="text-[var(--text-faint)] font-mono text-[10px] px-4 py-2">{t('ghSync.more', { n: String(notOnClit.length - 5) })}</p>
           )}
         </div>
       )}
 
       {!isLoading && list.length === 0 && (
         <div className="px-5 py-6 text-center">
-          <p className="text-[var(--text-faint)] font-mono text-[11px]">&gt; 0 {subTab} found.</p>
+          <p className="text-[var(--text-faint)] font-mono text-[11px]">{t('ghSync.empty', { tab: subTab })}</p>
         </div>
       )}
     </div>

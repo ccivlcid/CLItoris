@@ -107,7 +107,7 @@ export function useKeyboardShortcuts(onToggleHelp: () => void) {
 
         case '/':
           e.preventDefault();
-          document.querySelector<HTMLTextAreaElement>('textarea')?.focus();
+          navigate('/new');
           break;
 
         case '?':

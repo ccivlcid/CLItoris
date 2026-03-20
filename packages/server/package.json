@@ -11,11 +11,13 @@
   "dependencies": {
     "@clitoris/llm": "workspace:*",
     "@clitoris/shared": "workspace:*",
+    "@types/multer": "^2.1.0",
     "better-sqlite3": "^11.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
     "express": "^5.0.0",
     "express-session": "^1.18.0",
+    "multer": "^2.1.1",
     "pino": "^9.0.0",
     "pino-pretty": "^13.0.0",
     "pptxgenjs": "^4.0.1",

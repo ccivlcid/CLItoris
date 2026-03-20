@@ -16,7 +16,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-[var(--bg-input)] border border-gray-700 text-gray-200 font-mono text-sm px-3 py-2 placeholder-gray-600 focus:outline-none focus:border-gray-500"
+        className="w-full bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] font-mono text-sm px-3 py-2 placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--text-muted)]"
       />
     </div>
   );
@@ -75,7 +75,7 @@ export default function ProfileTab({ onToast }: { onToast: (msg: string) => void
   return (
     <div className="space-y-6">
       {/* Profile fields */}
-      <div className="border border-gray-700 bg-[var(--bg-elevated)] p-6 space-y-4">
+      <div className="border border-[var(--border)] bg-[var(--bg-elevated)] p-6 space-y-4">
         <p className="text-[var(--text-faint)] text-xs font-mono">// profile</p>
         <Field flag="--display-name" value={displayName} onChange={setDisplayName} placeholder={user.displayName} />
         <Field flag="--domain" value={domain} onChange={setDomain} placeholder="yourdomain.dev" />
@@ -93,7 +93,7 @@ export default function ProfileTab({ onToast }: { onToast: (msg: string) => void
       {/* Danger zone — 3-step confirmation */}
       <div className="border border-red-900/40 bg-[var(--bg-elevated)] p-6 space-y-3">
         <p className="text-[var(--text-faint)] text-xs font-mono">// danger</p>
-        <p className="text-gray-400 font-mono text-sm">$ delete --account</p>
+        <p className="text-[var(--text-muted)] font-mono text-sm">$ delete --account</p>
         <p className="text-[var(--text-muted)] font-sans text-sm">
           This action is irreversible. All posts, stars, and followers will be permanently deleted.
         </p>
@@ -117,20 +117,20 @@ export default function ProfileTab({ onToast }: { onToast: (msg: string) => void
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               placeholder={`delete ${user.username}`}
-              className="w-full bg-[var(--bg-input)] border border-[var(--color-error)]/30 text-gray-200 font-mono text-sm px-3 py-2 placeholder-gray-600 focus:outline-none focus:border-[var(--color-error)]/60"
+              className="w-full bg-[var(--bg-input)] border border-[var(--color-error)]/30 text-[var(--text)] font-mono text-sm px-3 py-2 placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--color-error)]/60"
               autoFocus
             />
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setDeleteStep(2)}
                 disabled={deleteConfirmText !== `delete ${user.username}`}
-                className="bg-[var(--color-error)]/10 text-[var(--color-error)] border border-[var(--color-error)]/30 px-4 py-1.5 font-mono text-sm hover:bg-[var(--color-error)]/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="bg-[var(--color-error)]/10 text-[var(--color-error)] border border-[var(--color-error)]/30 px-4 py-1.5 font-mono text-sm hover:bg-[var(--color-error)]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 confirm
               </button>
               <button
                 onClick={() => { setDeleteStep(0); setDeleteConfirmText(''); }}
-                className="text-[var(--text-muted)] hover:text-gray-300 font-mono text-sm transition-colors"
+                className="text-[var(--text-muted)] hover:text-[var(--text)] font-mono text-sm transition-colors"
               >
                 cancel
               </button>
@@ -150,7 +150,7 @@ export default function ProfileTab({ onToast }: { onToast: (msg: string) => void
             </button>
             <button
               onClick={() => { setDeleteStep(0); setDeleteConfirmText(''); }}
-              className="text-[var(--text-muted)] hover:text-gray-300 font-mono text-sm transition-colors"
+              className="text-[var(--text-muted)] hover:text-[var(--text)] font-mono text-sm transition-colors"
             >
               cancel
             </button>

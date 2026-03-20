@@ -25,6 +25,7 @@ const COMMANDS = [
   { to: '/github',      cmd: 'gh --status' },
   { to: '/messages',    cmd: 'msg --inbox' },
   { to: '/activity',    cmd: 'log --activity' },
+  { to: '/chat',        cmd: 'chat' },
   { to: '/search',      cmd: 'grep' },
 ];
 
@@ -32,7 +33,7 @@ export default function Sidebar() {
   const location = useLocation();
   const { user, isAuthenticated } = useAuthStore();
   const { selectedModel, selectModel } = usePostStore();
-  const { lang, setLang } = useUiStore();
+  const { lang, setLang, t } = useUiStore();
   const [llmEntries, setLlmEntries] = useState<LlmEntry[]>([]);
 
   useEffect(() => {
@@ -67,7 +68,7 @@ export default function Sidebar() {
 
       {/* Terminal header */}
       <div className="px-4 pt-4 pb-3 border-b border-[var(--border)]/30">
-        <span className="text-[var(--text-faint)] text-[10px]">terminal.social — bash</span>
+        <span className="text-[var(--text-faint)] text-[10px]">{t('sidebar.terminalBash')}</span>
       </div>
 
       {/* Command history — navigation */}
@@ -81,7 +82,7 @@ export default function Sidebar() {
               className={`py-1.5 px-4 transition-colors ${
                 active
                   ? 'text-[var(--text)] bg-white/[0.03]'
-                  : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-white/[0.02]'
+                  : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-white/[0.04]'
               }`}
             >
               <span className={active ? 'text-[var(--accent-green)]' : 'text-[var(--text-faint)]'}>$</span>{' '}
@@ -96,7 +97,7 @@ export default function Sidebar() {
       {isAuthenticated && llmEntries.length > 0 && (
         <div className="border-t border-[var(--border)]/30 py-2">
           <div className="px-4 py-1 text-[var(--text-faint)] text-[10px]">
-            export LLM=
+            {t('sidebar.exportLlm')}
           </div>
           {llmEntries.map(({ id, model }) => {
             const isSelected = selectedModel === model;
@@ -125,7 +126,7 @@ export default function Sidebar() {
             to={user ? `/@${user.username}?tab=api` : '/login'}
             className="block py-1 px-4 text-[var(--text-faint)] hover:text-[var(--accent-green)] transition-colors"
           >
-            $ export LLM_KEY=<span className="text-[var(--text-faint)]/50">...</span>
+            {t('sidebar.exportLlmKey')}<span className="text-[var(--text-faint)]/50">...</span>
           </Link>
         </div>
       )}
@@ -146,13 +147,13 @@ export default function Sidebar() {
             to="/login"
             className="text-[var(--text-muted)] hover:text-[var(--accent-green)] transition-colors block"
           >
-            $ ssh connect
+            {t('sidebar.sshConnect')}
           </Link>
         )}
 
         {/* Lang */}
         <div className="flex items-center gap-0.5">
-          <span className="text-[var(--text-faint)] mr-1">LANG=</span>
+          <span className="text-[var(--text-faint)] mr-1">{t('sidebar.lang')}</span>
           {(['en', 'ko', 'zh', 'ja'] as UiLang[]).map((l) => (
             <button
               key={l}

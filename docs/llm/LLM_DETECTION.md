@@ -1,6 +1,6 @@
-# LLM_DETECTION.md — Error Handling, Parsing & Credential Detection
+# LLM_DETECTION.md — Error Handling & Response Parsing
 
-> **Source of truth** for LLM error handling, response parsing, and credential auto-detection.
+> **Source of truth** for LLM error handling and response parsing.
 > See [LLM_INTEGRATION.md](./LLM_INTEGRATION.md) for system prompt, interface, and overview.
 
 ---
@@ -123,25 +123,19 @@ When `parseCliCommand` throws a `ParseError`, the caller (provider `transform` m
 
 ---
 
-## 3. Local Runtime Detection
+## 3. Ollama Detection
 
-CLItoris detects locally running LLM runtimes at server startup. This covers Ollama — **not API keys** (those are user-managed, see below).
+CLItoris detects Ollama running locally at server startup. Cloud API keys are user-managed via Settings.
 
-> **Key policy change**: API keys (Anthropic, OpenAI, Gemini, etc.) are NOT read from environment variables. Each user enters their own keys in Settings. Keys are stored in the `user_llm_keys` database table and looked up per-request.
+> **Key policy**: API keys (Anthropic, OpenAI, Gemini, etc.) are NOT read from environment variables. Each user enters their own keys in Settings. Keys are stored in the `user_llm_keys` database table and looked up per-request.
 
 ### Detection Logic
 
-```typescript
-// packages/llm/src/credential-detector.ts
-export function detectLocalRuntimes(): DetectedProvider[] {
-  // Checks: Ollama health endpoint
-  // Does NOT check process.env for API keys
-}
-```
+The server checks if Ollama is running by hitting its health endpoint at startup.
 
-| Runtime | Detection Method | Key Required? |
+| Provider | Detection Method | Key Required? |
 |---------|-----------------|---------------|
-| Ollama | `curl localhost:11434/api/tags` health check | No |
+| Ollama | `GET localhost:11434/api/tags` health check | No |
 | Anthropic API | User-provided in Settings | **Yes** (user's own key) |
 | OpenAI API | User-provided in Settings | **Yes** (user's own key) |
 | Gemini API | User-provided in Settings | **Yes** (user's own key) |
@@ -169,7 +163,7 @@ Requires a logged-in session. Returns local runtimes (e.g. Ollama) plus rows wit
 }
 ```
 
-Local runtimes appear only if detected. API providers appear only if the user has saved a key.
+Ollama appears only if detected locally. API providers appear only if the user has saved a key.
 
 ### Client UI Integration
 
@@ -196,6 +190,6 @@ The composer's model selector shows availability based on combined detection:
 ## See Also
 
 - [LLM_INTEGRATION.md](./LLM_INTEGRATION.md) -- Overview, system prompt, provider interface, execution modes
-- [LLM_PROVIDERS.md](./LLM_PROVIDERS.md) -- All 6 provider implementations
+- [LLM_PROVIDERS.md](./LLM_PROVIDERS.md) -- All 4 provider implementations
 - [docs/specs/API.md](./API.md) -- API specification
 - [docs/guides/ENV.md](../guides/ENV.md) -- Server environment variables (API keys are user-managed, not env vars)

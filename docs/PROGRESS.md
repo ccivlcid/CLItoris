@@ -36,7 +36,7 @@ All documentation, configuration files, and project scaffolding complete.
 | Feature | Status | Notes |
 |---------|--------|-------|
 | `@clitoris/shared` types | ✅ Done | Post, User, ApiResponse, PostIntent, PostEmotion, TranslateResponse |
-| `@clitoris/llm` providers | ✅ Done | 7 providers: Anthropic, OpenAI, Gemini, Ollama, Cursor, CLI, Generic API |
+| `@clitoris/llm` providers | ✅ Done | 4 providers: Anthropic, OpenAI, Gemini, Generic API + Ollama (local) |
 | LLM transform (JSON flow) | ✅ Done | transform.md → JSON → CLI reconstruction; intent/emotion extracted |
 | LLM translate | ✅ Done | translate.md; tone-aware, cached in DB |
 | DB migrations 001–007 | ✅ Done | users, posts, social, llm_keys, lang_columns, intent_emotion, translations |
@@ -165,7 +165,7 @@ All documentation, configuration files, and project scaffolding complete.
 | 2026-03-20 | LLM outputs JSON (not CLI string) | Reliable parsing; server reconstructs CLI; enables intent/emotion extraction |
 | 2026-03-20 | Translation cached per (post_id, lang) | Zero server cost (uses viewer's key); instant on cache hit |
 | 2026-03-20 | Ports changed to 3771 (server) / 7878 (client) | Avoids common port conflicts (3000/5173 often occupied) |
-| 2026-03-20 | CLI tool feature removed | Removed CLI-based LLM tools (claude-code, codex, gemini-cli, opencode); API-only LLM connections |
+| 2026-03-20 | CLI tool & Cursor provider removed | Removed CLI-based LLM tools (claude-code, codex, gemini-cli, opencode) and Cursor provider; API-only LLM connections |
 | 2026-03-20 | UI language persisted in localStorage | `clitoris:ui-lang` key; avoids API round-trip for a client-only preference |
 | 2026-03-20 | GitHub OAuth fix: `/api/auth/me/pending` endpoint | SetupPage called this endpoint; missing 404 caused login loop; fixed by adding endpoint |
 | 2026-03-20 | Sidebar my LLM: `/api/llm/providers` | API keys from server (source of truth); sidebar shows configured providers |

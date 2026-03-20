@@ -135,3 +135,139 @@ a, button {
 .toast-exit {
   animation: toastOut 0.2s ease-in forwards;
 }
+
+/* ── Mobile drawer slide-in ── */
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.2s ease-out;
+}
+
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.2s ease-out;
+}
+
+/* ── Tiptap Post Editor ── */
+.post-editor-content {
+  outline: none;
+  font-family: Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--text);
+  min-height: 120px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.post-editor-content p {
+  margin: 0;
+}
+
+.post-editor-content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--text-faint);
+  opacity: 0.4;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.post-editor-content .editor-mention {
+  color: var(--accent-amber);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  background: transparent;
+}
+
+/* Mention autocomplete popup */
+.mention-popup {
+  position: fixed;
+  z-index: 100;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  max-height: 200px;
+  overflow-y: auto;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.mention-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: left;
+  transition: background 0.1s;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.mention-item:hover,
+.mention-item.is-selected {
+  background: rgba(63, 185, 80, 0.08);
+  color: var(--text);
+}
+
+.mention-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.mention-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mention-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: rgba(72, 79, 88, 0.3);
+  font-size: 9px;
+  color: var(--text-faint);
+}
+
+.mention-name {
+  color: var(--accent-amber);
+}
+
+.mention-display {
+  color: var(--text-faint);
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Mobile touch targets ── */
+@media (max-width: 639px) {
+  /* Ensure minimum touch target sizes for nav/action buttons only */
+  nav button, nav a, [role="menuitem"],
+  header button, header a {
+    min-height: 36px;
+  }
+
+  /* Prevent horizontal overflow */
+  .max-w-3xl, .max-w-2xl {
+    max-width: 100%;
+  }
+}

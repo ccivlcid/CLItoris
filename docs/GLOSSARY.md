@@ -16,7 +16,6 @@
 | **By LLM filter** | Browse posts filtered by which LLM model was used for transformation |
 | **CLI command** | A structured text representation of a post using flags (e.g., `post --user=name --message="text"`) |
 | **Composer** | The input area where users write natural language text to create a post |
-| **Credential auto-detection** | Server scans local env vars and config files (e.g., `gcloud auth`) to auto-detect available LLM providers without manual API key entry |
 | **Cursor pagination** | Pagination using the last item's timestamp instead of page numbers. Never use OFFSET-based pagination |
 | **Custom LLM** | User-provided LLM connection (via API key) beyond the built-in Claude/GPT/Gemini/Llama |
 | **Debounce** | Delay execution until user stops typing/clicking for N milliseconds. Used in search and form inputs |

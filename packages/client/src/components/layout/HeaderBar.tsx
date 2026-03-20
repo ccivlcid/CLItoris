@@ -1,72 +1,82 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore.js';
-import { useUiStore } from '../../stores/uiStore.js';
+import { useUiStore, type UiLang } from '../../stores/uiStore.js';
 import { useState, useEffect, useRef } from 'react';
 import NotificationBell from './NotificationBell.js';
-import ComposerModal from '../composer/ComposerModal.js';
+
+const LANGS: UiLang[] = ['en', 'ko', 'zh', 'ja'];
 
 export default function HeaderBar() {
   const { user, isAuthenticated, logout } = useAuthStore();
-  const { t } = useUiStore();
+  const { lang, setLang, t } = useUiStore();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [composerOpen, setComposerOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = async () => {
+    setMenuOpen(false);
     await logout();
     navigate('/login');
   };
 
-  // Close dropdown on Escape
   useEffect(() => {
     if (!menuOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setMenuOpen(false); }
+      if (e.key === 'Escape') setMenuOpen(false);
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [menuOpen]);
 
-  // "/" hotkey opens composer
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === '/' && !composerOpen && document.activeElement?.tagName !== 'TEXTAREA' && document.activeElement?.tagName !== 'INPUT') {
-        e.preventDefault();
-        setComposerOpen(true);
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [composerOpen]);
-
   return (
-    <header className="h-12 bg-[var(--bg-surface)] border-b border-[var(--border)]/60 flex items-center justify-between px-5 shrink-0">
-      <Link
-        to="/"
-        className="flex items-center gap-1.5 hover:opacity-90 transition-opacity"
-      >
-        <span className="font-mono text-sm font-bold text-white tracking-tight">
+    <header className="h-11 sm:h-12 bg-[var(--bg-surface)] border-b border-[var(--border)]/60 flex items-center justify-between px-3 sm:px-5 shrink-0">
+
+      {/* ── Left: Logo ── */}
+      <Link to="/" className="hover:opacity-90 transition-opacity shrink-0">
+        <span className="font-mono text-[13px] sm:text-sm font-bold text-white tracking-tight">
           <span className="text-white">{'>'}&#x5f;</span>
           <span className="text-[var(--accent-green)]">CLI</span>
           <span className="text-white">toris</span>
         </span>
       </Link>
 
-      <div className="flex items-center gap-3">
-        {isAuthenticated && (
+      {/* ── Center: Language (mobile only) ── */}
+      <div className="sm:hidden flex items-center gap-0.5">
+        {LANGS.map((l) => (
           <button
-            onClick={() => setComposerOpen(true)}
-            className="font-mono text-[11px] text-[var(--bg-surface)] bg-[var(--accent-green)] hover:bg-[var(--accent-green)]/80 px-3 py-1 transition-colors"
+            key={l}
+            onClick={() => setLang(l)}
+            className={`px-1.5 py-0.5 font-mono text-[10px] transition-colors ${
+              lang === l
+                ? 'text-[var(--accent-green)]'
+                : 'text-[var(--text-faint)]'
+            }`}
           >
-            + post
+            {l}
           </button>
+        ))}
+      </div>
+
+      {/* ── Right: Actions ── */}
+      <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+
+        {/* New post — hidden on mobile (MobileNav has + button) */}
+        {isAuthenticated && (
+          <Link
+            to="/new"
+            className="hidden sm:inline-flex font-mono text-[var(--bg-surface)] bg-[var(--accent-green)] hover:bg-[var(--accent-green)]/80 transition-colors items-center justify-center px-3 py-1 text-[11px]"
+          >
+            <span className="sm:hidden">+</span>
+            <span className="hidden sm:inline">{t('header.newPost')}</span>
+          </Link>
         )}
 
+        {/* Notifications */}
         {isAuthenticated && <NotificationBell />}
 
+        {/* User menu — desktop only */}
         {isAuthenticated && user ? (
-          <div className="relative" ref={menuRef}>
+          <div className="relative hidden sm:block" ref={menuRef}>
             <button
               className="font-mono text-xs text-[var(--accent-amber)] hover:text-amber-300 flex items-center gap-1 transition-colors"
               onClick={() => setMenuOpen((o) => !o)}
@@ -112,23 +122,22 @@ export default function HeaderBar() {
         ) : (
           <Link
             to="/login"
-            className="font-mono text-[12px] text-[var(--text-muted)] hover:text-white transition-colors"
+            className="font-mono text-[12px] text-[var(--text-muted)] hover:text-white transition-colors hidden sm:inline"
           >
-            connect
+            {t('header.connect')}
           </Link>
         )}
 
+        {/* Keyboard help — desktop only */}
         <button
           onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }))}
-          className="font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+          className="hidden sm:inline-block font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
           aria-label="Keyboard shortcuts"
           title="Keyboard shortcuts (?)"
         >
           [?]
         </button>
       </div>
-
-      <ComposerModal open={composerOpen} onClose={() => setComposerOpen(false)} />
     </header>
   );
 }

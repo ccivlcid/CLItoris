@@ -19,6 +19,8 @@ interface GithubUserResponse {
   bio: string | null;
   html_url: string;
   public_repos: number;
+  followers: number;
+  following: number;
 }
 
 const setupSchema = z.object({
@@ -140,6 +142,8 @@ export function createAuthRouter(db: Database, logger: Logger): Router {
         displayName: githubUser.name ?? githubUser.login,
         bio: githubUser.bio,
         publicRepos: githubUser.public_repos,
+        followers: githubUser.followers ?? 0,
+        following: githubUser.following ?? 0,
       };
 
       const existingUser = db
@@ -154,11 +158,13 @@ export function createAuthRouter(db: Database, logger: Logger): Router {
             github_avatar_url = ?,
             github_profile_url = ?,
             github_repos_count = ?,
+            github_followers = ?,
+            github_following = ?,
             github_access_token = ?,
             github_token_scope = ?,
             github_connected_at = datetime('now')
           WHERE id = ?
-        `).run(profile.avatarUrl, `https://github.com/${profile.githubUsername}`, profile.publicRepos, tokenData.access_token, TOKEN_SCOPE, existingUser.id);
+        `).run(profile.avatarUrl, `https://github.com/${profile.githubUsername}`, profile.publicRepos, githubUser.followers ?? 0, githubUser.following ?? 0, tokenData.access_token, TOKEN_SCOPE, existingUser.id);
 
         req.session.userId = existingUser.id;
         res.redirect(clientUrl);
@@ -198,8 +204,9 @@ export function createAuthRouter(db: Database, logger: Logger): Router {
       INSERT INTO users (
         id, username, display_name, bio, avatar_url,
         github_id, github_username, github_avatar_url, github_profile_url, github_repos_count,
+        github_followers, github_following,
         github_access_token, github_token_scope
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       userId,
       username,
@@ -211,6 +218,8 @@ export function createAuthRouter(db: Database, logger: Logger): Router {
       profile.avatarUrl,
       `https://github.com/${profile.githubUsername}`,
       profile.publicRepos,
+      profile.followers ?? 0,
+      profile.following ?? 0,
       profile.accessToken ?? null,
       profile.accessToken ? 'read:user user:email notifications repo' : null,
     );

@@ -107,7 +107,6 @@ Users select an LLM provider when composing posts to perform natural language �
 | **openai** | API | All OpenAI models (gpt-4o, gpt-4, o1, o3...) | OpenAI SDK |
 | **gemini** | API | All Gemini models (gemini-2.5-pro, 2.5-flash, 2.0-flash...) | Google GenAI SDK (`@google/genai`) |
 | **ollama** | Local | All installed local models | Ollama REST API |
-| **cursor** | API | Cursor-supported models | Cursor AI |
 | **api** | API | Any model on the endpoint | Generic OpenAI-compatible REST |
 | **custom** | Custom | User-configured | User-provided configuration |
 
@@ -117,7 +116,7 @@ Users select an LLM provider when composing posts to perform natural language �
 - **API providers**: Require API key, call external endpoints, fetch available model list
 - **Local LLM**: Run models locally via Ollama (no API key needed), list installed models
 - **Generic API**: Connect any OpenAI-compatible endpoint with custom base URL + model name
-- **Auto-detection**: Server scans local env vars, config files (`~/.config/gcloud/`, `~/.anthropic/`), and PATH for available providers. Users already logged into providers on their PC need no additional setup — see `docs/llm/LLM_INTEGRATION.md` section 7
+- **Ollama detection**: Server checks for locally running Ollama at `localhost:11434`. Cloud providers require user-managed API keys via Settings
 
 **Transformation flow:**
 ```
@@ -309,7 +308,7 @@ Options:
 ```
 Select repo → Choose output type → Pick LLM model → Start analysis
     ↓              ↓                    ↓                ↓
-GitHub API    report|pptx|video    cloud|local|cli    Progress display
+GitHub API    report|pptx|video    cloud|local       Progress display
     ↓                                                    ↓
 Clone (shallow) → LLM analysis → Generate output → Preview
                                                       ↓

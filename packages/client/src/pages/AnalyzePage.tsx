@@ -20,11 +20,11 @@ function ProgressLine({ step }: { step: AnalysisProgress }) {
   const color =
     step.status === 'done' ? 'text-emerald-400' :
     step.status === 'failed' ? 'text-red-400' :
-    step.status === 'active' ? 'text-yellow-400' : 'text-gray-600';
+    step.status === 'active' ? 'text-yellow-400' : 'text-[var(--text-faint)]';
 
   return (
     <div className="flex items-center justify-between font-mono text-sm">
-      <span className="text-gray-400">&gt; {step.name}{step.detail ? `: ${step.detail}` : ''}...</span>
+      <span className="text-[var(--text-muted)]">&gt; {step.name}{step.detail ? `: ${step.detail}` : ''}...</span>
       <span className={color}>{icon}</span>
     </div>
   );
@@ -40,20 +40,20 @@ function AnalysisCard({ analysis, onSelect }: { analysis: AnalysisResult; onSele
   return (
     <button
       onClick={onSelect}
-      className="w-full text-left border border-gray-700 bg-[#16213e] p-4 hover:border-gray-600 transition-colors space-y-1"
+      className="w-full text-left border border-[var(--border)] bg-[var(--bg-elevated)] p-4 hover:border-[var(--border-hover)] transition-colors space-y-1"
     >
       <div className="flex items-center justify-between">
-        <span className="text-gray-200 font-mono text-sm">■ {analysis.repoOwner}/{analysis.repoName}</span>
+        <span className="text-[var(--text)] font-mono text-sm">■ {analysis.repoOwner}/{analysis.repoName}</span>
         <span className={`font-mono text-xs ${statusColor}`}>{analysis.status}</span>
       </div>
-      <div className="text-gray-500 font-mono text-xs flex gap-3">
+      <div className="text-[var(--text-muted)] font-mono text-xs flex gap-3">
         <span>{analysis.outputType}</span>
         <span>·</span>
         <span>{analysis.llmModel}</span>
         {elapsed && <><span>·</span><span>{elapsed}</span></>}
       </div>
       {analysis.resultSummary && (
-        <p className="text-gray-400 font-sans text-xs mt-2 line-clamp-2">
+        <p className="text-[var(--text-muted)] font-sans text-xs mt-2 line-clamp-2">
           {analysis.resultSummary.slice(0, 120)}...
         </p>
       )}
@@ -205,13 +205,13 @@ export default function AnalyzePage() {
       <div className="max-w-2xl mx-auto p-4 space-y-6">
 
         {/* Analyzer Form / Active Progress */}
-        <div className="border border-gray-700 bg-[#16213e] p-6 space-y-4">
+        <div className="border border-[var(--border)] bg-[var(--bg-elevated)] p-6 space-y-4">
 
           {activeAnalysis && (activeAnalysis.status === 'pending' || activeAnalysis.status === 'processing') ? (
             // Progress view
             <div className="space-y-3">
-              <p className="text-gray-600 text-xs font-mono">// analyzing repo</p>
-              <p className="text-gray-300 font-mono text-sm">
+              <p className="text-[var(--text-faint)] text-xs font-mono">// analyzing repo</p>
+              <p className="text-[var(--text)] font-mono text-sm">
                 $ analyze --repo={activeAnalysis.repoOwner}/{activeAnalysis.repoName} --output={activeAnalysis.outputType}
               </p>
               <div className="space-y-2 mt-4">
@@ -219,14 +219,14 @@ export default function AnalyzePage() {
                   <ProgressLine key={i} step={step} />
                 ))}
               </div>
-              <p className="text-gray-600 font-mono text-xs mt-3">elapsed: {elapsed.toFixed(1)}s</p>
+              <p className="text-[var(--text-faint)] font-mono text-xs mt-3">elapsed: {elapsed.toFixed(1)}s</p>
               <button
                 onClick={() => {
                   setActiveAnalysis(null);
                   if (pollingRef.current) clearTimeout(pollingRef.current);
                   if (elapsedRef.current) clearInterval(elapsedRef.current);
                 }}
-                className="text-gray-600 hover:text-gray-300 font-mono text-sm border border-gray-700 px-4 py-1.5 hover:border-gray-600 transition-colors"
+                className="text-[var(--text-faint)] hover:text-[var(--text)] font-mono text-sm border border-[var(--border)] px-4 py-1.5 hover:border-[var(--border-hover)] transition-colors"
               >
                 $ cancel
               </button>
@@ -234,62 +234,62 @@ export default function AnalyzePage() {
           ) : activeAnalysis?.status === 'completed' ? (
             // Result view
             <div className="space-y-3">
-              <p className="text-gray-600 text-xs font-mono">// analysis complete</p>
+              <p className="text-[var(--text-faint)] text-xs font-mono">// analysis complete</p>
               <p className="text-emerald-400 font-mono text-sm">
                 ✓ {activeAnalysis.repoOwner}/{activeAnalysis.repoName} · {activeAnalysis.durationMs ? `${(activeAnalysis.durationMs / 1000).toFixed(1)}s` : ''}
               </p>
 
               {activeAnalysis.outputType === 'video' ? (
-                <div className="border border-gray-700 bg-[#0d1117] p-6 text-center space-y-3">
-                  <p className="text-green-400 font-mono text-sm">■ terminal animation ready</p>
-                  <p className="text-gray-400 font-mono text-xs">interactive HTML — plays in browser</p>
+                <div className="border border-[var(--border)] bg-[#0d1117] p-6 text-center space-y-3">
+                  <p className="text-[var(--accent-green)] font-mono text-sm">■ terminal animation ready</p>
+                  <p className="text-[var(--text-muted)] font-mono text-xs">interactive HTML — plays in browser</p>
                   {activeAnalysis.resultUrl ? (
                     <a
                       href={`/api/analyze/${activeAnalysis.id}/download`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block bg-purple-400/10 text-purple-400 border border-purple-400/30 px-4 py-2 font-mono text-sm hover:bg-purple-400/20 transition-colors"
+                      className="inline-block bg-[var(--accent-purple)]/10 text-[var(--accent-purple)] border border-[var(--accent-purple)]/30 px-4 py-2 font-mono text-sm hover:bg-[var(--accent-purple)]/20 transition-colors"
                     >
                       ▶ open animation
                     </a>
                   ) : (
-                    <p className="text-gray-600 font-mono text-xs">// animation unavailable — see summary</p>
+                    <p className="text-[var(--text-faint)] font-mono text-xs">// animation unavailable — see summary</p>
                   )}
                   {activeAnalysis.resultSummary && (
                     <details className="text-left mt-2">
-                      <summary className="text-gray-600 font-mono text-xs cursor-pointer hover:text-gray-400">// view summary text</summary>
-                      <div className="border border-gray-700 bg-[#0d1117] p-4 font-sans text-sm text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto mt-2">
+                      <summary className="text-[var(--text-faint)] font-mono text-xs cursor-pointer hover:text-[var(--text-muted)]">// view summary text</summary>
+                      <div className="border border-[var(--border)] bg-[#0d1117] p-4 font-sans text-sm text-[var(--text)] whitespace-pre-wrap max-h-64 overflow-y-auto mt-2">
                         {activeAnalysis.resultSummary}
                       </div>
                     </details>
                   )}
                 </div>
               ) : activeAnalysis.outputType === 'pptx' ? (
-                <div className="border border-gray-700 bg-[#0d1117] p-6 text-center space-y-3">
-                  <p className="text-green-400 font-mono text-sm">■ presentation ready</p>
-                  <p className="text-gray-400 font-mono text-xs">
+                <div className="border border-[var(--border)] bg-[#0d1117] p-6 text-center space-y-3">
+                  <p className="text-[var(--accent-green)] font-mono text-sm">■ presentation ready</p>
+                  <p className="text-[var(--text-muted)] font-mono text-xs">
                     {activeAnalysis.resultUrl ? '5 slides generated' : 'summary generated (pptx unavailable)'}
                   </p>
                   {activeAnalysis.resultUrl && (
                     <a
                       href={`/api/analyze/${activeAnalysis.id}/download`}
                       download
-                      className="inline-block bg-sky-400/10 text-sky-400 border border-sky-400/30 px-4 py-2 font-mono text-sm hover:bg-sky-400/20 transition-colors"
+                      className="inline-block bg-[var(--accent-cyan)]/10 text-[var(--accent-cyan)] border border-[var(--accent-cyan)]/30 px-4 py-2 font-mono text-sm hover:bg-[var(--accent-cyan)]/20 transition-colors"
                     >
                       ↓ download .pptx
                     </a>
                   )}
                   {activeAnalysis.resultSummary && (
                     <details className="text-left mt-2">
-                      <summary className="text-gray-600 font-mono text-xs cursor-pointer hover:text-gray-400">// view summary text</summary>
-                      <div className="border border-gray-700 bg-[#0d1117] p-4 font-sans text-sm text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto mt-2">
+                      <summary className="text-[var(--text-faint)] font-mono text-xs cursor-pointer hover:text-[var(--text-muted)]">// view summary text</summary>
+                      <div className="border border-[var(--border)] bg-[#0d1117] p-4 font-sans text-sm text-[var(--text)] whitespace-pre-wrap max-h-64 overflow-y-auto mt-2">
                         {activeAnalysis.resultSummary}
                       </div>
                     </details>
                   )}
                 </div>
               ) : (
-                <div className="border border-gray-700 bg-[#0d1117] p-4 font-sans text-sm text-gray-300 whitespace-pre-wrap max-h-96 overflow-y-auto">
+                <div className="border border-[var(--border)] bg-[#0d1117] p-4 font-sans text-sm text-[var(--text)] whitespace-pre-wrap max-h-96 overflow-y-auto">
                   {activeAnalysis.resultSummary}
                 </div>
               )}
@@ -297,7 +297,7 @@ export default function AnalyzePage() {
               <div className="flex items-center gap-3 flex-wrap">
                 <button
                   onClick={() => { setActiveAnalysis(null); setSharedPostId(null); }}
-                  className="text-gray-500 hover:text-gray-300 font-mono text-sm transition-colors"
+                  className="text-[var(--text-muted)] hover:text-[var(--text)] font-mono text-sm transition-colors"
                 >
                   ← new analysis
                 </button>
@@ -312,7 +312,7 @@ export default function AnalyzePage() {
                   <button
                     onClick={handleShare}
                     disabled={isSharing}
-                    className="bg-green-400/10 text-green-400 border border-green-400/30 px-3 py-1 font-mono text-sm hover:bg-green-400/20 disabled:opacity-40 transition-colors"
+                    className="bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/30 px-3 py-1 font-mono text-sm hover:bg-[var(--accent-green)]/20 disabled:opacity-40 transition-colors"
                   >
                     {isSharing ? '$ sharing...' : '$ share --to=feed'}
                   </button>
@@ -322,24 +322,24 @@ export default function AnalyzePage() {
           ) : (
             // Input form
             <div className="space-y-4">
-              <p className="text-gray-600 text-xs font-mono">// analyze github repo</p>
+              <p className="text-[var(--text-faint)] text-xs font-mono">// analyze github repo</p>
 
               <div className="space-y-1">
-                <label className="text-gray-500 font-mono text-xs">$ analyze</label>
+                <label className="text-[var(--text-muted)] font-mono text-xs">$ analyze</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-600 font-mono text-sm shrink-0">--repo=</span>
+                  <span className="text-[var(--text-faint)] font-mono text-sm shrink-0">--repo=</span>
                   <input
                     value={repo}
                     onChange={(e) => setRepo(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleStart()}
                     placeholder="owner/repo or github.com/owner/repo"
-                    className="flex-1 bg-[#0d1117] border border-gray-700 text-gray-200 font-mono text-sm px-3 py-2 placeholder-gray-700 focus:outline-none focus:border-gray-500"
+                    className="flex-1 bg-[#0d1117] border border-[var(--border)] text-[var(--text)] font-mono text-sm px-3 py-2 placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--text-muted)]"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <span className="text-gray-500 font-mono text-xs">--output=</span>
+                <span className="text-[var(--text-muted)] font-mono text-xs">--output=</span>
                 <div className="flex gap-2 mt-1">
                   {OUTPUT_TYPES.map((t) => (
                     <button
@@ -347,8 +347,8 @@ export default function AnalyzePage() {
                       onClick={() => setOutputType(t)}
                       className={`px-3 py-1.5 font-mono text-xs border transition-colors ${
                         outputType === t
-                          ? 'bg-green-400/10 text-green-400 border-green-400/30'
-                          : 'text-gray-500 border-gray-700 hover:text-gray-300 hover:border-gray-600'
+                          ? 'bg-[var(--accent-green)]/10 text-[var(--accent-green)] border-[var(--accent-green)]/30'
+                          : 'text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text)] hover:border-[var(--border-hover)]'
                       }`}
                     >
                       [{t}]
@@ -359,11 +359,11 @@ export default function AnalyzePage() {
 
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-500 font-mono text-xs">--model=</span>
+                  <span className="text-[var(--text-muted)] font-mono text-xs">--model=</span>
                   <select
                     value={llmModel}
                     onChange={(e) => setLlmModel(e.target.value)}
-                    className="bg-[#0d1117] border border-gray-700 text-gray-300 font-mono text-xs px-2 py-1.5 focus:outline-none"
+                    className="bg-[#0d1117] border border-[var(--border)] text-[var(--text)] font-mono text-xs px-2 py-1.5 focus:outline-none"
                   >
                     {modelOptions.length === 0 ? (
                       <option value="">— load models from CLI or Settings (API keys) —</option>
@@ -373,11 +373,11 @@ export default function AnalyzePage() {
                   </select>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-500 font-mono text-xs">--lang=</span>
+                  <span className="text-[var(--text-muted)] font-mono text-xs">--lang=</span>
                   <select
                     value={lang}
                     onChange={(e) => setLang(e.target.value)}
-                    className="bg-[#0d1117] border border-gray-700 text-gray-300 font-mono text-xs px-2 py-1.5 focus:outline-none"
+                    className="bg-[#0d1117] border border-[var(--border)] text-[var(--text)] font-mono text-xs px-2 py-1.5 focus:outline-none"
                   >
                     <option value="en">en</option>
                     <option value="ko">ko</option>
@@ -390,7 +390,7 @@ export default function AnalyzePage() {
               <button
                 onClick={handleStart}
                 disabled={!repo.trim() || !llmModel.trim() || isStarting}
-                className="bg-green-400/10 text-green-400 border border-green-400/30 px-4 py-2 font-mono text-sm hover:bg-green-400/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/30 px-4 py-2 font-mono text-sm hover:bg-[var(--accent-green)]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {isStarting ? '$ starting...' : '[Enter] start analysis'}
               </button>
@@ -400,19 +400,19 @@ export default function AnalyzePage() {
 
         {/* History */}
         <div className="space-y-3">
-          <p className="text-gray-600 font-mono text-xs border-b border-gray-700 pb-2">// your analyses</p>
+          <p className="text-[var(--text-faint)] font-mono text-xs border-b border-[var(--border)] pb-2">// your analyses</p>
 
           {historyLoading ? (
             <div className="space-y-2 animate-pulse">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="border border-gray-700 bg-[#16213e] p-4 h-16" />
+                <div key={i} className="border border-[var(--border)] bg-[var(--bg-elevated)] p-4 h-16" />
               ))}
             </div>
           ) : history.length === 0 ? (
-            <div className="border border-gray-700 bg-[#16213e] p-6 text-center">
-              <p className="text-green-400 font-mono text-sm">$ analyses --list</p>
+            <div className="border border-[var(--border)] bg-[var(--bg-elevated)] p-6 text-center">
+              <p className="text-[var(--accent-green)] font-mono text-sm">$ analyses --list</p>
               <p className="text-orange-400 font-mono text-sm mt-1">&gt; 0 analyses found.</p>
-              <p className="text-gray-400 font-sans text-sm mt-2">Start your first repo analysis above.</p>
+              <p className="text-[var(--text-muted)] font-sans text-sm mt-2">Start your first repo analysis above.</p>
             </div>
           ) : (
             <div className="space-y-0">

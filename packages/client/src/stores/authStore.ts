@@ -30,6 +30,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const res = await api.get<ApiResponse<User>>('/auth/me');
       set({ user: res.data, isAuthenticated: true, isLoading: false });
+      // Auto-sync GitHub follows on each session restore
+      api.post('/github/sync-follows').catch(() => { /* silent */ });
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         set({ user: null, isAuthenticated: false, isLoading: false });

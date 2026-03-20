@@ -98,7 +98,6 @@
         "src/providers/anthropic.ts": "Claude integration (Anthropic SDK)",
         "src/providers/openai.ts": "GPT integration (OpenAI SDK)",
         "src/providers/ollama.ts": "Local LLM integration (Ollama REST API)",
-        "src/providers/cursor.ts": "Cursor AI integration (Cursor API)",
         "src/providers/api.ts": "Generic REST API adapter (connect any OpenAI-compatible endpoint)",
         "src/transformer.ts": "Natural language → CLI transformation logic and prompts"
       }

@@ -136,7 +136,7 @@ interface LlmProvider {
 
 interface TransformRequest {
   message: string;
-  provider: string;   // 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'cursor' | 'cli' | 'api'
+  provider: string;   // 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'api'
   model: string;      // e.g. 'claude-sonnet-4', 'gpt-4o', 'gemini-2.5-pro', 'llama3:8b'
   lang: string;
 }
@@ -360,7 +360,7 @@ Step-by-step flow from user action to database and back:
 ## Environment Configuration
 
 > Full env var reference: see `docs/guides/ENV.md`.
-> Credential auto-detection: see `docs/llm/LLM_INTEGRATION.md` section 7.
+> Ollama detection: see `docs/llm/LLM_DETECTION.md` section 3.
 
 ---
 

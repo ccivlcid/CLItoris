@@ -43,7 +43,7 @@ function avatarColor(username: string): string {
 
 export default function PostCard({ post, focused = false }: PostCardProps) {
   const navigate = useNavigate();
-  const { lang: uiLang } = useUiStore();
+  const { lang: uiLang, t } = useUiStore();
   const { user: authUser } = useAuthStore();
   const { updatePost } = useFeedStore();
   const isAuthor = authUser?.id === post.userId;
@@ -73,9 +73,9 @@ export default function PostCard({ post, focused = false }: PostCardProps) {
       });
       updatePost(post.id, res.data);
       setIsEditing(false);
-      toastSuccess('Post updated');
+      toastSuccess(t('post.updated'));
     } catch {
-      toastError('Failed to save');
+      toastError(t('post.saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -98,7 +98,7 @@ export default function PostCard({ post, focused = false }: PostCardProps) {
       className={`cursor-pointer outline-none transition-all duration-200 border-b ${
         focused
           ? 'border-[var(--accent-green)]/10 bg-[var(--accent-green)]/[0.02]'
-          : 'border-[var(--border)]/15 hover:bg-white/[0.01]'
+          : 'border-[var(--border)]/15 hover:bg-white/[0.025]'
       }`}
     >
       {/* Header — author identity, minimal metadata */}
@@ -124,11 +124,11 @@ export default function PostCard({ post, focused = false }: PostCardProps) {
           </Link>
           <span className="text-[var(--text-faint)]/40 text-[11px] font-mono shrink-0">
             {timeAgo(post.createdAt)}
-            {post.updatedAt && <span className="ml-1 text-[var(--text-faint)]/30">(edited)</span>}
+            {post.updatedAt && <span className="ml-1 text-[var(--text-faint)]/30">{t('post.edited')}</span>}
           </span>
 
           {post.lang && (
-            <span className="text-[var(--accent-purple)]/30 text-[10px] font-mono shrink-0 ml-auto">
+            <span className="text-[var(--accent-purple)]/50 text-[10px] font-mono shrink-0 ml-auto">
               {post.lang}
             </span>
           )}
@@ -151,14 +151,14 @@ export default function PostCard({ post, focused = false }: PostCardProps) {
               className="font-mono text-[11px] text-[var(--text-faint)] hover:text-[var(--text-muted)] px-3 py-1"
               disabled={isSaving}
             >
-              cancel
+              {t('post.cancel')}
             </button>
             <button
               onClick={handleEditSave}
               disabled={isSaving || !editDraft.trim()}
               className="font-mono text-[11px] text-[var(--accent-green)] border border-[var(--accent-green)]/20 bg-[var(--accent-green)]/[0.06] px-3 py-1 hover:bg-[var(--accent-green)]/[0.12] disabled:opacity-40"
             >
-              {isSaving ? 'saving...' : 'save'}
+              {isSaving ? t('post.saving') : t('post.save')}
             </button>
           </div>
         </div>
@@ -182,6 +182,38 @@ export default function PostCard({ post, focused = false }: PostCardProps) {
           messageCli={post.quotedPost.messageCli}
           user={post.quotedPost.user}
         />
+      )}
+
+      {/* Media */}
+      {post.media && post.media.length > 0 && (
+        <div
+          className={`mx-5 mb-2 grid gap-1.5 ${
+            post.media.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
+          }`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {post.media.map((m) => {
+            const src = `${(import.meta.env.VITE_API_URL ?? '/api').replace(/\/api$/, '')}${m.url}`;
+            return m.mimeType.startsWith('video/') ? (
+              <video
+                key={m.id}
+                src={src}
+                controls
+                playsInline
+                muted
+                className="w-full max-h-[320px] object-cover border border-[var(--border)] bg-black"
+              />
+            ) : (
+              <img
+                key={m.id}
+                src={src}
+                alt=""
+                loading="lazy"
+                className="w-full max-h-[320px] object-cover border border-[var(--border)]"
+              />
+            );
+          })}
+        </div>
       )}
 
       {/* Repo */}

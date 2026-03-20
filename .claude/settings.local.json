@@ -48,7 +48,19 @@
       "Bash(curl -s \"http://localhost:3771/api/posts/019d0b03-19d9-7600-803c-42484e545a60\")",
       "WebFetch(domain:www.instagram.com)",
       "WebFetch(domain:about.instagram.com)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite:*)",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js\\)$\")",
+      "Bash(xargs grep:*)",
+      "Bash(find /c/project/CLItoris/packages/shared -name *.ts)",
+      "Bash(grep:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm --filter @clitoris/shared build)",
+      "Bash(find /c/project/CLItoris/docs -name *GITHUB* -o -name *github*)",
+      "Bash(xargs sed:*)",
+      "Bash(node_modules/.bin/vite build:*)",
+      "Bash(pnpm run:*)"
     ]
   }
 }

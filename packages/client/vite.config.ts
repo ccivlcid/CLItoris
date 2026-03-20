@@ -14,6 +14,10 @@ export default defineConfig({
         secure: false,
         cookieDomainRewrite: "localhost",
       },
+      "/uploads": {
+        target: "http://localhost:3771",
+        changeOrigin: true,
+      },
     },
   },
   build: {

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect, type ReactNode } from 'react';
 import HeaderBar from './HeaderBar.js';
 import Sidebar from './Sidebar.js';
+import MobileNav from './MobileNav.js';
 import KeyboardHelpModal from './KeyboardHelpModal.js';
 import ToastContainer from './ToastContainer.js';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts.js';
@@ -33,10 +34,11 @@ export default function AppShell({ children }: AppShellProps) {
       <HeaderBar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto pb-14 sm:pb-0">
           <div className="max-w-3xl mx-auto">{children}</div>
         </main>
       </div>
+      <MobileNav />
       <ToastContainer />
       {showHelp && <KeyboardHelpModal onClose={() => setShowHelp(false)} />}
     </div>

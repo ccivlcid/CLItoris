@@ -20,6 +20,11 @@ const ja: Record<string, string> = {
   'feed.error.body': 'グローバルフィードを読み込めませんでした。\nサーバーがダウンしているか、接続が切れている可能性があります。',
   'feed.error.retry': '$ 再試行',
   'feed.loading': '$ loading --cursor={cursor} ...',
+  'feed.loadingMore': '読み込み中...',
+  'feed.local.emptyBody': 'フォロー中のユーザーの投稿はありません。\n誰かをフォローするとここに表示されます。',
+  'feed.tab.global': '--global',
+  'feed.tab.local': '--local',
+  'feed.searchPlaceholder': '投稿、ユーザー、タグを検索...',
 
   // Composer
   'composer.placeholder': 'ここに投稿を入力...',
@@ -32,6 +37,8 @@ const ja: Record<string, string> = {
   'composer.label': '> どの言語でも書いてください。LLM が CLI に変換します。',
   'composer.repo.attach': '📎 リポジトリ',
   'composer.repo.remove': '× 削除',
+  'composer.noModel': 'LLM 未設定',
+  'composer.addKey': 'API キー追加',
 
   // Post actions
   'post.action.reply': '↩ 返信',
@@ -43,6 +50,24 @@ const ja: Record<string, string> = {
   'post.translate': '翻訳 →{lang}',
   'post.translating': '翻訳中...',
   'post.translated.from': '--translated-from={lang}',
+  'post.edited': '(編集済み)',
+  'post.cancel': 'キャンセル',
+  'post.saving': '保存中...',
+  'post.save': '保存',
+  'post.updated': '投稿を更新しました',
+  'post.saveFailed': '保存に失敗しました',
+
+  // Action bar
+  'action.reply': '返信',
+  'action.fork': 'フォーク',
+  'action.star': 'スター',
+  'action.starred': 'スター済み',
+  'action.edit': '編集',
+  'action.share': '共有',
+  'action.copied': 'コピー済み',
+  'action.starFailed': 'スターに失敗しました',
+  'action.forkFailed': 'フォークに失敗しました',
+  'action.reactFailed': 'リアクションに失敗しました',
 
   // Auth
   'auth.connect.title': '// 接続を確立する',
@@ -84,6 +109,16 @@ const ja: Record<string, string> = {
   'settings.section.llm': '// LLM キー',
   'settings.section.account': '// アカウント',
 
+  // Settings — API tab
+  'settings.api.description': 'APIプロバイダー（OpenAI、Anthropic、Geminiなど）を登録してLLM機能を有効にします。',
+  'settings.api.saving': '保存中...',
+  'settings.api.add': '追加',
+  'settings.api.cancel': 'キャンセル',
+  'settings.api.remove': '削除',
+  'settings.api.confirmRemove': '確認？',
+  'settings.api.registered': '登録済みプロバイダー',
+  'settings.api.empty': '登録されたプロバイダーはありません。',
+
   // Errors
   'error.keyNotConfigured': 'API キーが設定されていません。設定で追加してください。',
   'error.unauthorized': '続行するにはログインしてください。',
@@ -101,6 +136,153 @@ const ja: Record<string, string> = {
   'menu.llm': 'LLM / CLI',
   'menu.settings': '設定',
   'menu.logout': 'ログアウト',
+
+  // Header
+  'header.newPost': '+ post',
+  'header.connect': '接続',
+
+  // Sidebar / Terminal
+  'sidebar.terminalBash': 'terminal.social — bash',
+  'sidebar.exportLlm': 'export LLM=',
+  'sidebar.exportLlmKey': '$ export LLM_KEY=',
+  'sidebar.sshConnect': '$ ssh connect',
+  'sidebar.lang': 'LANG=',
+
+  // Mobile Nav
+  'mobile.feed': 'フィード',
+  'mobile.explore': '探索',
+  'mobile.search': '検索',
+  'mobile.msg': 'メッセージ',
+  'mobile.log': 'ログ',
+  'mobile.more': 'その他',
+  'mobile.me': '自分',
+  'mobile.analyze': '分析',
+  'mobile.github': 'github',
+  'mobile.leaderboard': 'ランク',
+
+  // Messages
+  'msg.inbox': '$ msg --inbox',
+  'msg.loading': '読み込み中...',
+  'msg.noConversations': '会話なし',
+  'msg.selectConversation': '会話を選択してください',
+  'msg.placeholder': 'メッセージを入力...',
+  'msg.send': '送信',
+  'msg.new': '{n} 件の新着',
+
+  // Search
+  'search.placeholder': '投稿、ユーザー、タグを検索...',
+  'search.searching': '検索中...',
+  'search.users': 'ユーザー',
+  'search.tags': 'タグ',
+  'search.posts': '投稿',
+  'search.noResults': '"{q}" の結果が見つかりません',
+  'search.hint': '投稿、ユーザー、タグを検索',
+  'search.cancel': 'キャンセル',
+
+  // Explore
+  'explore.searchPlaceholder': 'gh search --repos "検索"',
+  'explore.search': '検索',
+  'explore.searchHint': '/ でフォーカス  ·  GitHubリポジトリとユーザーを検索',
+  'explore.searchError': 'GitHub検索に失敗しました',
+  'explore.fetchError': 'トレンドリポジトリの取得に失敗しました',
+  'explore.trendingTitle': '// トレンドリポジトリ',
+
+  // Profile
+  'profile.back': '← 戻る',
+  'profile.notFound': 'error: 404 ユーザーが見つかりません',
+  'profile.goHome': '$ cd /',
+  'profile.followers': 'フォロワー',
+  'profile.following': 'フォロー中',
+  'profile.posts': '投稿',
+  'profile.followBtn': 'フォロー',
+  'profile.followingBtn': 'フォロー中',
+  'profile.noRepos': 'リポジトリなし',
+  'profile.noItems': '{tab}なし',
+  'profile.calculating': '計算中...',
+  'profile.calculateInfluence': '$ influence --calculate',
+  'profile.loadMore': 'もっと読む',
+  'profile.bioPlaceholder': 'ステータスメッセージを書く...',
+  'profile.loading': '読み込み中...',
+
+  // Post detail
+  'detail.replyAuth': '返信にはログインが必要です',
+  'detail.replyPlaceholder': '返信を書いてください...',
+  'detail.ctrlEnter': 'ctrl+enterで返信',
+  'detail.transforming': '変換中...',
+  'detail.preview': 'プレビュー',
+  'detail.sending': '送信中...',
+  'detail.reply': '返信',
+  'detail.notFound': '404: 見つかりません',
+  'detail.notFoundBody': 'この投稿は存在しないか、削除されています。',
+  'detail.back': '戻る',
+  'detail.feed': 'フィード',
+  'detail.forkedFrom': 'フォーク元:',
+  'detail.noReplies': 'まだ返信はありません',
+  'detail.replyCount': '{n} 件の返信',
+  'detail.repliesCount': '{n} 件の返信',
+  'detail.clearReplyTarget': 'キャンセル',
+  'detail.mentionHint': '@ メンション',
+
+  // Leaderboard
+  'leaderboard.subtitle': 'GitHub活動 + CLItoris活動でランク付けされた開発者',
+  'leaderboard.empty': 'まだスコアが計算されていません。',
+  'leaderboard.emptyHint': 'プロフィールでGitHubを同期して始めましょう。',
+  'leaderboard.loading': 'リーダーボード読み込み中...',
+
+  // Contribution graph
+  'contrib.title': '// コントリビューション',
+  'contrib.thisYear': '今年 {n} 回',
+
+  // Influence
+  'influence.status': '$ influence --status',
+  'influence.calculating': '計算中...',
+  'influence.recalculate': '[再計算]',
+  'influence.calculated': '計算日:',
+  'influence.stale': '(古い — 再計算を推奨)',
+
+  // GitHub follow sync
+  'ghSync.title': 'github フォロー',
+  'ghSync.onPlatform': 'CLItoris に {n} 人',
+  'ghSync.syncing': '同期中...',
+  'ghSync.syncAll': '全て同期 ({n})',
+  'ghSync.following': 'フォロー中 ({n})',
+  'ghSync.followers': 'フォロワー ({n})',
+  'ghSync.onClit': 'CLItoris 上 ({n})',
+  'ghSync.notOnClit': 'CLItoris 未登録 ({n})',
+  'ghSync.unfollow': 'フォロー解除',
+  'ghSync.follow': 'フォロー',
+  'ghSync.more': '+{n} 件',
+  'ghSync.empty': '> {tab} 0 件。',
+  'ghSync.loadFollowingFailed': 'GitHub フォロー一覧の読み込みに失敗',
+  'ghSync.loadFollowersFailed': 'GitHub フォロワー一覧の読み込みに失敗',
+  'ghSync.syncFailed': '同期に失敗しました',
+  'ghSync.followFailed': 'フォロー状態の更新に失敗',
+
+  // GitHub settings tab
+  'github.connectionStatus': 'github 接続',
+  'github.connectedSince': '接続日',
+  'github.features': '有効な機能',
+  'github.featureProfile': 'プロフィール同期（アバター、紹介、リポジトリ）',
+  'github.featureRepos': 'プロフィールにリポジトリ一覧を表示',
+  'github.featureContrib': 'コントリビューショングラフ（草）',
+  'github.featureFollowSync': 'フォロー同期（GitHub ↔ CLItoris）',
+  'github.featureReviews': 'PR レビューリクエスト一覧',
+  'github.featureInfluence': '影響力スコアの計算',
+  'github.reviewSubtitle': 'あなたのレビューを待つ PR',
+  'github.reviewLoadFailed': 'PR レビューの読み込みに失敗しました。',
+  'github.noReviews': '保留中のレビューリクエストはありません。',
+
+  // Chat
+  'chat.clear': 'クリア',
+  'chat.empty': '会話を始めましょう。',
+  'chat.noAgent': 'AIエージェントを接続するとチャットできます。',
+  'chat.addAgent': '+ エージェント接続',
+  'chat.inputPlaceholder': 'メッセージを入力...',
+  'chat.agentName': 'エージェント名',
+  'chat.agentEndpoint': 'エンドポイント URL (https://...)',
+  'chat.agentApiKey': 'API キー（任意）',
+  'chat.agentModel': 'モデル（任意）',
+  'chat.connect': '接続',
 };
 
 export default ja;

@@ -1,6 +1,6 @@
 # LLM_PROVIDERS.md — Provider Implementations
 
-> **Source of truth** for all 6 LLM provider implementations.
+> **Source of truth** for all LLM provider implementations.
 > See [LLM_INTEGRATION.md](./LLM_INTEGRATION.md) for system prompt, interface, and overview.
 
 ---
@@ -97,106 +97,7 @@ export class OpenAiProvider implements LlmProvider {
 }
 ```
 
-## 3. ollama.ts -- Ollama REST API
-
-```typescript
-// packages/llm/src/providers/ollama.ts
-import type { LlmProvider, TransformRequest, TransformResponse } from "../types.js";
-import { SYSTEM_PROMPT, buildFewShotMessages } from "../prompt.js";
-import { parseCliCommand } from "../parser.js";
-
-const OLLAMA_BASE = process.env.OLLAMA_HOST ?? "http://localhost:11434";
-
-export class OllamaProvider implements LlmProvider {
-  name = "ollama";
-
-  async listModels(): Promise<string[]> {
-    const res = await fetch(`${OLLAMA_BASE}/api/tags`);
-    const data = (await res.json()) as { models: Array<{ name: string }> };
-    return data.models.map((m) => m.name);
-  }
-
-  async transform(input: TransformRequest): Promise<TransformResponse> {
-    const res = await fetch(`${OLLAMA_BASE}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: input.model,
-        stream: false,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...buildFewShotMessages(input.username),
-          { role: "user", content: input.message },
-        ],
-      }),
-    });
-
-    const data = (await res.json()) as {
-      message: { content: string };
-      model: string;
-      eval_count?: number;
-      prompt_eval_count?: number;
-    };
-
-    return {
-      messageCli: parseCliCommand(data.message.content),
-      model: data.model,
-      tokensUsed: (data.eval_count ?? 0) + (data.prompt_eval_count ?? 0),
-    };
-  }
-}
-```
-
-## 4. cursor.ts -- Cursor API
-
-```typescript
-// packages/llm/src/providers/cursor.ts
-import type { LlmProvider, TransformRequest, TransformResponse } from "../types.js";
-import { SYSTEM_PROMPT, buildFewShotMessages } from "../prompt.js";
-import { parseCliCommand } from "../parser.js";
-
-const CURSOR_BASE = "http://localhost:3100/v1";
-
-export class CursorProvider implements LlmProvider {
-  name = "cursor";
-
-  async listModels(): Promise<string[]> {
-    const res = await fetch(`${CURSOR_BASE}/models`);
-    const data = (await res.json()) as { data: Array<{ id: string }> };
-    return data.data.map((m) => m.id);
-  }
-
-  async transform(input: TransformRequest): Promise<TransformResponse> {
-    const res = await fetch(`${CURSOR_BASE}/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: input.model,
-        max_tokens: 512,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...buildFewShotMessages(input.username),
-          { role: "user", content: input.message },
-        ],
-      }),
-    });
-
-    const data = (await res.json()) as {
-      choices: Array<{ message: { content: string } }>;
-      model: string;
-      usage?: { total_tokens: number };
-    };
-
-    return {
-      messageCli: parseCliCommand(data.choices[0]?.message?.content ?? ""),
-      model: data.model,
-      tokensUsed: data.usage?.total_tokens ?? 0,
-    };
-  }
-}
-```
-
-## 5. gemini.ts -- Google Gemini SDK
+## 3. gemini.ts -- Google Gemini SDK
 
 ```typescript
 // packages/llm/src/providers/gemini.ts
@@ -249,9 +150,9 @@ export class GeminiProvider implements LlmProvider {
 }
 ```
 
-## 7. api.ts -- Generic OpenAI-Compatible Endpoint
+## 4. api.ts -- Generic OpenAI-Compatible Endpoint
 
-For any provider that exposes an OpenAI-compatible `/v1/chat/completions` endpoint (LM Studio, vLLM, Together AI, Groq, etc.).
+For any provider that exposes an OpenAI-compatible `/v1/chat/completions` endpoint (OpenRouter, Together AI, Groq, Cerebras, etc.).
 
 ```typescript
 // packages/llm/src/providers/api.ts
@@ -320,6 +221,6 @@ export class GenericApiProvider implements LlmProvider {
 
 ## See Also
 
-- [LLM_INTEGRATION.md](./LLM_INTEGRATION.md) -- Overview, system prompt, provider interface, execution modes
-- [LLM_DETECTION.md](./LLM_DETECTION.md) -- Error handling, response parsing, credential auto-detection
+- [LLM_INTEGRATION.md](./LLM_INTEGRATION.md) -- Overview, system prompt, provider interface
+- [LLM_DETECTION.md](./LLM_DETECTION.md) -- Error handling, response parsing
 - [docs/guides/ENV.md](../guides/ENV.md) -- Environment variables (API keys)

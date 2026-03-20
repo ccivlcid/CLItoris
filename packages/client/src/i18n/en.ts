@@ -20,6 +20,11 @@ const en: Record<string, string> = {
   'feed.error.body': 'Failed to load the global feed.\nThe server might be down or\nyour connection is interrupted.',
   'feed.error.retry': '$ retry',
   'feed.loading': '$ loading --cursor={cursor} ...',
+  'feed.loadingMore': 'loading...',
+  'feed.local.emptyBody': 'No posts from people you follow.\nFollow someone to see their posts here.',
+  'feed.tab.global': '--global',
+  'feed.tab.local': '--local',
+  'feed.searchPlaceholder': 'search posts, users, tags...',
 
   // Composer
   'composer.placeholder': 'Type your post here...',
@@ -32,6 +37,8 @@ const en: Record<string, string> = {
   'composer.label': '> Write in any language. LLM translates to CLI.',
   'composer.repo.attach': '📎 repo',
   'composer.repo.remove': '× remove',
+  'composer.noModel': 'no LLM configured',
+  'composer.addKey': 'add API key',
 
   // Post actions
   'post.action.reply': '↵ reply',
@@ -43,6 +50,24 @@ const en: Record<string, string> = {
   'post.translate': 'translate →{lang}',
   'post.translating': 'translating...',
   'post.translated.from': '--translated-from={lang}',
+  'post.edited': '(edited)',
+  'post.cancel': 'cancel',
+  'post.saving': 'saving...',
+  'post.save': 'save',
+  'post.updated': 'Post updated',
+  'post.saveFailed': 'Failed to save',
+
+  // Action bar
+  'action.reply': 'reply',
+  'action.fork': 'fork',
+  'action.star': 'star',
+  'action.starred': 'starred',
+  'action.edit': 'edit',
+  'action.share': 'share',
+  'action.copied': 'copied',
+  'action.starFailed': 'Failed to star post',
+  'action.forkFailed': 'Failed to fork post',
+  'action.reactFailed': 'Failed to react',
 
   // Auth
   'auth.connect.title': '// establish connection',
@@ -85,7 +110,7 @@ const en: Record<string, string> = {
   'settings.section.account': '// account',
 
   // Settings — API tab
-  'settings.api.description': 'Register local models (Ollama etc.), frontier models (OpenAI, Anthropic etc.), or other API services.',
+  'settings.api.description': 'Register API providers (OpenAI, Anthropic, Gemini, etc.) to enable LLM features.',
   'settings.api.saving': 'saving...',
   'settings.api.add': 'add',
   'settings.api.cancel': 'cancel',
@@ -111,6 +136,153 @@ const en: Record<string, string> = {
   'menu.llm': 'LLM / CLI',
   'menu.settings': 'settings',
   'menu.logout': 'logout',
+
+  // Header
+  'header.newPost': '+ post',
+  'header.connect': 'connect',
+
+  // Sidebar / Terminal
+  'sidebar.terminalBash': 'terminal.social — bash',
+  'sidebar.exportLlm': 'export LLM=',
+  'sidebar.exportLlmKey': '$ export LLM_KEY=',
+  'sidebar.sshConnect': '$ ssh connect',
+  'sidebar.lang': 'LANG=',
+
+  // Mobile Nav
+  'mobile.feed': 'feed',
+  'mobile.explore': 'explore',
+  'mobile.search': 'search',
+  'mobile.msg': 'msg',
+  'mobile.log': 'log',
+  'mobile.more': 'more',
+  'mobile.me': 'me',
+  'mobile.analyze': 'analyze',
+  'mobile.github': 'github',
+  'mobile.leaderboard': 'rank',
+
+  // Messages
+  'msg.inbox': '$ msg --inbox',
+  'msg.loading': 'loading...',
+  'msg.noConversations': 'no conversations',
+  'msg.selectConversation': 'select a conversation',
+  'msg.placeholder': 'type a message...',
+  'msg.send': 'send',
+  'msg.new': '{n} new',
+
+  // Search
+  'search.placeholder': 'search posts, users, tags...',
+  'search.searching': 'searching...',
+  'search.users': 'users',
+  'search.tags': 'tags',
+  'search.posts': 'posts',
+  'search.noResults': 'No results found for "{q}"',
+  'search.hint': 'Search for posts, users, or tags',
+  'search.cancel': 'cancel',
+
+  // Explore
+  'explore.searchPlaceholder': 'gh search --repos "query"',
+  'explore.search': 'search',
+  'explore.searchHint': 'press / to focus  ·  search GitHub repositories and users',
+  'explore.searchError': 'GitHub search failed',
+  'explore.fetchError': 'Failed to fetch trending repos',
+  'explore.trendingTitle': '// trending repositories',
+
+  // Profile
+  'profile.back': '← back',
+  'profile.notFound': 'error: 404 user not found',
+  'profile.goHome': '$ cd /',
+  'profile.followers': 'followers',
+  'profile.following': 'following',
+  'profile.posts': 'posts',
+  'profile.followBtn': 'follow',
+  'profile.followingBtn': 'following',
+  'profile.noRepos': 'no repositories',
+  'profile.noItems': 'no {tab}',
+  'profile.calculating': 'calculating...',
+  'profile.calculateInfluence': '$ influence --calculate',
+  'profile.loadMore': 'load more',
+  'profile.bioPlaceholder': 'Write a status message...',
+  'profile.loading': 'loading...',
+
+  // Post detail
+  'detail.replyAuth': 'reply requires authentication',
+  'detail.replyPlaceholder': 'Write your reply...',
+  'detail.ctrlEnter': 'ctrl+enter to reply',
+  'detail.transforming': 'transforming...',
+  'detail.preview': 'preview',
+  'detail.sending': 'sending...',
+  'detail.reply': 'reply',
+  'detail.notFound': '404: not found',
+  'detail.notFoundBody': "This post doesn't exist or has been deleted.",
+  'detail.back': 'back',
+  'detail.feed': 'feed',
+  'detail.forkedFrom': 'forked from',
+  'detail.noReplies': 'no replies yet',
+  'detail.replyCount': '{n} reply',
+  'detail.repliesCount': '{n} replies',
+  'detail.clearReplyTarget': 'cancel',
+  'detail.mentionHint': '@ to mention',
+
+  // Leaderboard
+  'leaderboard.subtitle': 'Developers ranked by GitHub presence + CLItoris activity',
+  'leaderboard.empty': 'No scores calculated yet.',
+  'leaderboard.emptyHint': 'Go to your profile and sync GitHub to get started.',
+  'leaderboard.loading': 'loading leaderboard...',
+
+  // Contribution graph
+  'contrib.title': '// contributions',
+  'contrib.thisYear': '{n} this year',
+
+  // Influence
+  'influence.status': '$ influence --status',
+  'influence.calculating': 'calculating...',
+  'influence.recalculate': '[recalculate]',
+  'influence.calculated': 'calculated:',
+  'influence.stale': '(stale — recalculate recommended)',
+
+  // GitHub follow sync
+  'ghSync.title': 'github follows',
+  'ghSync.onPlatform': '{n} on CLItoris',
+  'ghSync.syncing': 'syncing...',
+  'ghSync.syncAll': 'sync all ({n})',
+  'ghSync.following': 'following ({n})',
+  'ghSync.followers': 'followers ({n})',
+  'ghSync.onClit': 'on CLItoris ({n})',
+  'ghSync.notOnClit': 'not on CLItoris ({n})',
+  'ghSync.unfollow': 'unfollow',
+  'ghSync.follow': 'follow',
+  'ghSync.more': '+{n} more',
+  'ghSync.empty': '> 0 {tab} found.',
+  'ghSync.loadFollowingFailed': 'Failed to load GitHub following',
+  'ghSync.loadFollowersFailed': 'Failed to load GitHub followers',
+  'ghSync.syncFailed': 'Sync failed',
+  'ghSync.followFailed': 'Failed to update follow status',
+
+  // GitHub settings tab
+  'github.connectionStatus': 'github connection',
+  'github.connectedSince': 'connected since',
+  'github.features': 'enabled features',
+  'github.featureProfile': 'Profile sync (avatar, bio, repos)',
+  'github.featureRepos': 'Repository list on profile',
+  'github.featureContrib': 'Contribution graph (green squares)',
+  'github.featureFollowSync': 'Follow sync (GitHub ↔ CLItoris)',
+  'github.featureReviews': 'PR review requests',
+  'github.featureInfluence': 'Influence score calculation',
+  'github.reviewSubtitle': 'PRs requesting your review',
+  'github.reviewLoadFailed': 'Failed to load PR reviews.',
+  'github.noReviews': 'No pending review requests.',
+
+  // Chat
+  'chat.clear': 'clear',
+  'chat.empty': 'Start a conversation.',
+  'chat.noAgent': 'Connect an AI agent to start chatting.',
+  'chat.addAgent': '+ connect agent',
+  'chat.inputPlaceholder': 'Send a message...',
+  'chat.agentName': 'Agent name',
+  'chat.agentEndpoint': 'Endpoint URL (https://...)',
+  'chat.agentApiKey': 'API key (optional)',
+  'chat.agentModel': 'Model (optional)',
+  'chat.connect': 'connect',
 };
 
 export default en;

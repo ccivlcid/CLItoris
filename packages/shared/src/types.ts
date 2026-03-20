@@ -52,6 +52,7 @@ export interface Post {
   forkCount: number;
   isStarred: boolean;
   repoAttachment: RepoAttachment | null;
+  media: MediaAttachment[];
   intent: PostIntent;
   emotion: PostEmotion;
   reactions: PostReactions;
@@ -65,6 +66,18 @@ export interface PostUser {
   domain: string | null;
   displayName: string;
   avatarUrl: string | null;
+}
+
+// ============================================
+// Media Attachment
+// ============================================
+export interface MediaAttachment {
+  id: string;
+  url: string;
+  mimeType: string;
+  fileSize: number;
+  width: number | null;
+  height: number | null;
 }
 
 // ============================================
@@ -112,7 +125,7 @@ export interface AnalysisProgress {
 /** Model or CLI tool id returned by providers — values come from live APIs, not a fixed enum */
 export type LlmModel = string;
 
-export type LlmProvider = 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'cursor' | 'cli' | 'api' | 'custom';
+export type LlmProvider = 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'openrouter' | 'together' | 'groq' | 'cerebras' | 'api' | 'custom';
 
 export interface TransformRequest {
   message: string;
@@ -172,6 +185,8 @@ export interface GitHubProfile {
   displayName: string;
   bio: string | null;
   publicRepos: number;
+  followers: number;
+  following: number;
 }
 
 export interface SetupRequest {

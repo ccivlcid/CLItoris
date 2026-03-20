@@ -360,6 +360,184 @@ export function createGithubRouter(db: Database): Router {
     }
   });
 
+  // ── GET /api/github/search/repositories ─────────────────────────────
+  // Proxy to GitHub search API (no auth required for public repos)
+  router.get('/search/repositories', async (req, res) => {
+    const q = (req.query.q as string) ?? '';
+    const sort = (req.query.sort as string) ?? 'stars';
+    const order = (req.query.order as string) ?? 'desc';
+    const page = parseInt(req.query.page as string) || 1;
+    const perPage = Math.min(parseInt(req.query.per_page as string) || 20, 30);
+
+    if (!q.trim()) {
+      res.json({ data: [], meta: { total: 0, page, perPage } });
+      return;
+    }
+
+    // Use user token if authenticated, otherwise public API
+    const headers: Record<string, string> = {
+      'User-Agent': 'CLItoris',
+      Accept: 'application/vnd.github+json',
+    };
+    if (req.session.userId) {
+      const user = getToken(req.session.userId);
+      if (user?.github_access_token) headers.Authorization = `Bearer ${user.github_access_token}`;
+    }
+
+    try {
+      const ghRes = await fetch(
+        `https://api.github.com/search/repositories?q=${encodeURIComponent(q)}&sort=${sort}&order=${order}&page=${page}&per_page=${perPage}`,
+        { headers },
+      );
+      if (!ghRes.ok) {
+        res.status(502).json({ error: { code: 'GITHUB_ERROR', message: 'GitHub search failed' } });
+        return;
+      }
+
+      const raw = await ghRes.json() as {
+        total_count: number;
+        items: Array<{
+          full_name: string; name: string; description: string | null;
+          stargazers_count: number; forks_count: number; language: string | null;
+          html_url: string; topics: string[]; pushed_at: string; updated_at: string;
+          open_issues_count: number; license: { spdx_id: string } | null;
+          owner: { login: string; avatar_url: string };
+        }>;
+      };
+
+      const data = raw.items.map((r) => ({
+        fullName: r.full_name,
+        name: r.name,
+        owner: r.owner.login,
+        ownerAvatar: r.owner.avatar_url,
+        description: r.description,
+        stars: r.stargazers_count,
+        forks: r.forks_count,
+        language: r.language,
+        url: r.html_url,
+        topics: r.topics.slice(0, 5),
+        pushedAt: r.pushed_at,
+        updatedAt: r.updated_at,
+        openIssues: r.open_issues_count,
+        license: r.license?.spdx_id ?? null,
+      }));
+
+      res.json({ data, meta: { total: raw.total_count, page, perPage } });
+    } catch {
+      res.status(502).json({ error: { code: 'GITHUB_ERROR', message: 'GitHub search failed' } });
+    }
+  });
+
+  // ── GET /api/github/search/users ──────────────────────────────────
+  router.get('/search/users', async (req, res) => {
+    const q = (req.query.q as string) ?? '';
+    const page = parseInt(req.query.page as string) || 1;
+    const perPage = Math.min(parseInt(req.query.per_page as string) || 20, 30);
+
+    if (!q.trim()) {
+      res.json({ data: [], meta: { total: 0, page, perPage } });
+      return;
+    }
+
+    const headers: Record<string, string> = {
+      'User-Agent': 'CLItoris',
+      Accept: 'application/vnd.github+json',
+    };
+    if (req.session.userId) {
+      const user = getToken(req.session.userId);
+      if (user?.github_access_token) headers.Authorization = `Bearer ${user.github_access_token}`;
+    }
+
+    try {
+      const ghRes = await fetch(
+        `https://api.github.com/search/users?q=${encodeURIComponent(q)}&page=${page}&per_page=${perPage}`,
+        { headers },
+      );
+      if (!ghRes.ok) {
+        res.status(502).json({ error: { code: 'GITHUB_ERROR', message: 'GitHub user search failed' } });
+        return;
+      }
+
+      const raw = await ghRes.json() as {
+        total_count: number;
+        items: Array<{
+          login: string; avatar_url: string; html_url: string;
+          type: string; score: number;
+        }>;
+      };
+
+      const data = raw.items.map((u) => ({
+        username: u.login,
+        avatarUrl: u.avatar_url,
+        url: u.html_url,
+        type: u.type,
+      }));
+
+      res.json({ data, meta: { total: raw.total_count, page, perPage } });
+    } catch {
+      res.status(502).json({ error: { code: 'GITHUB_ERROR', message: 'GitHub user search failed' } });
+    }
+  });
+
+  // ── GET /api/github/trending ──────────────────────────────────────
+  // GitHub trending repos (scrapes the trending endpoint)
+  router.get('/trending', async (req, res) => {
+    const language = (req.query.language as string) ?? '';
+    const since = (req.query.since as string) ?? 'daily'; // daily, weekly, monthly
+
+    const headers: Record<string, string> = {
+      'User-Agent': 'CLItoris',
+      Accept: 'application/vnd.github+json',
+    };
+    if (req.session.userId) {
+      const user = getToken(req.session.userId);
+      if (user?.github_access_token) headers.Authorization = `Bearer ${user.github_access_token}`;
+    }
+
+    try {
+      // Use GitHub search API to approximate trending
+      const dateRange = since === 'monthly' ? 30 : since === 'weekly' ? 7 : 1;
+      const date = new Date(Date.now() - dateRange * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const langQuery = language ? `+language:${encodeURIComponent(language)}` : '';
+      const ghRes = await fetch(
+        `https://api.github.com/search/repositories?q=created:>${date}${langQuery}&sort=stars&order=desc&per_page=25`,
+        { headers },
+      );
+      if (!ghRes.ok) {
+        res.status(502).json({ error: { code: 'GITHUB_ERROR', message: 'Failed to fetch trending' } });
+        return;
+      }
+
+      const raw = await ghRes.json() as {
+        total_count: number;
+        items: Array<{
+          full_name: string; name: string; description: string | null;
+          stargazers_count: number; forks_count: number; language: string | null;
+          html_url: string; topics: string[]; pushed_at: string; updated_at: string;
+          owner: { login: string; avatar_url: string };
+        }>;
+      };
+
+      const data = raw.items.map((r) => ({
+        fullName: r.full_name,
+        name: r.name,
+        owner: r.owner.login,
+        ownerAvatar: r.owner.avatar_url,
+        description: r.description,
+        stars: r.stargazers_count,
+        forks: r.forks_count,
+        language: r.language,
+        url: r.html_url,
+        topics: r.topics.slice(0, 5),
+        pushedAt: r.pushed_at,
+      }));
+
+      res.json({ data, meta: { total: raw.total_count } });
+    } catch {
+      res.status(502).json({ error: { code: 'GITHUB_ERROR', message: 'Failed to fetch trending' } });
+    }
+  });
+
   // ── GET /api/github/followers ────────────────────────────────────────
   // GitHub followers with CLItoris enrollment status
   router.get('/followers', requireAuth, async (req, res) => {

@@ -125,7 +125,7 @@ export interface AnalysisProgress {
 /** Model id from provider APIs — not a fixed enum (see packages/shared) */
 export type LlmModel = string;
 
-export type LlmProvider = 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'cursor' | 'cli' | 'api' | 'custom';
+export type LlmProvider = 'anthropic' | 'openai' | 'gemini' | 'ollama' | 'openrouter' | 'together' | 'groq' | 'cerebras' | 'api' | 'custom';
 
 export interface TransformRequest {
   message: string;

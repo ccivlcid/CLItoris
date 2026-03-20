@@ -306,7 +306,7 @@ const postSchema = z.object({
   tags: z.array(z.string().max(50)).max(10),
   mentions: z.array(z.string()).max(20),
   visibility: z.enum(['public', 'private', 'unlisted']),
-  llmModel: z.enum(['claude-sonnet', 'gpt-4o', 'gemini-2.5-pro', 'llama-3', 'cursor', 'cli', 'api', 'custom']),
+  llmModel: z.enum(['claude-sonnet', 'gpt-4o', 'gemini-2.5-pro', 'llama-3', 'api', 'custom']),
 });
 
 async function handleSubmitPost(formData: unknown): Promise<void> {

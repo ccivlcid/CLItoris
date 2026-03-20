@@ -33,9 +33,3 @@ export interface LlmTranslateInput {
   emotion: PostEmotion;
   model: string;
 }
-
-export interface DetectedProvider {
-  provider: string;
-  source: string;
-  isAvailable: boolean;
-}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client.js';
+import { useUiStore } from '../../stores/uiStore.js';
 import type { ApiResponse } from '@clitoris/shared';
 
 interface ContributionDay {
@@ -27,6 +28,7 @@ function levelColor(count: number): string {
 }
 
 export default function ContributionGraph({ githubUsername }: { githubUsername: string }) {
+  const { t } = useUiStore();
   const [data, setData] = useState<ContributionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -52,8 +54,8 @@ export default function ContributionGraph({ githubUsername }: { githubUsername: 
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-[var(--text-faint)] font-mono text-[10px]">// contributions</span>
-        <span className="text-[var(--text-muted)] font-mono text-[10px]">{data.total.toLocaleString()} this year</span>
+        <span className="text-[var(--text-faint)] font-mono text-[10px]">{t('contrib.title')}</span>
+        <span className="text-[var(--text-muted)] font-mono text-[10px]">{t('contrib.thisYear', { n: data.total.toLocaleString() })}</span>
       </div>
       <div className="flex gap-[3px]" role="img" aria-label={`${data.total} contributions this year`}>
         {weeks.map((week, wi) => (

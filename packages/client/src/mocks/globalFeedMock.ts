@@ -28,6 +28,7 @@ export const GLOBAL_FEED_MOCK: Post[] = [
     reactions: { counts: { lgtm: 4, fire: 2 }, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -54,6 +55,7 @@ export const GLOBAL_FEED_MOCK: Post[] = [
     reactions: { counts: { thinking: 12, fire: 5, lgtm: 3 }, mine: ['thinking'] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -86,6 +88,7 @@ export const GLOBAL_FEED_MOCK: Post[] = [
     reactions: { counts: { ship_it: 8, rocket: 14, lgtm: 6 }, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -112,6 +115,7 @@ export const GLOBAL_FEED_MOCK: Post[] = [
     reactions: { counts: { eyes: 7, thinking: 3 }, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -138,18 +142,19 @@ export const GLOBAL_FEED_MOCK: Post[] = [
     reactions: { counts: { lgtm: 9, heart: 2 }, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
     id: 'mock-g6',
     userId: 'u6',
-    messageRaw: 'Ollama + llama3.2 로컬에서 돌려봤는데 생각보다 괜찮다. API 키 없이 완전 오프라인에서 포스트 변환되는 거 보면 좀 감동적임.',
-    messageCli: 'post --user=dahye_io --lang=ko --message="ollama llama3.2 로컬 테스트: 오프라인 CLI 변환 성공" --tags=ollama,local-llm,privacy --intent=reaction --emotion=excited',
+    messageRaw: 'Claude API로 포스트 변환해봤는데 생각보다 괜찮다. CLI 포맷으로 자동 변환되는 거 보면 좀 감동적임.',
+    messageCli: 'post --user=dahye_io --lang=ko --message="Claude API CLI 변환 테스트: 자연어→CLI 자동 변환 성공" --tags=anthropic,api,cli-format --intent=reaction --emotion=excited',
     lang: 'ko',
-    tags: ['ollama', 'local-llm', 'privacy'],
+    tags: ['anthropic', 'api', 'cli-format'],
     mentions: [],
     visibility: 'public',
-    llmModel: 'llama3.2:latest',
+    llmModel: 'claude-sonnet-4-20250514',
     parentId: null,
     forkedFromId: null,
     createdAt: ago(140),
@@ -164,6 +169,7 @@ export const GLOBAL_FEED_MOCK: Post[] = [
     reactions: { counts: { rocket: 6, fire: 3, heart: 2 }, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -190,6 +196,7 @@ export const GLOBAL_FEED_MOCK: Post[] = [
     reactions: { counts: { fire: 18, lgtm: 12, thinking: 5 }, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -222,6 +229,7 @@ export const GLOBAL_FEED_MOCK: Post[] = [
     reactions: { counts: { rocket: 4, ship_it: 3 }, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -248,6 +256,7 @@ export const GLOBAL_FEED_MOCK: Post[] = [
     reactions: { counts: { lgtm: 24, fire: 11, ship_it: 8 }, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -274,6 +283,7 @@ export const GLOBAL_FEED_MOCK: Post[] = [
     reactions: { counts: { heart: 5, lgtm: 3 }, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
 ];

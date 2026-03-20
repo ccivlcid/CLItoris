@@ -97,7 +97,7 @@ export default function FeedList({ emptyTitle, emptySubtitle: _emptySubtitle, em
 
       {isLoadingMore && (
         <div data-testid="feed-loading" className="py-6 text-center">
-          <span className="text-[var(--text-faint)] font-mono text-[11px]">loading...</span>
+          <span className="text-[var(--text-faint)] font-mono text-[11px]">{t('feed.loadingMore')}</span>
         </div>
       )}
 

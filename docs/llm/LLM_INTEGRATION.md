@@ -15,8 +15,8 @@
 5. [Provider Registration](#5-provider-registration)
 
 > **Split files:**
-> - [LLM_PROVIDERS.md](./LLM_PROVIDERS.md) — 7 provider implementations (Anthropic, OpenAI, Gemini, Ollama, Cursor, CLI, Generic API)
-> - [LLM_DETECTION.md](./LLM_DETECTION.md) — Credential auto-detection, response parsing, error handling
+> - [LLM_PROVIDERS.md](./LLM_PROVIDERS.md) — 4 provider implementations (Anthropic, OpenAI, Gemini, Generic API)
+> - [LLM_DETECTION.md](./LLM_DETECTION.md) — Response parsing, error handling
 
 ---
 
@@ -176,27 +176,13 @@ interface TranslateInput {
 
 ---
 
-## 4. LLM Execution Modes
+## 4. LLM Execution Mode
+
+All LLM operations use cloud API providers. Users select a provider and model, and the server calls the provider's API with the user's stored API key.
 
 | Mode | Description | Use Case |
 |------|-------------|----------|
-| **Cloud API** | Anthropic, OpenAI, Gemini via API keys | Post transformation, repo analysis |
-| **Local LLM** | Ollama, llama.cpp installed on user's PC | Offline analysis, privacy-sensitive repos |
-
-**Local LLM setup:**
-CLItoris provides in-app guidance for installing and managing local models:
-```
-$ llm --install ollama
-> detecting system: Apple M2 Pro, 32GB RAM
-> recommended model: llama-3-8b-q4
-> downloading... ████████░░ 72%
-
-$ llm --list-local
-> ollama/llama-3-8b     (4.7GB, quantized Q4)
-> ollama/codellama-13b  (7.3GB, quantized Q4)
-```
-
-Users can switch between cloud and local models per task. Local models require no API key and keep all data on-device.
+| **Cloud API** | Anthropic, OpenAI, Gemini, or any OpenAI-compatible endpoint via API keys | Post transformation, repo analysis, translation |
 
 ---
 
@@ -213,7 +199,7 @@ All providers are registered in a central factory. Adding a new provider require
 ```typescript
 // packages/llm/src/provider-factory.ts
 export interface ProviderCredentials {
-  apiKey?: string;   // Required for cloud providers (anthropic, openai, gemini, api)
+  apiKey?: string;   // Required for all providers (anthropic, openai, gemini, api)
   baseUrl?: string;  // Required for api provider
 }
 
@@ -229,12 +215,6 @@ export function createProvider(name: string, credentials: ProviderCredentials = 
       return new OpenAiProvider(credentials.apiKey!);
     case "gemini":
       return new GeminiProvider(credentials.apiKey!);
-    case "ollama":
-      return new OllamaProvider();   // no key needed — local runtime
-    case "cursor":
-      return new CursorProvider();   // no key needed — local runtime
-    case "cli":
-      return new CliProvider();      // no key needed — local binary
     case "api":
       return new GenericApiProvider("custom", credentials.baseUrl!, credentials.apiKey ?? "");
     default:
@@ -255,14 +235,12 @@ Look up user_llm_keys WHERE user_id = req.session.userId AND provider = provider
        "No API key configured for provider: anthropic. Add it in Settings."
 ```
 
-Providers that never need a key: `ollama`, `cursor`, `cli`
-
 ---
 
 ## See Also
 
-- [LLM_PROVIDERS.md](./LLM_PROVIDERS.md) -- All 7 provider implementations (Anthropic, OpenAI, Gemini, Ollama, Cursor, CLI, Generic API)
-- [LLM_DETECTION.md](./LLM_DETECTION.md) -- Error handling, response parsing, credential auto-detection
+- [LLM_PROVIDERS.md](./LLM_PROVIDERS.md) -- All 4 provider implementations (Anthropic, OpenAI, Gemini, Generic API)
+- [LLM_DETECTION.md](./LLM_DETECTION.md) -- Error handling, response parsing
 - [docs/setup/CONFIGS.md](../setup/CONFIGS.md) -- Project configuration files
 - [docs/GLOSSARY.md](../GLOSSARY.md) -- Unified terminology index
 - [docs/specs/API.md](./API.md) -- API specification

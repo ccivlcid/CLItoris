@@ -154,7 +154,7 @@ export default function ComposerModal({ open, onClose }: Props) {
                 className="flex-1 bg-[var(--bg-void)] border border-[var(--border)] text-[var(--text)] font-mono text-[11px] px-3 py-1.5 outline-none focus:border-[var(--accent-blue)]/30 placeholder:text-[var(--text-faint)] transition-colors"
                 autoFocus
               />
-              <button onClick={handleRepoAttach} disabled={!repoInput.match(/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/)} className="text-[var(--accent-blue)] font-mono text-[11px] disabled:opacity-30">attach</button>
+              <button onClick={handleRepoAttach} disabled={!repoInput.match(/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/)} className="text-[var(--accent-blue)] font-mono text-[11px] disabled:opacity-40">attach</button>
               <button onClick={() => { setShowRepoInput(false); setRepoInput(''); }} className="text-[var(--text-faint)] font-mono text-[11px]">cancel</button>
             </div>
           )}
@@ -203,7 +203,7 @@ export default function ComposerModal({ open, onClose }: Props) {
             <button
               onClick={() => void handleTransform()}
               disabled={!draft.trim() || isBusy || noModel}
-              className="border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] px-3 py-1.5 font-mono text-[11px] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] px-3 py-1.5 font-mono text-[11px] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {isTransforming ? t('composer.button.transforming') : t('composer.button.transform')}
             </button>
@@ -211,7 +211,7 @@ export default function ComposerModal({ open, onClose }: Props) {
             <button
               onClick={() => void handleSubmit()}
               disabled={!draft.trim() || isBusy || noModel}
-              className="bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20 px-4 py-1.5 font-mono text-[12px] hover:bg-[var(--accent-green)]/20 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              className="bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20 px-4 py-1.5 font-mono text-[12px] hover:bg-[var(--accent-green)]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {isSubmitting ? t('composer.button.submitting') : t('composer.button.submit')}
             </button>

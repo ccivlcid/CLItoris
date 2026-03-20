@@ -70,8 +70,7 @@ graph TB
                 L_TYPES["types.ts"]
                 L_PROMPT["prompt.ts + parser.ts"]
                 L_FACTORY["provider-factory.ts"]
-                L_DETECT["credential-detector.ts"]
-                L_PROVIDERS["providers/<br/>anthropic, openai, gemini,<br/>ollama, cursor, cli, api"]
+                L_PROVIDERS["providers/<br/>anthropic, openai, gemini,<br/>ollama, api"]
             end
         end
     end
@@ -107,4 +106,4 @@ graph TB
     class CLIENT_PKG,CLIENT_VITE,CLIENT_TW,C_MAIN,C_APP,C_API,C_COMPONENTS,C_PAGES,C_STORES,C_HOOKS,C_I18N,C_MOCKS client
     class SERVER_PKG,S_INDEX,S_ROUTES,S_DB,S_MIDDLEWARE,S_LIB server
     class SHARED_PKG,SH_INDEX,SH_TYPES shared
-    class LLM_PKG,L_INDEX,L_TYPES,L_PROMPT,L_FACTORY,L_DETECT,L_PROVIDERS llm
+    class LLM_PKG,L_INDEX,L_TYPES,L_PROMPT,L_FACTORY,L_PROVIDERS llm

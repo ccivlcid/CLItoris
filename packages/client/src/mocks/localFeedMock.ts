@@ -28,6 +28,7 @@ export const LOCAL_FEED_MOCK: Post[] = [
     reactions: { counts: {}, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -54,6 +55,7 @@ export const LOCAL_FEED_MOCK: Post[] = [
     reactions: { counts: {}, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -80,6 +82,7 @@ export const LOCAL_FEED_MOCK: Post[] = [
     reactions: { counts: {}, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -112,6 +115,7 @@ export const LOCAL_FEED_MOCK: Post[] = [
     reactions: { counts: {}, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -138,6 +142,7 @@ export const LOCAL_FEED_MOCK: Post[] = [
     reactions: { counts: {}, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
   {
@@ -164,6 +169,7 @@ export const LOCAL_FEED_MOCK: Post[] = [
     reactions: { counts: {}, mine: [] },
     quotedPostId: null,
     quotedPost: null,
+    media: [],
     updatedAt: null,
   },
 ];

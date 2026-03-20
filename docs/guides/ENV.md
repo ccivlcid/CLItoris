@@ -17,7 +17,6 @@
 | `SESSION_SECRET` | string | — | **Yes** | Express session secret (min 32 chars) |
 | `LOG_LEVEL` | string | `info` | No | Pino log level: `debug`, `info`, `warn`, `error` |
 | `CORS_ORIGIN` | string | `http://localhost:7878` | No | Allowed CORS origin |
-| `CURSOR_LLM_BASE` | string | `http://localhost:3100/v1` | No | Cursor local OpenAI-compatible API (`/models`, `/chat/completions`). Used for Settings → CLI tab model list and server-side Cursor transforms. |
 | `GITHUB_WEBHOOK_SECRET` | string | — | No | HMAC-SHA256 secret for verifying GitHub webhook payloads (`X-Hub-Signature-256`). Required when using the `POST /api/webhook/github` endpoint. Must match the secret configured in GitHub repository webhook settings. |
 | `GITHUB_TOKEN` | string | — | No | Server-side fallback GitHub personal access token. Used by `GET /api/github/contributions/:username` when the requesting user is unauthenticated. Without this, unauthenticated contribution graph requests will fail. |
 
@@ -55,9 +54,6 @@ CLIENT_URL=http://localhost:7878
 # LLM API keys are NOT set here.
 # Users enter their own keys in Settings (/settings → LLM Keys).
 # Keys are stored in the user_llm_keys database table.
-
-# Optional: Cursor local API (CLI tab + Cursor provider)
-# CURSOR_LLM_BASE=http://localhost:3100/v1
 
 # Optional: GitHub webhook signature verification secret
 # Required when using POST /api/webhook/github

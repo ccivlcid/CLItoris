@@ -73,6 +73,8 @@ export default function SetupPage() {
       });
       // Update auth store
       useAuthStore.setState({ user: res.data, isAuthenticated: true });
+      // Auto-sync GitHub follows in background
+      api.post('/github/sync-follows').catch(() => { /* silent */ });
       navigate('/', { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {
@@ -99,7 +101,7 @@ export default function SetupPage() {
   if (pageLoading) {
     return (
       <AuthLayout>
-        <div className="text-gray-500 font-mono text-sm animate-pulse">
+        <div className="text-[var(--text-muted)] font-mono text-sm animate-pulse">
           $ connecting...
         </div>
       </AuthLayout>
@@ -110,26 +112,26 @@ export default function SetupPage() {
     <AuthLayout>
       <div className="w-full max-w-lg border border-[var(--border)] bg-[var(--bg-elevated)] p-8" onKeyDown={handleKeyDown}>
         {/* Title */}
-        <p className="text-gray-600 text-sm font-mono mb-4">{t('setup.title')}</p>
+        <p className="text-[var(--text-faint)] text-sm font-mono mb-4">{t('setup.title')}</p>
 
         {/* GitHub import info */}
         {pending && (
           <div className="mb-6 font-mono text-sm">
-            <p className="text-gray-400">{t('setup.imported')}</p>
-            <p className="text-gray-500 ml-2">{t('setup.avatar')}</p>
-            <p className="text-gray-500 ml-2">
+            <p className="text-[var(--text-muted)]">{t('setup.imported')}</p>
+            <p className="text-[var(--text-muted)] ml-2">{t('setup.avatar')}</p>
+            <p className="text-[var(--text-muted)] ml-2">
               {t('setup.name')}{' '}
               <span className="text-amber-400">"{pending.displayName}"</span>
             </p>
             {pending.bio && (
-              <p className="text-gray-500 ml-2">
+              <p className="text-[var(--text-muted)] ml-2">
                 {t('setup.bio')}{' '}
-                <span className="text-gray-300">"{pending.bio.slice(0, 40)}{pending.bio.length > 40 ? '…' : ''}"</span>
+                <span className="text-[var(--text)]">"{pending.bio.slice(0, 40)}{pending.bio.length > 40 ? '…' : ''}"</span>
               </p>
             )}
-            <p className="text-gray-500 ml-2">
+            <p className="text-[var(--text-muted)] ml-2">
               {t('setup.repos')}{' '}
-              <span className="text-green-400">{pending.publicRepos}</span>{' '}
+              <span className="text-[var(--accent-green)]">{pending.publicRepos}</span>{' '}
               {t('setup.repos.public')}
             </p>
           </div>
@@ -138,7 +140,7 @@ export default function SetupPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Username */}
           <div>
-            <label className="font-mono text-sm text-green-400 block mb-1">
+            <label className="font-mono text-sm text-[var(--accent-green)] block mb-1">
               {t('setup.username.label')}
             </label>
             <input
@@ -150,10 +152,10 @@ export default function SetupPage() {
               minLength={2}
               maxLength={32}
               required
-              className="w-full bg-[var(--bg-input)] border border-gray-700 text-gray-200 font-mono text-sm px-3 py-2 outline-none focus:border-green-400/50 placeholder:text-gray-600"
+              className="w-full bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] font-mono text-sm px-3 py-2 outline-none focus:border-[var(--accent-green)]/50 placeholder:text-[var(--text-faint)]"
             />
             {pending && (
-              <p className="text-gray-600 font-mono text-xs mt-1">
+              <p className="text-[var(--text-faint)] font-mono text-xs mt-1">
                 {t('setup.username.suggested', { github: pending.githubUsername })}
               </p>
             )}
@@ -164,31 +166,31 @@ export default function SetupPage() {
 
           {/* Display name */}
           <div>
-            <label className="font-mono text-xs text-sky-400 block mb-1">
+            <label className="font-mono text-xs text-[var(--accent-cyan)] block mb-1">
               {t('setup.displayName.label')}
-              <span className="text-gray-600 ml-2">{t('setup.displayName.hint')}</span>
+              <span className="text-[var(--text-faint)] ml-2">{t('setup.displayName.hint')}</span>
             </label>
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               maxLength={80}
-              className="w-full bg-[var(--bg-input)] border border-gray-700 text-gray-200 font-mono text-sm px-3 py-2 outline-none focus:border-gray-500"
+              className="w-full bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] font-mono text-sm px-3 py-2 outline-none focus:border-[var(--text-muted)]"
             />
           </div>
 
           {/* Bio */}
           <div>
-            <label className="font-mono text-xs text-sky-400 block mb-1">
+            <label className="font-mono text-xs text-[var(--accent-cyan)] block mb-1">
               {t('setup.bio.label')}
-              <span className="text-gray-600 ml-2">{t('setup.bio.hint')}</span>
+              <span className="text-[var(--text-faint)] ml-2">{t('setup.bio.hint')}</span>
             </label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               maxLength={160}
               rows={2}
-              className="w-full bg-[var(--bg-input)] border border-gray-700 text-gray-200 font-mono text-sm px-3 py-2 outline-none focus:border-gray-500 resize-none"
+              className="w-full bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] font-mono text-sm px-3 py-2 outline-none focus:border-[var(--text-muted)] resize-none"
             />
           </div>
 
@@ -196,7 +198,7 @@ export default function SetupPage() {
           <button
             type="submit"
             disabled={isSubmitting || !username.trim()}
-            className="w-full border border-gray-600 text-gray-300 hover:border-green-400 hover:text-green-400 px-4 py-3 font-mono text-sm text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full border border-[var(--border)] text-[var(--text)] hover:border-[var(--accent-green)] hover:text-[var(--accent-green)] px-4 py-3 font-mono text-sm text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isSubmitting ? t('setup.submitting') : t('setup.submit')}
           </button>

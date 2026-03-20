@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../../api/client.js';
 import { useAuthStore } from '../../stores/authStore.js';
 import { useFeedStore } from '../../stores/feedStore.js';
+import { useUiStore } from '../../stores/uiStore.js';
 import { toastError } from '../../stores/toastStore.js';
 import type { ApiResponse, PostReactions, ReactionEmoji } from '@clitoris/shared';
 import { REACTION_DISPLAY } from '@clitoris/shared';
@@ -33,18 +34,27 @@ export default function ActionBar({
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const { starPost } = useFeedStore();
+  const { t } = useUiStore();
   const starBusy = useRef(false);
   const forkBusy = useRef(false);
   const [localForkCount, setLocalForkCount] = useState(forkCount);
   const [shareCopied, setShareCopied] = useState(false);
 
-  const handleShare = (e: React.MouseEvent) => {
+  const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
     const url = `${window.location.origin}/post/${postId}`;
-    navigator.clipboard.writeText(url).then(() => {
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ url });
+      } catch {
+        /* user cancelled — ignore */
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
       setShareCopied(true);
       setTimeout(() => setShareCopied(false), 2000);
-    });
+    }
   };
 
   const handleStar = async (e: React.MouseEvent) => {
@@ -57,7 +67,7 @@ export default function ActionBar({
       await api.post<ApiResponse<{ isStarred: boolean; starCount: number }>>(`/posts/${postId}/star`);
     } catch {
       starPost(postId, isStarred);
-      toastError('Failed to star post');
+      toastError(t('action.starFailed'));
     } finally {
       starBusy.current = false;
     }
@@ -73,7 +83,7 @@ export default function ActionBar({
       await api.post(`/posts/${postId}/fork`);
     } catch {
       setLocalForkCount((c) => c - 1);
-      toastError('Failed to fork post');
+      toastError(t('action.forkFailed'));
     } finally {
       forkBusy.current = false;
     }
@@ -94,7 +104,7 @@ export default function ActionBar({
       );
       onReactionUpdate?.(res.data.reactions);
     } catch {
-      toastError('Failed to react');
+      toastError(t('action.reactFailed'));
     } finally {
       reactBusy.current = false;
       setReactPickerOpen(false);
@@ -114,7 +124,7 @@ export default function ActionBar({
         onClick={handleReply}
         className="font-mono text-[11px] text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
       >
-        reply{replyCount > 0 && <span className="ml-1 text-[var(--text-faint)]/60">{replyCount}</span>}
+        {t('action.reply')}{replyCount > 0 && <span className="ml-1 text-[var(--text-faint)]/60">{replyCount}</span>}
       </button>
 
       {/* Fork */}
@@ -123,7 +133,7 @@ export default function ActionBar({
         onClick={handleFork}
         className="font-mono text-[11px] text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
       >
-        fork{localForkCount > 0 && <span className="ml-1 text-[var(--text-faint)]/60">{localForkCount}</span>}
+        {t('action.fork')}{localForkCount > 0 && <span className="ml-1 text-[var(--text-faint)]/60">{localForkCount}</span>}
       </button>
 
       {/* Star */}
@@ -137,7 +147,7 @@ export default function ActionBar({
         }`}
         aria-pressed={isStarred}
       >
-        {isStarred ? 'starred' : 'star'}
+        {isStarred ? t('action.starred') : t('action.star')}
         {starCount > 0 && (
           <span data-testid="star-count" className="ml-1 opacity-60">{starCount}</span>
         )}
@@ -149,7 +159,7 @@ export default function ActionBar({
           onClick={(e) => { e.stopPropagation(); onEdit(); }}
           className="font-mono text-[11px] text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
         >
-          edit
+          {t('action.edit')}
         </button>
       )}
 
@@ -160,7 +170,7 @@ export default function ActionBar({
           shareCopied ? 'text-[var(--accent-green)]' : 'text-[var(--text-faint)] hover:text-[var(--text-muted)]'
         }`}
       >
-        {shareCopied ? 'copied' : 'share'}
+        {shareCopied ? t('action.copied') : t('action.share')}
       </button>
 
       {/* React */}

@@ -20,6 +20,11 @@ const zh: Record<string, string> = {
   'feed.error.body': '无法加载全局动态。\n服务器可能已关闭或连接中断。',
   'feed.error.retry': '$ 重试',
   'feed.loading': '$ loading --cursor={cursor} ...',
+  'feed.loadingMore': '加载中...',
+  'feed.local.emptyBody': '没有关注用户的帖子。\n关注某人即可在此查看。',
+  'feed.tab.global': '--global',
+  'feed.tab.local': '--local',
+  'feed.searchPlaceholder': '搜索帖子、用户、标签...',
 
   // Composer
   'composer.placeholder': '在这里输入您的帖子...',
@@ -32,6 +37,8 @@ const zh: Record<string, string> = {
   'composer.label': '> 用任何语言书写。LLM 将转换为 CLI。',
   'composer.repo.attach': '📎 仓库',
   'composer.repo.remove': '× 移除',
+  'composer.noModel': '未配置 LLM',
+  'composer.addKey': '添加 API 密钥',
 
   // Post actions
   'post.action.reply': '↩ 回复',
@@ -43,6 +50,24 @@ const zh: Record<string, string> = {
   'post.translate': '翻译 →{lang}',
   'post.translating': '翻译中...',
   'post.translated.from': '--translated-from={lang}',
+  'post.edited': '(已编辑)',
+  'post.cancel': '取消',
+  'post.saving': '保存中...',
+  'post.save': '保存',
+  'post.updated': '帖子已更新',
+  'post.saveFailed': '保存失败',
+
+  // Action bar
+  'action.reply': '回复',
+  'action.fork': '分叉',
+  'action.star': '收藏',
+  'action.starred': '已收藏',
+  'action.edit': '编辑',
+  'action.share': '分享',
+  'action.copied': '已复制',
+  'action.starFailed': '收藏失败',
+  'action.forkFailed': '分叉失败',
+  'action.reactFailed': '反应失败',
 
   // Auth
   'auth.connect.title': '// 建立连接',
@@ -84,6 +109,16 @@ const zh: Record<string, string> = {
   'settings.section.llm': '// LLM 密钥',
   'settings.section.account': '// 账户',
 
+  // Settings — API tab
+  'settings.api.description': '注册API提供商（OpenAI、Anthropic、Gemini等）以启用LLM功能。',
+  'settings.api.saving': '保存中...',
+  'settings.api.add': '添加',
+  'settings.api.cancel': '取消',
+  'settings.api.remove': '删除',
+  'settings.api.confirmRemove': '确认？',
+  'settings.api.registered': '已注册的提供商',
+  'settings.api.empty': '暂无已注册的提供商。',
+
   // Errors
   'error.keyNotConfigured': 'API 密钥未配置。请在设置中添加。',
   'error.unauthorized': '请登录后继续。',
@@ -101,6 +136,153 @@ const zh: Record<string, string> = {
   'menu.llm': 'LLM / CLI',
   'menu.settings': '设置',
   'menu.logout': '退出登录',
+
+  // Header
+  'header.newPost': '+ post',
+  'header.connect': '连接',
+
+  // Sidebar / Terminal
+  'sidebar.terminalBash': 'terminal.social — bash',
+  'sidebar.exportLlm': 'export LLM=',
+  'sidebar.exportLlmKey': '$ export LLM_KEY=',
+  'sidebar.sshConnect': '$ ssh connect',
+  'sidebar.lang': 'LANG=',
+
+  // Mobile Nav
+  'mobile.feed': '动态',
+  'mobile.explore': '发现',
+  'mobile.search': '搜索',
+  'mobile.msg': '消息',
+  'mobile.log': '活动',
+  'mobile.more': '更多',
+  'mobile.me': '我',
+  'mobile.analyze': '分析',
+  'mobile.github': 'github',
+  'mobile.leaderboard': '排名',
+
+  // Messages
+  'msg.inbox': '$ msg --inbox',
+  'msg.loading': '加载中...',
+  'msg.noConversations': '暂无对话',
+  'msg.selectConversation': '选择一个对话',
+  'msg.placeholder': '输入消息...',
+  'msg.send': '发送',
+  'msg.new': '{n} 条新消息',
+
+  // Search
+  'search.placeholder': '搜索帖子、用户、标签...',
+  'search.searching': '搜索中...',
+  'search.users': '用户',
+  'search.tags': '标签',
+  'search.posts': '帖子',
+  'search.noResults': '未找到 "{q}" 的结果',
+  'search.hint': '搜索帖子、用户或标签',
+  'search.cancel': '取消',
+
+  // Explore
+  'explore.searchPlaceholder': 'gh search --repos "搜索"',
+  'explore.search': '搜索',
+  'explore.searchHint': '按 / 聚焦  ·  搜索 GitHub 仓库和用户',
+  'explore.searchError': 'GitHub 搜索失败',
+  'explore.fetchError': '获取热门仓库失败',
+  'explore.trendingTitle': '// 热门仓库',
+
+  // Profile
+  'profile.back': '← 返回',
+  'profile.notFound': 'error: 404 未找到用户',
+  'profile.goHome': '$ cd /',
+  'profile.followers': '粉丝',
+  'profile.following': '关注',
+  'profile.posts': '帖子',
+  'profile.followBtn': '关注',
+  'profile.followingBtn': '已关注',
+  'profile.noRepos': '暂无仓库',
+  'profile.noItems': '暂无{tab}',
+  'profile.calculating': '计算中...',
+  'profile.calculateInfluence': '$ influence --calculate',
+  'profile.loadMore': '加载更多',
+  'profile.bioPlaceholder': '写一条状态消息...',
+  'profile.loading': '加载中...',
+
+  // Post detail
+  'detail.replyAuth': '回复需要登录',
+  'detail.replyPlaceholder': '写下你的回复...',
+  'detail.ctrlEnter': 'ctrl+enter 回复',
+  'detail.transforming': '转换中...',
+  'detail.preview': '预览',
+  'detail.sending': '发送中...',
+  'detail.reply': '回复',
+  'detail.notFound': '404: 未找到',
+  'detail.notFoundBody': '此帖子不存在或已被删除。',
+  'detail.back': '返回',
+  'detail.feed': '动态',
+  'detail.forkedFrom': '分叉自',
+  'detail.noReplies': '暂无回复',
+  'detail.replyCount': '{n} 条回复',
+  'detail.repliesCount': '{n} 条回复',
+  'detail.clearReplyTarget': '取消',
+  'detail.mentionHint': '@ 提及',
+
+  // Leaderboard
+  'leaderboard.subtitle': '基于 GitHub 活跃度 + CLItoris 活动排名的开发者',
+  'leaderboard.empty': '暂无计算分数。',
+  'leaderboard.emptyHint': '前往个人主页同步 GitHub 开始使用。',
+  'leaderboard.loading': '加载排行榜...',
+
+  // Contribution graph
+  'contrib.title': '// 贡献',
+  'contrib.thisYear': '今年 {n} 次',
+
+  // Influence
+  'influence.status': '$ influence --status',
+  'influence.calculating': '计算中...',
+  'influence.recalculate': '[重新计算]',
+  'influence.calculated': '计算于:',
+  'influence.stale': '(已过期 — 建议重新计算)',
+
+  // GitHub follow sync
+  'ghSync.title': 'github 关注',
+  'ghSync.onPlatform': 'CLItoris 上 {n} 人',
+  'ghSync.syncing': '同步中...',
+  'ghSync.syncAll': '全部同步 ({n})',
+  'ghSync.following': '关注 ({n})',
+  'ghSync.followers': '粉丝 ({n})',
+  'ghSync.onClit': '在 CLItoris ({n})',
+  'ghSync.notOnClit': '不在 CLItoris ({n})',
+  'ghSync.unfollow': '取消关注',
+  'ghSync.follow': '关注',
+  'ghSync.more': '+{n} 更多',
+  'ghSync.empty': '> 找到 0 个{tab}。',
+  'ghSync.loadFollowingFailed': '加载 GitHub 关注列表失败',
+  'ghSync.loadFollowersFailed': '加载 GitHub 粉丝列表失败',
+  'ghSync.syncFailed': '同步失败',
+  'ghSync.followFailed': '更新关注状态失败',
+
+  // GitHub settings tab
+  'github.connectionStatus': 'github 连接',
+  'github.connectedSince': '连接日期',
+  'github.features': '已启用功能',
+  'github.featureProfile': '个人资料同步（头像、简介、仓库）',
+  'github.featureRepos': '个人主页显示仓库列表',
+  'github.featureContrib': '贡献图表（绿色方块）',
+  'github.featureFollowSync': '关注同步（GitHub ↔ CLItoris）',
+  'github.featureReviews': 'PR 审查请求列表',
+  'github.featureInfluence': '影响力分数计算',
+  'github.reviewSubtitle': '等待你审查的 PR',
+  'github.reviewLoadFailed': '加载 PR 审查失败。',
+  'github.noReviews': '没有待处理的审查请求。',
+
+  // Chat
+  'chat.clear': '清除',
+  'chat.empty': '开始对话。',
+  'chat.noAgent': '连接AI代理即可开始聊天。',
+  'chat.addAgent': '+ 连接代理',
+  'chat.inputPlaceholder': '输入消息...',
+  'chat.agentName': '代理名称',
+  'chat.agentEndpoint': '端点 URL (https://...)',
+  'chat.agentApiKey': 'API 密钥（可选）',
+  'chat.agentModel': '模型（可选）',
+  'chat.connect': '连接',
 };
 
 export default zh;

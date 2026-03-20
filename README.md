@@ -36,12 +36,12 @@ Your pushes, PRs, releases, and stars automatically become posts. Then you add c
     <td align="center">🟢<br/><sub><strong>OpenAI</strong><br/>GPT-4o<br/>GPT-4o-mini</sub></td>
     <td align="center">🔵<br/><sub><strong>Google</strong><br/>Gemini 2.5 Pro<br/>Gemini Flash</sub></td>
     <td align="center">🦙<br/><sub><strong>Ollama</strong><br/>Llama · Mistral<br/>Any local model</sub></td>
-    <td align="center">⌨️<br/><sub><strong>CLI Tools</strong><br/>Claude Code<br/>Codex · Gemini</sub></td>
-    <td align="center">🔗<br/><sub><strong>Any API</strong><br/>OpenAI-compatible<br/>endpoints</sub></td>
+    <td align="center">🔀<br/><sub><strong>Routers</strong><br/>OpenRouter<br/>Together · Groq<br/>Cerebras</sub></td>
+    <td align="center">🤖<br/><sub><strong>AI Agents</strong><br/>OpenClaw · Dify<br/>Coze · Custom</sub></td>
   </tr>
 </table>
 
-<em>If it has an API, it's connected. If it runs locally, even better.</em>
+<em>If it has an API, it's connected. If it runs locally, even better. If it's an agent, chat with it.</em>
 
 </div>
 
@@ -111,6 +111,8 @@ GitHub shows **what** you did. CLItoris shows **why** it mattered.
 - ✅ You want to **analyze repos with AI** and share the results
 - ✅ You hate touching the mouse — **keyboard-first navigation** (`j`/`k`/`s`/`r`/`?`)
 - ✅ You want to run LLMs **locally** with Ollama for full privacy
+- ✅ You want to **chat with AI agents** (OpenClaw, Dify, Coze) from one place
+- ✅ You want a **mobile-first** terminal social experience
 
 <br/>
 
@@ -188,19 +190,29 @@ GitHub shows the diff. You add the story — what you learned, what frustrated y
 Every post shows your original text and its CLI representation side by side. AI extracts intent, emotion, and hashtags automatically.
 </td>
 <td align="center" width="33%">
-<h3>🤖 7 AI Providers</h3>
-Claude, GPT-4o, Gemini, Ollama, Cursor, CLI tools, or any OpenAI-compatible endpoint. Compare how they interpret you.
+<h3>🤖 9+ AI Providers</h3>
+Claude, GPT-4o, Gemini, Ollama, OpenRouter, Together, Groq, Cerebras, or any OpenAI-compatible endpoint.
 </td>
 <td align="center" width="33%">
-<h3>📊 Repo Analysis</h3>
-Analyze any GitHub repo with AI. Get architecture reports, PPTX slide decks, or animated video walkthroughs.
+<h3>💬 AI Agent Chat</h3>
+Connect external AI agents (OpenClaw, Dify, Coze) and chat with them directly inside CLItoris. Streaming responses.
 </td>
 </tr>
 <tr>
 <td align="center">
-<h3>🔍 Full-Text Search</h3>
-Instant search across all posts, users, and tags. Find that post about Rust async from last week.
+<h3>📊 Repo Analysis</h3>
+Analyze any GitHub repo with AI. Architecture reports, PPTX decks, animated video walkthroughs.
 </td>
+<td align="center">
+<h3>🔍 GitHub Explore</h3>
+Trending repos, search repositories and users — like GitHub search, with terminal aesthetic.
+</td>
+<td align="center">
+<h3>📱 Mobile-First</h3>
+Redesigned for touch. Bottom nav, full-screen notifications, agent icon profile tab, backdrop-blur glass UI.
+</td>
+</tr>
+<tr>
 <td align="center">
 <h3>⌨️ Keyboard-First</h3>
 <code>j</code>/<code>k</code> navigate, <code>s</code> star, <code>r</code> reply, <code>/</code> compose. No mouse needed.
@@ -208,6 +220,10 @@ Instant search across all posts, users, and tags. Find that post about Rust asyn
 <td align="center">
 <h3>🌍 4 Languages</h3>
 Full UI in English, Korean, Chinese, Japanese. Write posts in any language — AI handles the rest.
+</td>
+<td align="center">
+<h3>✉️ Direct Messages</h3>
+Send private messages to any user. Real-time conversation threads. Mobile-optimized inbox.
 </td>
 </tr>
 </table>

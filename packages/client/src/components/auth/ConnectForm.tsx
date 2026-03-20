@@ -66,15 +66,15 @@ export default function ConnectForm({ errorFromCallback }: ConnectFormProps) {
         </div>
       ) : isConnecting ? (
         <div role="status" aria-live="polite" className="mb-4" data-testid="connection-status">
-          <p className="text-gray-400 font-mono text-sm">{t('auth.connect.redirecting')}</p>
-          <p className="text-gray-400 font-mono text-sm animate-pulse">{t('auth.connect.waiting')}</p>
+          <p className="text-[var(--text-muted)] font-mono text-sm">{t('auth.connect.redirecting')}</p>
+          <p className="text-[var(--text-muted)] font-mono text-sm animate-pulse">{t('auth.connect.waiting')}</p>
         </div>
       ) : (
         <p
           role="status"
           aria-live="polite"
           data-testid="connection-status"
-          className="text-gray-400 font-mono text-sm mb-4"
+          className="text-[var(--text-muted)] font-mono text-sm mb-4"
         >
           {t('auth.connect.keyNotFound')}
         </p>
@@ -103,10 +103,10 @@ export default function ConnectForm({ errorFromCallback }: ConnectFormProps) {
           className="mt-6"
           aria-label="OAuth permissions: read-only profile access"
         >
-          <p className="text-gray-600 text-xs font-mono">{t('auth.connect.scope.label')}</p>
-          <p className="text-gray-500 text-xs font-mono">{t('auth.connect.scope.value')}</p>
-          <p className="text-gray-500 text-xs font-mono mt-2">{t('auth.connect.info1')}</p>
-          <p className="text-gray-500 text-xs font-mono">{t('auth.connect.info2')}</p>
+          <p className="text-[var(--text-faint)] text-xs font-mono">{t('auth.connect.scope.label')}</p>
+          <p className="text-[var(--text-muted)] text-xs font-mono">{t('auth.connect.scope.value')}</p>
+          <p className="text-[var(--text-muted)] text-xs font-mono mt-2">{t('auth.connect.info1')}</p>
+          <p className="text-[var(--text-muted)] text-xs font-mono">{t('auth.connect.info2')}</p>
         </div>
       )}
     </div>

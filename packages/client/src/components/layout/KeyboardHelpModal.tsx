@@ -50,15 +50,15 @@ export default function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
 
       {/* Modal */}
       <div
-        className="relative bg-[#0d1117] border border-gray-700 w-full max-w-lg mx-4 font-mono text-sm"
+        className="relative bg-[var(--bg-surface)] border border-[var(--border)] w-full max-w-lg mx-4 font-mono text-sm"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-700 bg-[#16213e]">
-          <span className="text-gray-400 text-xs">$ help --keyboard-shortcuts</span>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-elevated)]">
+          <span className="text-[var(--text-muted)] text-xs">$ help --keyboard-shortcuts</span>
           <button
             onClick={onClose}
-            className="text-gray-600 hover:text-gray-300 text-xs transition-colors"
+            className="text-[var(--text-faint)] hover:text-[var(--text-muted)] text-xs transition-colors"
             aria-label="Close help"
           >
             [Esc]
@@ -69,21 +69,21 @@ export default function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
         <div className="p-5 space-y-5 max-h-[70vh] overflow-y-auto">
           {SHORTCUTS.map(({ section, items }) => (
             <div key={section}>
-              <p className="text-gray-600 text-[10px] mb-2">// {section}</p>
+              <p className="text-[var(--text-faint)] text-[10px] mb-2">// {section}</p>
               <div className="space-y-1.5">
                 {items.map(({ key, desc }) => (
                   <div key={key} className="flex items-center gap-3">
                     <span className="shrink-0 w-20 text-right">
                       {key.split(' / ').map((k, i) => (
                         <span key={i}>
-                          {i > 0 && <span className="text-gray-700"> / </span>}
-                          <kbd className="inline-block bg-[#1a1a2e] border border-gray-700 px-1.5 py-0.5 text-green-400 text-[11px] rounded-sm">
+                          {i > 0 && <span className="text-[var(--text-faint)]"> / </span>}
+                          <kbd className="inline-block bg-[var(--bg-cli)] border border-[var(--border)] px-1.5 py-0.5 text-[var(--accent-green)] text-[11px] rounded-sm">
                             {k}
                           </kbd>
                         </span>
                       ))}
                     </span>
-                    <span className="text-gray-400 text-xs">{desc}</span>
+                    <span className="text-[var(--text-muted)] text-xs">{desc}</span>
                   </div>
                 ))}
               </div>
@@ -92,7 +92,7 @@ export default function KeyboardHelpModal({ onClose }: KeyboardHelpModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3 border-t border-gray-700 text-gray-700 text-[10px]">
+        <div className="px-5 py-3 border-t border-[var(--border)] text-[var(--text-faint)] text-[10px]">
           // shortcuts disabled while typing in input fields
         </div>
       </div>

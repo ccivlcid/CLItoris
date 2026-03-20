@@ -36,7 +36,7 @@ interface PostDetailState {
   setDraft: (text: string) => void;
   setModel: (model: LlmModel) => void;
   transformReply: (parentId: string) => Promise<void>;
-  submitReply: (parentId: string) => Promise<Post | null>;
+  submitReply: (parentId: string, mentions?: string[]) => Promise<Post | null>;
   resetDraft: () => void;
   clearTransformError: () => void;
 }
@@ -127,7 +127,7 @@ export const usePostDetailStore = create<PostDetailState>((set, get) => ({
     }
   },
 
-  submitReply: async (parentId) => {
+  submitReply: async (parentId, mentions = []) => {
     const { draft, cliPreview, selectedModel } = get();
     if (!draft.trim()) return null;
     if (!selectedModel.trim()) return null;
@@ -147,6 +147,7 @@ export const usePostDetailStore = create<PostDetailState>((set, get) => ({
         lang: 'en',
         llmModel: selectedModel,
         parentId,
+        mentions,
       });
       set({ isSubmitting: false });
       get().resetDraft();

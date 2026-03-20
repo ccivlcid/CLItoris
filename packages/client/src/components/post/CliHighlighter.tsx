@@ -97,12 +97,12 @@ function tokenizeLine(line: string): Token[] {
 }
 
 const colorMap: Record<TokenType, string> = {
-  command: 'text-green-400 font-bold',
-  flag: 'text-sky-400',
-  value: 'text-amber-400',
-  operator: 'text-purple-400',
-  comment: 'text-gray-600 italic',
-  text: 'text-gray-300',
+  command: 'text-[var(--accent-green)] font-bold',
+  flag: 'text-[var(--accent-cyan)]',
+  value: 'text-[var(--accent-amber)]',
+  operator: 'text-[var(--accent-purple)]',
+  comment: 'text-[var(--text-faint)] italic',
+  text: 'text-[var(--text)]',
 };
 
 export default function CliHighlighter({ code }: CliHighlighterProps) {

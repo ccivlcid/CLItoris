@@ -86,8 +86,8 @@ export function createUsersRouter(db: Database): Router {
 
     const user = db.prepare(`
       SELECT u.*,
-        (SELECT COUNT(*) FROM follows WHERE following_id = u.id) as follower_count,
-        (SELECT COUNT(*) FROM follows WHERE follower_id = u.id) as following_count,
+        u.github_followers as follower_count,
+        u.github_following as following_count,
         (SELECT COUNT(*) FROM posts WHERE user_id = u.id) as post_count
         ${followingSql}
       FROM users u WHERE u.username = ?
@@ -317,6 +317,7 @@ export function createUsersRouter(db: Database): Router {
       const ghUser = await ghRes.json() as {
         name: string | null; bio: string | null; avatar_url: string;
         public_repos: number; html_url: string;
+        followers: number; following: number;
       };
 
       // Compute top languages and star totals from repos
@@ -344,10 +345,12 @@ export function createUsersRouter(db: Database): Router {
           github_avatar_url = ?,
           github_profile_url = ?,
           github_repos_count = ?,
+          github_followers = ?,
+          github_following = ?,
           top_languages = ?,
           display_name = COALESCE(NULLIF(?, ''), display_name)
         WHERE id = ?
-      `).run(ghUser.avatar_url, ghUser.html_url, ghUser.public_repos, JSON.stringify(topLanguages), ghUser.name, sessionUserId);
+      `).run(ghUser.avatar_url, ghUser.html_url, ghUser.public_repos, ghUser.followers ?? 0, ghUser.following ?? 0, JSON.stringify(topLanguages), ghUser.name, sessionUserId);
 
       // Update influence score with GitHub stats
       const ghFollowers = (ghUser as unknown as { followers?: number }).followers ?? 0;

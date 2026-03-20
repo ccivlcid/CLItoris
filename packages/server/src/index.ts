@@ -17,6 +17,7 @@ import { createActivityRouter } from './routes/activity.js';
 import { createNotificationRouter } from './routes/notifications.js';
 import { createInfluenceRouter } from './routes/influence.js';
 import { createMessagesRouter } from './routes/messages.js';
+import { createMediaRouter } from './routes/media.js';
 import { createErrorHandler } from './middleware/error.js';
 
 const logger = pino({
@@ -25,6 +26,7 @@ const logger = pino({
 });
 
 const DB_PATH = process.env.DATABASE_URL ?? path.join(process.cwd(), 'clitoris.db');
+const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 const db = createDb(DB_PATH, logger);
 
 const app = express();
@@ -56,6 +58,8 @@ app.use('/api/activity', createActivityRouter(db));
 app.use('/api/notifications', createNotificationRouter(db));
 app.use('/api/influence', createInfluenceRouter(db));
 app.use('/api/messages', createMessagesRouter(db));
+app.use('/api/media', createMediaRouter(db, logger, UPLOADS_DIR));
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 app.get('/api/health', (_req, res) => {
   res.json({ data: { status: 'ok', timestamp: new Date().toISOString() } });

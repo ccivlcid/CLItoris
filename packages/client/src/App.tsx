@@ -14,6 +14,8 @@ import ActivityFeedPage from './pages/ActivityFeedPage.js';
 import SearchPage from './pages/SearchPage.js';
 import LeaderboardPage from './pages/LeaderboardPage.js';
 import MessagesPage from './pages/MessagesPage.js';
+import CreatePostPage from './pages/CreatePostPage.js';
+import ChatPage from './pages/ChatPage.js';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   constructor(props: { children: ReactNode }) {
@@ -58,11 +60,10 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 
 const router = createBrowserRouter([
   { path: '/', element: <GlobalFeedPage /> },
+  { path: '/new', element: <CreatePostPage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/setup', element: <SetupPage /> },
   { path: '/post/:id', element: <PostDetailPage /> },
-  // '/@:username' handled via /:atUsername pattern
-  { path: '/:atUsername', element: <UserProfilePage /> },
   { path: '/feed/local', element: <LocalFeedPage /> },
   { path: '/explore', element: <ExplorePage /> },
   { path: '/settings', element: <SettingsPage /> },
@@ -71,8 +72,11 @@ const router = createBrowserRouter([
   { path: '/activity', element: <ActivityFeedPage /> },
   { path: '/search', element: <SearchPage /> },
   { path: '/leaderboard', element: <LeaderboardPage /> },
+  { path: '/chat', element: <ChatPage /> },
   { path: '/messages', element: <MessagesPage /> },
   { path: '/messages/:username', element: <MessagesPage /> },
+  // Dynamic /:atUsername must be LAST — catches /@username paths
+  { path: '/:atUsername', element: <UserProfilePage /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 

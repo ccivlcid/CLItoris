@@ -2,11 +2,13 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AppShell from '../components/layout/AppShell.js';
 import { useInfluenceStore } from '../stores/influenceStore.js';
+import { useUiStore } from '../stores/uiStore.js';
 import InfluenceBadge from '../components/profile/InfluenceBadge.js';
 import InfiniteScrollTrigger from '../components/feed/InfiniteScrollTrigger.js';
 
 export default function LeaderboardPage() {
   const { leaderboard, isLoading, hasMore, fetchLeaderboard, fetchNextPage } = useInfluenceStore();
+  const { t } = useUiStore();
 
   useEffect(() => {
     fetchLeaderboard();
@@ -21,7 +23,7 @@ export default function LeaderboardPage() {
             <span className="text-[var(--accent-amber)]">$</span> influence --leaderboard --sort=score
           </p>
           <p className="font-mono text-[var(--text-muted)] text-xs">
-            Developers ranked by GitHub presence + CLItoris activity
+            {t('leaderboard.subtitle')}
           </p>
         </div>
 
@@ -79,15 +81,15 @@ export default function LeaderboardPage() {
         {/* Empty state */}
         {!isLoading && leaderboard.length === 0 && (
           <div className="text-center py-12 font-mono text-[var(--text-muted)] text-sm">
-            <p>No scores calculated yet.</p>
-            <p className="text-xs mt-1">Go to your profile and sync GitHub to get started.</p>
+            <p>{t('leaderboard.empty')}</p>
+            <p className="text-xs mt-1">{t('leaderboard.emptyHint')}</p>
           </div>
         )}
 
         {/* Loading */}
         {isLoading && (
           <div className="text-center py-8 font-mono text-[var(--text-muted)] text-xs animate-pulse">
-            loading leaderboard...
+            {t('leaderboard.loading')}
           </div>
         )}
 

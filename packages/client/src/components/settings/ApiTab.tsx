@@ -100,20 +100,20 @@ export default function ApiTab({ onToast }: { onToast?: (msg: string) => void })
         <span className="text-[var(--text-muted)] font-mono text-xs">// API PROVIDERS</span>
         <button
           onClick={fetchSaved}
-          className="text-[var(--text-faint)] hover:text-gray-300 font-mono text-xs border border-gray-700 hover:border-gray-600 px-2 py-1 transition-colors"
+          className="text-[var(--text-faint)] hover:text-[var(--text-muted)] font-mono text-xs border border-[var(--border)] hover:border-[var(--border-hover)] px-2 py-1 transition-colors"
         >
           [↺]
         </button>
       </div>
 
-      <p className="text-gray-400 font-sans text-sm leading-relaxed">
+      <p className="text-[var(--text-muted)] font-sans text-sm leading-relaxed">
         {t('settings.api.description')}
       </p>
 
       {/* Add Provider Form */}
-      <div className="border border-gray-700 bg-[var(--bg-elevated)] p-5 space-y-4">
-        <p className="text-amber-600/80 font-mono text-[10px] uppercase tracking-widest">
-          <span className="text-amber-700">▌</span> // ADD PROVIDER
+      <div className="border border-[var(--border)] bg-[var(--bg-elevated)] p-5 space-y-4">
+        <p className="text-[var(--accent-amber)]/80 font-mono text-[10px] uppercase tracking-widest">
+          <span className="text-[var(--accent-amber)]">▌</span> // ADD PROVIDER
         </p>
 
         {/* Provider type buttons */}
@@ -124,10 +124,10 @@ export default function ApiTab({ onToast }: { onToast?: (msg: string) => void })
               <button
                 key={p.id}
                 onClick={() => selectType(p)}
-                className={`px-3 py-1 font-mono text-xs border transition-colors ${
+                className={`px-3 py-1.5 sm:py-1 font-mono text-xs border transition-colors ${
                   selectedType.id === p.id
-                    ? 'bg-amber-700/20 text-amber-400 border-amber-600/50'
-                    : 'text-gray-400 border-gray-700 hover:text-gray-200 hover:border-gray-600'
+                    ? 'bg-[var(--accent-amber)]/[0.12] text-[var(--accent-amber)] border-[var(--accent-amber)]/40'
+                    : 'text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--text)] hover:border-[var(--border-hover)]'
                 }`}
               >
                 {p.label}
@@ -143,7 +143,7 @@ export default function ApiTab({ onToast }: { onToast?: (msg: string) => void })
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={selectedType.label}
-            className="w-full bg-[var(--bg-input)] border border-gray-700 text-gray-200 font-mono text-sm px-3 py-2 placeholder-gray-600 focus:outline-none focus:border-gray-500"
+            className="w-full bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] font-mono text-sm px-3 py-2 placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--border-hover)]"
           />
         </div>
 
@@ -154,7 +154,7 @@ export default function ApiTab({ onToast }: { onToast?: (msg: string) => void })
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value)}
             placeholder="https://api.openai.com/v1"
-            className="w-full bg-[var(--bg-input)] border border-gray-700 text-gray-200 font-mono text-sm px-3 py-2 placeholder-gray-600 focus:outline-none focus:border-gray-500"
+            className="w-full bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] font-mono text-sm px-3 py-2 placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--border-hover)]"
           />
         </div>
 
@@ -168,7 +168,7 @@ export default function ApiTab({ onToast }: { onToast?: (msg: string) => void })
               onChange={(e) => setApiKey(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
               placeholder={selectedType.keyPlaceholder}
-              className="w-full bg-[var(--bg-input)] border border-gray-700 text-gray-200 font-mono text-sm px-3 py-2 placeholder-gray-600 focus:outline-none focus:border-gray-500"
+              className="w-full bg-[var(--bg-input)] border border-[var(--border)] text-[var(--text)] font-mono text-sm px-3 py-2 placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--border-hover)]"
             />
           </div>
         )}
@@ -179,13 +179,13 @@ export default function ApiTab({ onToast }: { onToast?: (msg: string) => void })
             onClick={handleAdd}
             disabled={saving || (!selectedType.noKey && !apiKey.trim())}
             title={!selectedType.noKey && !apiKey.trim() ? 'Enter an API key first' : ''}
-            className="bg-amber-700/80 hover:bg-amber-700 text-amber-100 px-5 py-1.5 font-mono text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="bg-[var(--accent-amber)]/80 hover:bg-[var(--accent-amber)] text-[var(--bg-surface)] px-5 py-1.5 font-mono text-sm disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {saving ? t('settings.api.saving') : t('settings.api.add')}
           </button>
           <button
             onClick={() => { setApiKey(''); setName(''); setBaseUrl(selectedType.baseUrl); }}
-            className="text-gray-400 hover:text-gray-200 border border-gray-700 hover:border-gray-600 px-5 py-1.5 font-mono text-sm transition-colors"
+            className="text-[var(--text-muted)] hover:text-[var(--text)] border border-[var(--border)] hover:border-[var(--border-hover)] px-5 py-1.5 font-mono text-sm transition-colors"
           >
             {t('settings.api.cancel')}
           </button>
@@ -194,14 +194,14 @@ export default function ApiTab({ onToast }: { onToast?: (msg: string) => void })
 
       {/* Saved providers list */}
       {loaded && saved.length > 0 && (
-        <div className="border border-gray-700 bg-[var(--bg-elevated)] p-5 space-y-3">
+        <div className="border border-[var(--border)] bg-[var(--bg-elevated)] p-5 space-y-3">
           <p className="text-[var(--text-faint)] font-mono text-[10px]">// {t('settings.api.registered')}</p>
           <div className="space-y-2">
             {saved.map((p) => (
               <div key={p.provider} className="flex items-center justify-between font-mono text-sm">
                 <div className="flex items-center gap-3">
-                  <span className="text-emerald-400 text-[10px]">●</span>
-                  <span className="text-gray-300">{p.label ?? p.provider}</span>
+                  <span className="text-[var(--accent-green)] text-[10px]">●</span>
+                  <span className="text-[var(--text)]">{p.label ?? p.provider}</span>
                   {p.base_url && (
                     <span className="text-[var(--text-faint)] text-[10px]">{p.base_url}</span>
                   )}
@@ -236,7 +236,7 @@ export default function ApiTab({ onToast }: { onToast?: (msg: string) => void })
       )}
 
       {loaded && saved.length === 0 && (
-        <p className="text-gray-700 font-mono text-xs text-center py-4">
+        <p className="text-[var(--text-faint)] font-mono text-xs text-center py-4">
           &gt; {t('settings.api.empty')}
         </p>
       )}

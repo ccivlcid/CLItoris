@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { generateId } from '../lib/id.js';
 import { requireAuth } from '../middleware/auth.js';
 import { createProvider } from '@clitoris/llm';
-import type { Post, PostIntent, PostEmotion, ReactionEmoji } from '@clitoris/shared';
+import type { Post, PostIntent, PostEmotion, ReactionEmoji, MediaAttachment } from '@clitoris/shared';
 import { REACTION_EMOJIS } from '@clitoris/shared';
 import { createNotification, createActivity } from './notifications.js';
 
@@ -23,6 +23,7 @@ const createPostSchema = z.object({
   repoOwner: z.string().max(100).optional(),
   repoName: z.string().max(100).optional(),
   quotedPostId: z.string().optional(),
+  mediaIds: z.array(z.string()).max(4).default([]),
 });
 
 const reactSchema = z.object({
@@ -142,6 +143,17 @@ function mapPost(row: PostRow, _userId: string | undefined, db?: Database): Post
       },
     } : null,
     updatedAt: row.updated_at ?? null,
+    media: db ? (db.prepare(
+      'SELECT id, filename, mime_type, file_size, width, height FROM media_attachments WHERE post_id = ? ORDER BY created_at ASC'
+    ).all(row.id) as Array<{ id: string; filename: string; mime_type: string; file_size: number; width: number | null; height: number | null }>)
+      .map((m): MediaAttachment => ({
+        id: m.id,
+        url: `/uploads/${m.filename}`,
+        mimeType: m.mime_type,
+        fileSize: m.file_size,
+        width: m.width,
+        height: m.height,
+      })) : [],
   };
 }
 
@@ -273,11 +285,9 @@ function feedByModelQuery(userId: string | undefined): { sql: string; params: un
 
 function modelToProvider(model: string): string {
   if (model.startsWith('claude')) return 'anthropic';
-  if (model.startsWith('gpt')) return 'openai';
+  if (model.startsWith('gpt') || model.startsWith('o1') || model.startsWith('o3') || model.startsWith('o4')) return 'openai';
   if (model.startsWith('gemini')) return 'gemini';
   if (model.startsWith('llama')) return 'ollama';
-  if (model === 'cursor') return 'cursor';
-  if (model === 'cli') return 'cli';
   return 'api';
 }
 
@@ -309,7 +319,7 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
       return;
     }
 
-    const { messageRaw, messageCli, lang, tags, mentions, visibility, llmModel, parentId, intent, emotion, repoOwner, repoName, quotedPostId } = parsed.data;
+    const { messageRaw, messageCli, lang, tags, mentions, visibility, llmModel, parentId, intent, emotion, repoOwner, repoName, quotedPostId, mediaIds } = parsed.data;
 
     if (parentId) {
       const parent = db.prepare('SELECT id, user_id FROM posts WHERE id = ?').get(parentId) as { id: string; user_id: string } | undefined;
@@ -357,6 +367,14 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
       const quoted = db.prepare('SELECT user_id FROM posts WHERE id = ?').get(quotedPostId) as { user_id: string } | undefined;
       if (quoted) {
         createNotification(db, quoted.user_id, 'quote', userId, id, messageRaw.slice(0, 100));
+      }
+    }
+
+    // Link uploaded media to this post
+    if (mediaIds.length > 0) {
+      const linkStmt = db.prepare('UPDATE media_attachments SET post_id = ? WHERE id = ? AND user_id = ? AND post_id IS NULL');
+      for (const mediaId of mediaIds) {
+        linkStmt.run(id, mediaId, userId);
       }
     }
 
@@ -726,7 +744,7 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
 
     // Look up user's LLM key for the provider
     const providerName = modelToProvider(post.llm_model);
-    const keylessProviders = new Set(['ollama', 'cursor', 'cli']);
+    const keylessProviders = new Set(['ollama']);
     let credentials: { apiKey?: string; baseUrl?: string } = {};
 
     if (!keylessProviders.has(providerName)) {

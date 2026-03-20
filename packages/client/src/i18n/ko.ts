@@ -20,6 +20,11 @@ const ko: Record<string, string> = {
   'feed.error.body': '피드를 불러오지 못했습니다.\n서버가 다운되었거나 연결이 끊겼을 수 있습니다.',
   'feed.error.retry': '$ 다시 시도',
   'feed.loading': '$ loading --cursor={cursor} ...',
+  'feed.loadingMore': '불러오는 중...',
+  'feed.local.emptyBody': '팔로우한 사람의 게시물이 없습니다.\n누군가를 팔로우하면 여기에 게시물이 표시됩니다.',
+  'feed.tab.global': '--global',
+  'feed.tab.local': '--local',
+  'feed.searchPlaceholder': '게시물, 사용자, 태그 검색...',
 
   // Composer
   'composer.placeholder': '하고 싶은 말을 그냥 쓰세요. LLM이 CLI로 번역하고, 둘 다 올라갑니다.',
@@ -32,6 +37,8 @@ const ko: Record<string, string> = {
   'composer.label': '> 어떤 언어로든 쓰세요. LLM이 CLI로 변환합니다.',
   'composer.repo.attach': '📎 저장소',
   'composer.repo.remove': '× 제거',
+  'composer.noModel': 'LLM 미설정',
+  'composer.addKey': 'API 키 추가',
 
   // Post actions
   'post.action.reply': '↵ 답글',
@@ -43,6 +50,24 @@ const ko: Record<string, string> = {
   'post.translate': '번역 →{lang}',
   'post.translating': '번역 중...',
   'post.translated.from': '--translated-from={lang}',
+  'post.edited': '(수정됨)',
+  'post.cancel': '취소',
+  'post.saving': '저장 중...',
+  'post.save': '저장',
+  'post.updated': '게시물 수정됨',
+  'post.saveFailed': '저장 실패',
+
+  // Action bar
+  'action.reply': '답글',
+  'action.fork': '포크',
+  'action.star': '스타',
+  'action.starred': '스타됨',
+  'action.edit': '수정',
+  'action.share': '공유',
+  'action.copied': '복사됨',
+  'action.starFailed': '스타 실패',
+  'action.forkFailed': '포크 실패',
+  'action.reactFailed': '반응 실패',
 
   // Auth
   'auth.connect.title': '// 연결 설정',
@@ -85,7 +110,7 @@ const ko: Record<string, string> = {
   'settings.section.account': '// 계정',
 
   // Settings — API tab
-  'settings.api.description': '로컬 모델(Ollama 등), 프론티어 모델(OpenAI, Anthropic 등), 기타 서비스의 API를 등록하여 언어모델에 접근합니다.',
+  'settings.api.description': 'API 프로바이더(OpenAI, Anthropic, Gemini 등)를 등록하여 LLM 기능을 활성화합니다.',
   'settings.api.saving': '저장 중...',
   'settings.api.add': '추가',
   'settings.api.cancel': '취소',
@@ -111,6 +136,153 @@ const ko: Record<string, string> = {
   'menu.llm': 'LLM / CLI',
   'menu.settings': '설정',
   'menu.logout': '로그아웃',
+
+  // Header
+  'header.newPost': '+ post',
+  'header.connect': '접속',
+
+  // Sidebar / Terminal
+  'sidebar.terminalBash': 'terminal.social — bash',
+  'sidebar.exportLlm': 'export LLM=',
+  'sidebar.exportLlmKey': '$ export LLM_KEY=',
+  'sidebar.sshConnect': '$ ssh connect',
+  'sidebar.lang': 'LANG=',
+
+  // Mobile Nav
+  'mobile.feed': '피드',
+  'mobile.explore': '탐색',
+  'mobile.search': '검색',
+  'mobile.msg': '메시지',
+  'mobile.log': '활동',
+  'mobile.more': '더보기',
+  'mobile.me': '나',
+  'mobile.analyze': '분석',
+  'mobile.github': 'github',
+  'mobile.leaderboard': '순위',
+
+  // Messages
+  'msg.inbox': '$ msg --inbox',
+  'msg.loading': '불러오는 중...',
+  'msg.noConversations': '대화 없음',
+  'msg.selectConversation': '대화를 선택하세요',
+  'msg.placeholder': '메시지를 입력하세요...',
+  'msg.send': '전송',
+  'msg.new': '{n}건 새 메시지',
+
+  // Search
+  'search.placeholder': '게시물, 사용자, 태그 검색...',
+  'search.searching': '검색 중...',
+  'search.users': '사용자',
+  'search.tags': '태그',
+  'search.posts': '게시물',
+  'search.noResults': '"{q}"에 대한 결과가 없습니다',
+  'search.hint': '게시물, 사용자 또는 태그를 검색하세요',
+  'search.cancel': '취소',
+
+  // Explore
+  'explore.searchPlaceholder': 'gh search --repos "검색어"',
+  'explore.search': '검색',
+  'explore.searchHint': '/ 키로 포커스  ·  GitHub 저장소와 사용자를 검색하세요',
+  'explore.searchError': 'GitHub 검색에 실패했습니다',
+  'explore.fetchError': '인기 저장소를 불러오지 못했습니다',
+  'explore.trendingTitle': '// 인기 저장소',
+
+  // Profile
+  'profile.back': '← 뒤로',
+  'profile.notFound': 'error: 404 사용자를 찾을 수 없음',
+  'profile.goHome': '$ cd /',
+  'profile.followers': '팔로워',
+  'profile.following': '팔로잉',
+  'profile.posts': '게시물',
+  'profile.followBtn': '팔로우',
+  'profile.followingBtn': '팔로잉',
+  'profile.noRepos': '저장소 없음',
+  'profile.noItems': '{tab} 없음',
+  'profile.calculating': '계산 중...',
+  'profile.calculateInfluence': '$ influence --calculate',
+  'profile.loadMore': '더 불러오기',
+  'profile.bioPlaceholder': '상태 메시지를 작성하세요...',
+  'profile.loading': '불러오는 중...',
+
+  // Post detail
+  'detail.replyAuth': '답글을 쓰려면 로그인이 필요합니다',
+  'detail.replyPlaceholder': '답글을 작성하세요...',
+  'detail.ctrlEnter': 'ctrl+enter로 답글 작성',
+  'detail.transforming': '변환 중...',
+  'detail.preview': '미리보기',
+  'detail.sending': '전송 중...',
+  'detail.reply': '답글',
+  'detail.notFound': '404: 찾을 수 없음',
+  'detail.notFoundBody': '이 게시물은 존재하지 않거나 삭제되었습니다.',
+  'detail.back': '뒤로',
+  'detail.feed': '피드',
+  'detail.forkedFrom': '포크 원본:',
+  'detail.noReplies': '아직 답글이 없습니다',
+  'detail.replyCount': '{n}개 답글',
+  'detail.repliesCount': '{n}개 답글',
+  'detail.clearReplyTarget': '취소',
+  'detail.mentionHint': '@ 멘션',
+
+  // Leaderboard
+  'leaderboard.subtitle': 'GitHub 활동 + CLItoris 활동으로 순위 매긴 개발자',
+  'leaderboard.empty': '아직 점수가 계산되지 않았습니다.',
+  'leaderboard.emptyHint': '프로필에서 GitHub를 동기화하여 시작하세요.',
+  'leaderboard.loading': '리더보드 불러오는 중...',
+
+  // Contribution graph
+  'contrib.title': '// 기여',
+  'contrib.thisYear': '올해 {n}회',
+
+  // Influence
+  'influence.status': '$ influence --status',
+  'influence.calculating': '계산 중...',
+  'influence.recalculate': '[재계산]',
+  'influence.calculated': '계산일:',
+  'influence.stale': '(오래됨 — 재계산 권장)',
+
+  // GitHub follow sync
+  'ghSync.title': 'github 팔로우',
+  'ghSync.onPlatform': 'CLItoris에 {n}명',
+  'ghSync.syncing': '동기화 중...',
+  'ghSync.syncAll': '전체 동기화 ({n})',
+  'ghSync.following': '팔로잉 ({n})',
+  'ghSync.followers': '팔로워 ({n})',
+  'ghSync.onClit': 'CLItoris 가입 ({n})',
+  'ghSync.notOnClit': 'CLItoris 미가입 ({n})',
+  'ghSync.unfollow': '언팔로우',
+  'ghSync.follow': '팔로우',
+  'ghSync.more': '+{n}명 더',
+  'ghSync.empty': '> {tab} 0명.',
+  'ghSync.loadFollowingFailed': 'GitHub 팔로잉 불러오기 실패',
+  'ghSync.loadFollowersFailed': 'GitHub 팔로워 불러오기 실패',
+  'ghSync.syncFailed': '동기화 실패',
+  'ghSync.followFailed': '팔로우 상태 변경 실패',
+
+  // GitHub settings tab
+  'github.connectionStatus': 'github 연결',
+  'github.connectedSince': '연결일',
+  'github.features': '활성화된 기능',
+  'github.featureProfile': '프로필 동기화 (아바타, 소개, 저장소)',
+  'github.featureRepos': '프로필에 저장소 목록 표시',
+  'github.featureContrib': '기여 그래프 (잔디)',
+  'github.featureFollowSync': '팔로우 동기화 (GitHub ↔ CLItoris)',
+  'github.featureReviews': 'PR 리뷰 요청 목록',
+  'github.featureInfluence': '영향력 점수 계산',
+  'github.reviewSubtitle': '내 리뷰를 기다리는 PR',
+  'github.reviewLoadFailed': 'PR 리뷰 불러오기 실패.',
+  'github.noReviews': '대기 중인 리뷰 요청이 없습니다.',
+
+  // Chat
+  'chat.clear': '초기화',
+  'chat.empty': '대화를 시작하세요.',
+  'chat.noAgent': 'AI 에이전트를 연결하면 채팅할 수 있습니다.',
+  'chat.addAgent': '+ 에이전트 연결',
+  'chat.inputPlaceholder': '메시지를 입력하세요...',
+  'chat.agentName': '에이전트 이름',
+  'chat.agentEndpoint': '엔드포인트 URL (https://...)',
+  'chat.agentApiKey': 'API 키 (선택사항)',
+  'chat.agentModel': '모델 (선택사항)',
+  'chat.connect': '연결',
 };
 
 export default ko;
