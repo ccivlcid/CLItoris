@@ -10,7 +10,7 @@
 |---------------|--------------------------------------------------------------|
 | Route         | `/post/:id`                                                  |
 | Title         | `terminal.social / post --id=:id`                            |
-| Description   | Displays a single post in full dual-panel format with its reply thread below. Includes a reply composer at the bottom. Shows forked-from link if the post is a fork. |
+| Description   | **Social layer.** Displays a single post in full dual-panel format with its reply thread below. If the post is linked to an analysis (`analysis_id`), shows an analysis preview card with link to `/analysis/:id`. Includes a reply composer at the bottom. |
 | Auth Required | No (viewing). Yes (replying, starring, forking).             |
 
 ---

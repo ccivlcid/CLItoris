@@ -106,6 +106,7 @@ const startSchema = z.object({
   outputType: z.enum(['report', 'pptx', 'video']).default('report'),
   llmModel: z.string().min(1),
   lang: z.string().length(2).default('en'),
+  userPrompt: z.string().max(500).optional(),
   options: z.record(z.unknown()).default({}),
 });
 
@@ -184,6 +185,7 @@ async function runAnalysis(
   lang: string,
   userId: string,
   logger: Logger,
+  userPrompt?: string,
 ): Promise<void> {
   const startedAt = Date.now();
 
@@ -238,6 +240,7 @@ async function runAnalysis(
     progress[2] = { name: 'generating summary', status: 'active' };
     setProgress(progress);
 
+    const langName = lang === 'ko' ? 'Korean' : lang === 'ja' ? 'Japanese' : lang === 'zh' ? 'Chinese' : 'English';
     const prompt = `Analyze the GitHub repository ${repoOwner}/${repoName}.
 
 Repository info:
@@ -248,14 +251,15 @@ Repository info:
 - Size: ${repo.size}kb
 - Open issues: ${repo.open_issues_count}
 - Default branch: ${repo.default_branch}
-
+${userPrompt ? `\nUser focus: ${userPrompt}\n` : ''}
 Write a concise technical analysis (3-5 paragraphs) covering:
 1. What the project does
 2. Architecture and key patterns
 3. Code quality indicators
 4. Notable strengths
+${userPrompt ? `5. Address the user's specific focus: "${userPrompt}"` : ''}
 
-Reply in ${lang === 'ko' ? 'Korean' : lang === 'ja' ? 'Japanese' : lang === 'zh' ? 'Chinese' : 'English'}. Be specific and technical.`;
+Reply in ${langName}. Be specific and technical.`;
 
     let summary = '';
     try {
@@ -376,17 +380,17 @@ export function createAnalyzeRouter(db: Database, logger: Logger): Router {
       return;
     }
 
-    const { repoOwner, repoName, outputType, llmModel, lang, options } = parsed.data;
+    const { repoOwner, repoName, outputType, llmModel, lang, userPrompt, options } = parsed.data;
     const userId = req.session.userId!;
     const id = generateId();
 
     db.prepare(`
       INSERT INTO analyses (id, user_id, repo_owner, repo_name, output_type, llm_model, lang, options_json)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, userId, repoOwner, repoName, outputType, llmModel, lang, JSON.stringify(options));
+    `).run(id, userId, repoOwner, repoName, outputType, llmModel, lang, JSON.stringify({ ...options, userPrompt }));
 
     // Run in background (non-blocking)
-    void runAnalysis(db, id, repoOwner, repoName, outputType, llmModel, lang, userId, logger);
+    void runAnalysis(db, id, repoOwner, repoName, outputType, llmModel, lang, userId, logger, userPrompt);
 
     const row = db.prepare('SELECT * FROM analyses WHERE id = ?').get(id) as AnalysisRow;
     res.status(201).json({ data: mapAnalysis(row) });
@@ -445,9 +449,13 @@ export function createAnalyzeRouter(db: Database, logger: Logger): Router {
       return;
     }
 
+    const shareSchema = z.object({ caption: z.string().max(2000).optional() });
+    const parsed = shareSchema.safeParse(req.body);
+    const caption = parsed.success ? parsed.data.caption : undefined;
+
     const summary = row.result_summary ?? '';
     const firstLine = summary.split('\n').find((l) => l.trim()) ?? '';
-    const messageRaw = `Analyzed ${row.repo_owner}/${row.repo_name} (${row.output_type})\n\n${summary.slice(0, 500)}`;
+    const messageRaw = caption ?? `Analyzed ${row.repo_owner}/${row.repo_name} (${row.output_type})\n\n${summary.slice(0, 500)}`;
     const messageCli = `analyze --repo=${row.repo_owner}/${row.repo_name} --output=${row.output_type} --model=${row.llm_model}\n# ${firstLine.slice(0, 120)}`;
 
     const postId = generateId();

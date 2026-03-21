@@ -16,7 +16,8 @@
 
 - **Two tabs**: Feed (following + own) / Global (all platform activity)
 - **GitHub Sync button**: Triggers `POST /api/activity/sync-github` to import GitHub events
-- **Activity event types**: follow, star_post, fork_post, reply, github_push, github_pr_merge, github_pr_open, github_release, github_star, github_fork, github_create
+- **Activity event types**: follow, star_post, fork_post, reply, **star_analysis**, **share_analysis**, github_push, github_pr_merge, github_pr_open, github_release, github_star, github_fork, github_create
+- **B-plan**: Analysis-related events (`star_analysis`, `share_analysis`) added to activity feed
 - **Cursor-based pagination** with infinite scroll
 - **Terminal aesthetic**: Event descriptions formatted as CLI-style entries
 

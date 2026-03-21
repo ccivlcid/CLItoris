@@ -10,8 +10,8 @@
 |-----------------|--------------------------------------------------------------|
 | **Route**       | `/login`                                                     |
 | **Title**       | `connect -- terminal.social`                                 |
-| **Description** | Terminal-style connection page using SSH metaphor. Single button to authenticate via GitHub OAuth. No username/password fields. No sidebar -- full-width centered layout. Redirects to `/` if already authenticated. |
-| **Auth Required** | No. Redirects to `/` (global feed) if session already exists. |
+| **Description** | Terminal-style connection page using SSH metaphor. Single button to authenticate via GitHub OAuth. No username/password fields. No sidebar -- full-width centered layout. Redirects to `/` if already authenticated. B-plan: Login is the gateway to repo analysis — unauthenticated users are redirected here from the Analyze CTA. |
+| **Auth Required** | No. Redirects to `/` (home) if session already exists. |
 
 ---
 

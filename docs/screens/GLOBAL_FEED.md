@@ -1,6 +1,7 @@
 # GLOBAL_FEED.md — Global Feed Screen Specification
 
-> **Source of truth** for the Global Feed screen (`/`).
+> **Source of truth** for the Global Feed screen.
+> **B-plan (2026-03-21)**: This page moves from `/` to `/feed`. The `/` route is now the Home page (Hero + Analyze CTA). See [HOME.md](./HOME.md) for the new landing page. See [FEED.md](./FEED.md) for the unified feed spec. This file is retained as legacy reference.
 
 ---
 
@@ -8,9 +9,9 @@
 
 | Property      | Value                                                        |
 |---------------|--------------------------------------------------------------|
-| Route         | `/`                                                          |
-| Title         | `terminal.social / feed --global`                            |
-| Description   | Default landing page. Shows all public posts in reverse chronological order with dual-format display (natural language + CLI). Supports infinite scroll, keyboard navigation, and inline composition. |
+| Route         | `/feed` (was `/` — moved in B-plan)                         |
+| Title         | `terminal.social / feed`                                     |
+| Description   | **Social layer.** Shows shared analyses and posts in reverse chronological order with dual-format display. Analysis result cards appear alongside regular post cards. Supports infinite scroll, keyboard navigation. |
 | Auth Required | No (viewing). Yes (composing, starring, replying, forking).  |
 
 ---

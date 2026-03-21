@@ -1,9 +1,10 @@
 # API.md — REST API Specification
 
-> **Source of truth** for all 61 REST API endpoints across 10 groups, request/response formats, and error handling.
+> **Source of truth** for all REST API endpoints, request/response formats, and error handling.
 > Base URL: `/api`
 > Content-Type: `application/json`
 > Authentication: Session-based (express-session) via GitHub OAuth
+> Updated: 2026-03-21 — B-plan analysis endpoints added (see bottom of file).
 
 ---
 
@@ -1749,9 +1750,130 @@ GET /api/posts/feed/global?cursor=2026-03-19T12:15:00Z&limit=20
 
 ---
 
+## B-plan: New Analysis Endpoints
+
+> Added 2026-03-21 as part of the B-plan (Repo Analysis Platform) pivot.
+
+### GET `/api/analyze/popular`
+
+Get popular/trending analyses for the Home page. No authentication required.
+
+**Query Parameters:**
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `limit` | number | `10` | Max items (max 50) |
+| `period` | string | `week` | Time period: `day`, `week`, `month`, `all` |
+
+**Response:** `200 OK`
+```json
+{
+  "data": [
+    {
+      "id": "uuid",
+      "repoOwner": "vercel",
+      "repoName": "next.js",
+      "outputType": "report",
+      "llmModel": "claude-sonnet",
+      "lang": "en",
+      "status": "completed",
+      "resultSummary": "Production-grade React framework...",
+      "durationMs": 12300,
+      "createdAt": "2026-03-20T10:30:00Z",
+      "user": { "username": "dev1", "avatarUrl": "..." },
+      "starCount": 42,
+      "shareCount": 5
+    }
+  ]
+}
+```
+
+---
+
+### GET `/api/analysis/:id`
+
+Get full analysis result with structured sections. Public analyses visible to all.
+
+**Response:** `200 OK`
+```json
+{
+  "data": {
+    "id": "uuid",
+    "repoOwner": "vercel",
+    "repoName": "next.js",
+    "outputType": "report",
+    "llmModel": "claude-sonnet",
+    "lang": "en",
+    "status": "completed",
+    "resultSummary": "Production-grade React framework...",
+    "resultSections": {
+      "summary": "Executive summary...",
+      "techStack": { "primary": "TypeScript", "languages": [...], "frameworks": [...] },
+      "architecture": { "type": "monorepo", "patterns": [...] },
+      "strengths": ["...", "..."],
+      "risks": ["...", "..."],
+      "improvements": ["...", "..."],
+      "cliView": "$ analyze --repo=vercel/next.js ..."
+    },
+    "durationMs": 12300,
+    "createdAt": "2026-03-20T10:30:00Z",
+    "user": { "username": "dev1", "avatarUrl": "..." },
+    "starCount": 42,
+    "isStarred": false
+  }
+}
+```
+
+**Errors:**
+| Code | Condition |
+|------|-----------|
+| `404` | Analysis not found |
+
+---
+
+### POST `/api/analysis/:id/star`
+
+Star/unstar an analysis. Requires authentication.
+
+**Response:** `200 OK`
+```json
+{
+  "data": { "starred": true, "starCount": 43 }
+}
+```
+
+---
+
+### GET `/api/notifications/register` (planned — Phase B4)
+
+Register a device push notification token.
+
+**Request:**
+```json
+{
+  "token": "fcm-device-token-...",
+  "platform": "android"
+}
+```
+
+---
+
+### B-plan Endpoint Summary
+
+| Method | Endpoint | Auth | Purpose |
+|--------|----------|------|---------|
+| `GET` | `/api/analyze/popular` | No | Popular analyses for Home page |
+| `GET` | `/api/analysis/:id` | No | Full analysis result with sections |
+| `POST` | `/api/analysis/:id/star` | Yes | Star/unstar an analysis |
+| `POST` | `/api/notifications/register` | Yes | Register push token (Phase B4) |
+
+---
+
 ## See Also
 
 - [api-schema.json](./api-schema.json) — OpenAPI 3.1 machine-readable schema
 - [DATABASE.md](./DATABASE.md) — Database schema backing these endpoints
 - [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Request lifecycle and error flows
 - [TESTING.md](../testing/TESTING.md) — API route test patterns
+- [PRD.md](./PRD.md) — B-plan product requirements
+- [MOBILE.md](./MOBILE.md) — Mobile strategy (push notifications)

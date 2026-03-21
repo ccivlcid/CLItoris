@@ -171,12 +171,42 @@ This guide is split into focused sub-documents for easier navigation:
 
 ---
 
+## B-plan: Analysis UI Design Principles
+
+> Added 2026-03-21 for the Repo Analysis Platform pivot.
+
+### Analyze First, Social Second
+
+The visual hierarchy must reflect the product priority:
+1. **Home page**: Hero section with Analyze CTA is the largest, most prominent element
+2. **Navigation**: Analyze appears first in sidebar and center in mobile nav
+3. **Feed cards**: Analysis result cards are visually distinct from regular post cards (repo badge, section preview)
+
+### CLI Aesthetic for Analysis, Readable UI for Results
+
+- **Analysis input**: Full CLI aesthetic (`$ analyze --repo=`, green text, monospace)
+- **Progress display**: Terminal-style step output (`✓ done`, `░░░ active`, `pending`)
+- **Result sections**: Switch to **readable font-sans** for body text — analysis results must be easy to read
+- **Section headers**: Remain monospace green (`// architecture`, `// strengths`)
+- **Rule**: CLI is the brand expression layer; body text prioritizes readability over aesthetics
+
+### Mobile-First Analysis UX
+
+- Single-column form layout on mobile
+- Sticky bottom CTA button when scrolling
+- Section cards as scrollable stack
+- Bottom sheet selectors instead of dropdowns
+- Min 44x44px touch targets on all interactive elements
+
+---
+
 ## See Also
 
 - [tokens.json](./tokens.json) — Machine-readable design tokens (colors, typography, spacing, breakpoints, animations)
-- [DESIGN_COMPONENTS.md](./DESIGN_COMPONENTS.md) — Component specifications
+- [DESIGN_COMPONENTS.md](./DESIGN_COMPONENTS.md) — Component specifications (including B-plan analysis components)
 - [DESIGN_STATES.md](./DESIGN_STATES.md) — Interaction states, loading/empty/error
 - [DESIGN_UI.md](./DESIGN_UI.md) — Icons, responsive, accessibility, forms
 - [CONVENTIONS.md](../guides/CONVENTIONS.md) — Tailwind-only rule, naming conventions
 - [Screen specs](../screens/) — Page-by-page wireframes using these design tokens
 - [PROMPTS.md](../guides/PROMPTS.md) — Component creation prompt templates
+- [MOBILE.md](../specs/MOBILE.md) — Mobile responsive guidelines

@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import AppShell from '../components/layout/AppShell.js';
 import { useAuthStore } from '../stores/authStore.js';
+import { useUiStore } from '../stores/uiStore.js';
 import { api } from '../api/client.js';
 import { toastError } from '../stores/toastStore.js';
 import type { ApiResponse, Analysis, AnalysisProgress } from '@clitoris/shared';
@@ -30,48 +31,25 @@ function ProgressLine({ step }: { step: AnalysisProgress }) {
   );
 }
 
-function AnalysisCard({ analysis, onSelect }: { analysis: AnalysisResult; onSelect: () => void }) {
-  const elapsed = analysis.durationMs ? `${(analysis.durationMs / 1000).toFixed(1)}s` : null;
-  const statusColor =
-    analysis.status === 'completed' ? 'text-emerald-400' :
-    analysis.status === 'failed' ? 'text-red-400' :
-    'text-yellow-400';
-
-  return (
-    <button
-      onClick={onSelect}
-      className="w-full text-left border border-[var(--border)] bg-[var(--bg-elevated)] p-4 hover:border-[var(--border-hover)] transition-colors space-y-1"
-    >
-      <div className="flex items-center justify-between">
-        <span className="text-[var(--text)] font-mono text-sm">■ {analysis.repoOwner}/{analysis.repoName}</span>
-        <span className={`font-mono text-xs ${statusColor}`}>{analysis.status}</span>
-      </div>
-      <div className="text-[var(--text-muted)] font-mono text-xs flex gap-3">
-        <span>{analysis.outputType}</span>
-        <span>·</span>
-        <span>{analysis.llmModel}</span>
-        {elapsed && <><span>·</span><span>{elapsed}</span></>}
-      </div>
-      {analysis.resultSummary && (
-        <p className="text-[var(--text-muted)] font-sans text-xs mt-2 line-clamp-2">
-          {analysis.resultSummary.slice(0, 120)}...
-        </p>
-      )}
-    </button>
-  );
-}
 
 export default function AnalyzePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated, isLoading: authLoading } = useAuthStore();
+  const { t } = useUiStore();
 
-  // Form state
-  const [repo, setRepo] = useState('');
-  const [outputType, setOutputType] = useState<OutputType>('report');
+  // Form state — pre-fill from URL params (from HomePage CTA)
+  const [repo, setRepo] = useState(() => searchParams.get('repo') ?? '');
+  const [outputType, setOutputType] = useState<OutputType>(
+    () => (searchParams.get('output') as OutputType) ?? 'report'
+  );
   const [llmModel, setLlmModel] = useState('');
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [lang, setLang] = useState('en');
+  const [userPrompt, setUserPrompt] = useState('');
+  const [promptFile, setPromptFile] = useState<string | null>(null); // filename
   const [isStarting, setIsStarting] = useState(false);
+  const mdFileRef = useRef<HTMLInputElement>(null);
 
   // Active analysis
   const [activeAnalysis, setActiveAnalysis] = useState<AnalysisResult | null>(null);
@@ -80,10 +58,9 @@ export default function AnalyzePage() {
   const elapsedRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [isSharing, setIsSharing] = useState(false);
   const [sharedPostId, setSharedPostId] = useState<string | null>(null);
+  const [showShareEditor, setShowShareEditor] = useState(false);
+  const [shareCaption, setShareCaption] = useState('');
 
-  // History
-  const [history, setHistory] = useState<AnalysisResult[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(true);
 
   const OUTPUT_TYPES: OutputType[] = ['report', 'pptx', 'video'];
 
@@ -123,14 +100,6 @@ export default function AnalyzePage() {
     };
   }, [isAuthenticated]);
 
-  // Load history
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    api.get<ApiResponse<AnalysisResult[]>>('/analyze')
-      .then((res) => setHistory(res.data))
-      .catch(() => toastError('Failed to load analysis history'))
-      .finally(() => setHistoryLoading(false));
-  }, [isAuthenticated]);
 
   // Poll active analysis
   useEffect(() => {
@@ -146,7 +115,6 @@ export default function AnalyzePage() {
           const res = await api.get<ApiResponse<AnalysisResult>>(`/analyze/${activeAnalysis.id}`);
           setActiveAnalysis(res.data);
           if (res.data.status === 'completed' || res.data.status === 'failed') {
-            setHistory((h) => [res.data, ...h.filter((a) => a.id !== res.data.id)]);
             if (elapsedRef.current) clearInterval(elapsedRef.current);
           } else {
             poll();
@@ -168,11 +136,33 @@ export default function AnalyzePage() {
     if (!activeAnalysis) return;
     setIsSharing(true);
     try {
-      const res = await api.post<ApiResponse<{ postId: string }>>(`/analyze/${activeAnalysis.id}/share`);
+      const body = shareCaption.trim() ? { caption: shareCaption.trim() } : {};
+      const res = await api.post<ApiResponse<{ postId: string }>>(`/analyze/${activeAnalysis.id}/share`, body);
       setSharedPostId(res.data.postId);
+      setShowShareEditor(false);
     } catch { toastError('Failed to share analysis'); } finally {
       setIsSharing(false);
     }
+  };
+
+  const openShareEditor = (analysis: AnalysisResult) => {
+    const summary = analysis.resultSummary ?? '';
+    const defaultCaption = `Analyzed ${analysis.repoOwner}/${analysis.repoName} (${analysis.outputType})\n\n${summary.slice(0, 500)}`;
+    setShareCaption(defaultCaption);
+    setShowShareEditor(true);
+  };
+
+  const handleMdFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const content = ev.target?.result as string;
+      setUserPrompt(content.slice(0, 500));
+      setPromptFile(file.name);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
   };
 
   const handleStart = async () => {
@@ -188,6 +178,7 @@ export default function AnalyzePage() {
         outputType,
         llmModel,
         lang,
+        ...(userPrompt.trim() ? { userPrompt: userPrompt.trim() } : {}),
       });
       setActiveAnalysis(res.data);
       setSharedPostId(null);
@@ -210,7 +201,7 @@ export default function AnalyzePage() {
           {activeAnalysis && (activeAnalysis.status === 'pending' || activeAnalysis.status === 'processing') ? (
             // Progress view
             <div className="space-y-3">
-              <p className="text-[var(--text-faint)] text-xs font-mono">// analyzing repo</p>
+              <p className="text-[var(--text-faint)] text-xs font-mono">{t('analyze.progress.section')}</p>
               <p className="text-[var(--text)] font-mono text-sm">
                 $ analyze --repo={activeAnalysis.repoOwner}/{activeAnalysis.repoName} --output={activeAnalysis.outputType}
               </p>
@@ -228,21 +219,21 @@ export default function AnalyzePage() {
                 }}
                 className="text-[var(--text-faint)] hover:text-[var(--text)] font-mono text-sm border border-[var(--border)] px-4 py-1.5 hover:border-[var(--border-hover)] transition-colors"
               >
-                $ cancel
+                {t('analyze.progress.cancel')}
               </button>
             </div>
           ) : activeAnalysis?.status === 'completed' ? (
             // Result view
             <div className="space-y-3">
-              <p className="text-[var(--text-faint)] text-xs font-mono">// analysis complete</p>
+              <p className="text-[var(--text-faint)] text-xs font-mono">{t('analyze.result.section')}</p>
               <p className="text-emerald-400 font-mono text-sm">
                 ✓ {activeAnalysis.repoOwner}/{activeAnalysis.repoName} · {activeAnalysis.durationMs ? `${(activeAnalysis.durationMs / 1000).toFixed(1)}s` : ''}
               </p>
 
               {activeAnalysis.outputType === 'video' ? (
                 <div className="border border-[var(--border)] bg-[#0d1117] p-6 text-center space-y-3">
-                  <p className="text-[var(--accent-green)] font-mono text-sm">■ terminal animation ready</p>
-                  <p className="text-[var(--text-muted)] font-mono text-xs">interactive HTML — plays in browser</p>
+                  <p className="text-[var(--accent-green)] font-mono text-sm">{t('analyze.result.videoReady')}</p>
+                  <p className="text-[var(--text-muted)] font-mono text-xs">{t('analyze.result.videoHint')}</p>
                   {activeAnalysis.resultUrl ? (
                     <a
                       href={`/api/analyze/${activeAnalysis.id}/download`}
@@ -250,14 +241,14 @@ export default function AnalyzePage() {
                       rel="noopener noreferrer"
                       className="inline-block bg-[var(--accent-purple)]/10 text-[var(--accent-purple)] border border-[var(--accent-purple)]/30 px-4 py-2 font-mono text-sm hover:bg-[var(--accent-purple)]/20 transition-colors"
                     >
-                      ▶ open animation
+                      {t('analyze.result.videoOpen')}
                     </a>
                   ) : (
-                    <p className="text-[var(--text-faint)] font-mono text-xs">// animation unavailable — see summary</p>
+                    <p className="text-[var(--text-faint)] font-mono text-xs">{t('analyze.result.videoUnavailable')}</p>
                   )}
                   {activeAnalysis.resultSummary && (
                     <details className="text-left mt-2">
-                      <summary className="text-[var(--text-faint)] font-mono text-xs cursor-pointer hover:text-[var(--text-muted)]">// view summary text</summary>
+                      <summary className="text-[var(--text-faint)] font-mono text-xs cursor-pointer hover:text-[var(--text-muted)]">{t('analyze.result.videoSummary')}</summary>
                       <div className="border border-[var(--border)] bg-[#0d1117] p-4 font-sans text-sm text-[var(--text)] whitespace-pre-wrap max-h-64 overflow-y-auto mt-2">
                         {activeAnalysis.resultSummary}
                       </div>
@@ -266,9 +257,9 @@ export default function AnalyzePage() {
                 </div>
               ) : activeAnalysis.outputType === 'pptx' ? (
                 <div className="border border-[var(--border)] bg-[#0d1117] p-6 text-center space-y-3">
-                  <p className="text-[var(--accent-green)] font-mono text-sm">■ presentation ready</p>
+                  <p className="text-[var(--accent-green)] font-mono text-sm">{t('analyze.result.pptxReady')}</p>
                   <p className="text-[var(--text-muted)] font-mono text-xs">
-                    {activeAnalysis.resultUrl ? '5 slides generated' : 'summary generated (pptx unavailable)'}
+                    {activeAnalysis.resultUrl ? t('analyze.result.pptxSlides') : t('analyze.result.pptxFallback')}
                   </p>
                   {activeAnalysis.resultUrl && (
                     <a
@@ -276,12 +267,12 @@ export default function AnalyzePage() {
                       download
                       className="inline-block bg-[var(--accent-cyan)]/10 text-[var(--accent-cyan)] border border-[var(--accent-cyan)]/30 px-4 py-2 font-mono text-sm hover:bg-[var(--accent-cyan)]/20 transition-colors"
                     >
-                      ↓ download .pptx
+                      {t('analyze.result.pptxDownload')}
                     </a>
                   )}
                   {activeAnalysis.resultSummary && (
                     <details className="text-left mt-2">
-                      <summary className="text-[var(--text-faint)] font-mono text-xs cursor-pointer hover:text-[var(--text-muted)]">// view summary text</summary>
+                      <summary className="text-[var(--text-faint)] font-mono text-xs cursor-pointer hover:text-[var(--text-muted)]">{t('analyze.result.pptxSummary')}</summary>
                       <div className="border border-[var(--border)] bg-[#0d1117] p-4 font-sans text-sm text-[var(--text)] whitespace-pre-wrap max-h-64 overflow-y-auto mt-2">
                         {activeAnalysis.resultSummary}
                       </div>
@@ -294,52 +285,83 @@ export default function AnalyzePage() {
                 </div>
               )}
 
+              {/* Share editor / status */}
+              {showShareEditor && !sharedPostId ? (
+                <div className="border border-[var(--border)] bg-[#0d1117] p-4 space-y-3 mt-2">
+                  <p className="text-[var(--text-faint)] font-mono text-xs">{t('analyze.share.reviewTitle')}</p>
+                  <textarea
+                    value={shareCaption}
+                    onChange={(e) => setShareCaption(e.target.value)}
+                    rows={6}
+                    maxLength={2000}
+                    className="w-full bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text)] font-mono text-[16px] sm:text-xs px-3 py-2 focus:outline-none focus:border-[var(--border-hover)] resize-none transition-colors"
+                  />
+                  <div className="text-right font-mono text-[10px] text-[var(--text-faint)]">
+                    {shareCaption.length}/2000
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleShare}
+                      disabled={isSharing}
+                      className="bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/30 px-4 py-2 font-mono text-sm hover:bg-[var(--accent-green)]/20 disabled:opacity-40 transition-colors"
+                    >
+                      {isSharing ? t('analyze.result.sharing') : t('analyze.share.post')}
+                    </button>
+                    <button
+                      onClick={() => setShowShareEditor(false)}
+                      className="text-[var(--text-faint)] hover:text-[var(--text)] font-mono text-sm transition-colors"
+                    >
+                      {t('post.cancel')}
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
               <div className="flex items-center gap-3 flex-wrap">
                 <button
-                  onClick={() => { setActiveAnalysis(null); setSharedPostId(null); }}
+                  onClick={() => { setActiveAnalysis(null); setSharedPostId(null); setShowShareEditor(false); }}
                   className="text-[var(--text-muted)] hover:text-[var(--text)] font-mono text-sm transition-colors"
                 >
-                  ← new analysis
+                  {t('analyze.result.newAnalysis')}
                 </button>
                 {sharedPostId ? (
                   <Link
                     to={`/post/${sharedPostId}`}
                     className="text-emerald-400 font-mono text-sm hover:underline"
                   >
-                    ✓ shared → view post
+                    {t('analyze.result.shared')}
                   </Link>
-                ) : (
+                ) : !showShareEditor ? (
                   <button
-                    onClick={handleShare}
-                    disabled={isSharing}
-                    className="bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/30 px-3 py-1 font-mono text-sm hover:bg-[var(--accent-green)]/20 disabled:opacity-40 transition-colors"
+                    onClick={() => openShareEditor(activeAnalysis)}
+                    className="bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/30 px-3 py-1 font-mono text-sm hover:bg-[var(--accent-green)]/20 transition-colors"
                   >
-                    {isSharing ? '$ sharing...' : '$ share --to=feed'}
+                    {t('analyze.result.share')}
                   </button>
-                )}
+                ) : null}
               </div>
             </div>
           ) : (
             // Input form
             <div className="space-y-4">
-              <p className="text-[var(--text-faint)] text-xs font-mono">// analyze github repo</p>
+              <p className="text-[var(--text-faint)] text-xs font-mono">{t('analyze.section')}</p>
 
               <div className="space-y-1">
-                <label className="text-[var(--text-muted)] font-mono text-xs">$ analyze</label>
+                <label className="text-[var(--text-muted)] font-mono text-xs">{t('analyze.repoLabel')}</label>
                 <div className="flex items-center gap-2">
-                  <span className="text-[var(--text-faint)] font-mono text-sm shrink-0">--repo=</span>
+                  <span className="text-[var(--text-faint)] font-mono text-sm shrink-0">{t('analyze.repoPrefix')}</span>
                   <input
                     value={repo}
                     onChange={(e) => setRepo(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleStart()}
-                    placeholder="owner/repo or github.com/owner/repo"
-                    className="flex-1 bg-[#0d1117] border border-[var(--border)] text-[var(--text)] font-mono text-sm px-3 py-2 placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--text-muted)]"
+                    placeholder={t('analyze.repoPlaceholder')}
+                    className="flex-1 bg-[#0d1117] border border-[var(--border)] text-[var(--text)] font-mono text-[16px] sm:text-sm px-3 py-2 placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--text-muted)]"
                   />
                 </div>
               </div>
 
               <div className="space-y-1">
-                <span className="text-[var(--text-muted)] font-mono text-xs">--output=</span>
+                <span className="text-[var(--text-muted)] font-mono text-xs">{t('analyze.outputLabel')}</span>
                 <div className="flex gap-2 mt-1">
                   {OUTPUT_TYPES.map((t) => (
                     <button
@@ -357,23 +379,70 @@ export default function AnalyzePage() {
                 </div>
               </div>
 
+              {/* User prompt */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[var(--text-muted)] font-mono text-xs">{t('analyze.promptLabel')}</span>
+                  <div className="flex items-center gap-2">
+                    {promptFile && (
+                      <span className="font-mono text-[10px] text-[var(--accent-cyan)] flex items-center gap-1">
+                        📄 {promptFile}
+                        <button
+                          onClick={() => { setPromptFile(null); setUserPrompt(''); }}
+                          className="text-[var(--text-faint)] hover:text-red-400 ml-1 transition-colors"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    )}
+                    <button
+                      onClick={() => mdFileRef.current?.click()}
+                      className="font-mono text-[10px] text-[var(--text-faint)] hover:text-[var(--accent-cyan)] border border-[var(--border)] px-2 py-0.5 transition-colors"
+                      title={t('analyze.promptFileHint')}
+                    >
+                      📎 .md
+                    </button>
+                    <input
+                      ref={mdFileRef}
+                      type="file"
+                      accept=".md,text/markdown"
+                      className="hidden"
+                      onChange={handleMdFile}
+                    />
+                  </div>
+                </div>
+                <textarea
+                  value={userPrompt}
+                  onChange={(e) => { setUserPrompt(e.target.value); if (promptFile) setPromptFile(null); }}
+                  placeholder={t('analyze.promptPlaceholder')}
+                  rows={2}
+                  maxLength={500}
+                  className="w-full bg-[#0d1117] border border-[var(--border)] text-[var(--text)] font-mono text-sm px-3 py-2 placeholder-[var(--text-faint)] focus:outline-none focus:border-[var(--text-muted)] resize-none transition-colors"
+                />
+                {userPrompt.length > 0 && (
+                  <div className="text-right font-mono text-[10px] text-[var(--text-faint)]">
+                    {userPrompt.length}/500
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-[var(--text-muted)] font-mono text-xs">--model=</span>
+                  <span className="text-[var(--text-muted)] font-mono text-xs">{t('analyze.modelLabel')}</span>
                   <select
                     value={llmModel}
                     onChange={(e) => setLlmModel(e.target.value)}
                     className="bg-[#0d1117] border border-[var(--border)] text-[var(--text)] font-mono text-xs px-2 py-1.5 focus:outline-none"
                   >
                     {modelOptions.length === 0 ? (
-                      <option value="">— load models from CLI or Settings (API keys) —</option>
+                      <option value="">{t('analyze.modelEmpty')}</option>
                     ) : (
                       modelOptions.map((m) => <option key={m} value={m}>{m}</option>)
                     )}
                   </select>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[var(--text-muted)] font-mono text-xs">--lang=</span>
+                  <span className="text-[var(--text-muted)] font-mono text-xs">{t('analyze.langLabel')}</span>
                   <select
                     value={lang}
                     onChange={(e) => setLang(e.target.value)}
@@ -387,45 +456,32 @@ export default function AnalyzePage() {
                 </div>
               </div>
 
-              <button
-                onClick={handleStart}
-                disabled={!repo.trim() || !llmModel.trim() || isStarting}
-                className="bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/30 px-4 py-2 font-mono text-sm hover:bg-[var(--accent-green)]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-              >
-                {isStarting ? '$ starting...' : '[Enter] start analysis'}
-              </button>
+              {modelOptions.length === 0 ? (
+                <div className="border border-[var(--border)] p-3 text-xs font-mono space-y-1">
+                  <span className="text-[var(--text-faint)]">{t('analyze.noModel.error')}</span>
+                  <div>
+                    <Link
+                      to="/settings"
+                      className="text-[var(--accent-green)] hover:underline"
+                    >
+                      {t('analyze.noModel.link')}
+                    </Link>
+                    <span className="text-[var(--text-faint)] ml-2">{t('analyze.noModel.hint')}</span>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={handleStart}
+                  disabled={!repo.trim() || !llmModel.trim() || isStarting}
+                  className="bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/30 px-4 py-2 font-mono text-sm hover:bg-[var(--accent-green)]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isStarting ? t('analyze.starting') : t('analyze.start')}
+                </button>
+              )}
             </div>
           )}
         </div>
 
-        {/* History */}
-        <div className="space-y-3">
-          <p className="text-[var(--text-faint)] font-mono text-xs border-b border-[var(--border)] pb-2">// your analyses</p>
-
-          {historyLoading ? (
-            <div className="space-y-2 animate-pulse">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="border border-[var(--border)] bg-[var(--bg-elevated)] p-4 h-16" />
-              ))}
-            </div>
-          ) : history.length === 0 ? (
-            <div className="border border-[var(--border)] bg-[var(--bg-elevated)] p-6 text-center">
-              <p className="text-[var(--accent-green)] font-mono text-sm">$ analyses --list</p>
-              <p className="text-orange-400 font-mono text-sm mt-1">&gt; 0 analyses found.</p>
-              <p className="text-[var(--text-muted)] font-sans text-sm mt-2">Start your first repo analysis above.</p>
-            </div>
-          ) : (
-            <div className="space-y-0">
-              {history.map((a) => (
-                <AnalysisCard
-                  key={a.id}
-                  analysis={a}
-                  onSelect={() => setActiveAnalysis(a)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
 
       </div>
     </AppShell>

@@ -10,7 +10,7 @@
 |---|---|
 | **Route** | `/github` |
 | **Title** | `terminal.social / github --connect` |
-| **Description** | GitHub platform integration page. Shows the user's GitHub Stars, Notifications, and open Issues/PRs in a tabbed interface. Requires GitHub OAuth with `notifications` and `repo` scopes. |
+| **Description** | GitHub platform integration page. Shows the user's GitHub Stars, Notifications, and open Issues/PRs in a tabbed interface. Requires GitHub OAuth with `notifications` and `repo` scopes. B-plan: This page can serve as a repo discovery entry point — starred repos can be directly analyzed via "Analyze" button on each repo card. |
 | **Auth Required** | Yes. Redirects to `/login` if not authenticated. |
 | **Layout** | AppShell + max-w-2xl content area |
 

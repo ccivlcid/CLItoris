@@ -59,7 +59,8 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
 }
 
 const router = createBrowserRouter([
-  { path: '/', element: <GlobalFeedPage /> },
+  { path: '/', element: <Navigate to="/feed" replace /> },
+  { path: '/feed', element: <GlobalFeedPage /> },
   { path: '/new', element: <CreatePostPage /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/setup', element: <SetupPage /> },

@@ -56,7 +56,7 @@ export default function SearchPage() {
 
   return (
     <AppShell>
-      <div className="flex flex-col min-h-[calc(100vh-48px)]">
+      <div className="flex flex-col min-h-[calc(100dvh-48px)]">
 
         {/* Search input + cancel */}
         <div className={`px-4 sm:px-5 ${showLanding ? 'pt-8 sm:pt-10 pb-5' : 'pt-4 sm:pt-5 pb-4'}`}>

@@ -32,7 +32,7 @@ export default function HeaderBar() {
     <header className="h-11 sm:h-12 bg-[var(--bg-surface)] border-b border-[var(--border)]/60 flex items-center justify-between px-3 sm:px-5 shrink-0">
 
       {/* ── Left: Logo ── */}
-      <Link to="/" className="hover:opacity-90 transition-opacity shrink-0">
+      <Link to="/feed" className="hover:opacity-90 transition-opacity shrink-0">
         <span className="font-mono text-[13px] sm:text-sm font-bold text-white tracking-tight">
           <span className="text-white">{'>'}&#x5f;</span>
           <span className="text-[var(--accent-green)]">CLI</span>
@@ -46,7 +46,7 @@ export default function HeaderBar() {
           <button
             key={l}
             onClick={() => setLang(l)}
-            className={`px-1.5 py-0.5 font-mono text-[10px] transition-colors ${
+            className={`px-2 py-2 font-mono text-[11px] transition-colors ${
               lang === l
                 ? 'text-[var(--accent-green)]'
                 : 'text-[var(--text-faint)]'
@@ -59,17 +59,6 @@ export default function HeaderBar() {
 
       {/* ── Right: Actions ── */}
       <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-
-        {/* New post — hidden on mobile (MobileNav has + button) */}
-        {isAuthenticated && (
-          <Link
-            to="/new"
-            className="hidden sm:inline-flex font-mono text-[var(--bg-surface)] bg-[var(--accent-green)] hover:bg-[var(--accent-green)]/80 transition-colors items-center justify-center px-3 py-1 text-[11px]"
-          >
-            <span className="sm:hidden">+</span>
-            <span className="hidden sm:inline">{t('header.newPost')}</span>
-          </Link>
-        )}
 
         {/* Notifications */}
         {isAuthenticated && <NotificationBell />}

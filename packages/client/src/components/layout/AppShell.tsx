@@ -29,12 +29,12 @@ export default function AppShell({ children }: AppShellProps) {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-[var(--bg-void)]">
+    <div className="flex flex-col h-dvh bg-[var(--bg-void)]">
       <KeyboardShortcutsProvider onToggleHelp={toggleHelp} />
       <HeaderBar />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
-        <main className="flex-1 overflow-y-auto pb-14 sm:pb-0">
+        <main className="flex-1 overflow-y-auto pb-16 sm:pb-0">
           <div className="max-w-3xl mx-auto">{children}</div>
         </main>
       </div>

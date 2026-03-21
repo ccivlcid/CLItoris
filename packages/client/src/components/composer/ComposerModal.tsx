@@ -16,9 +16,8 @@ export default function ComposerModal({ open, onClose }: Props) {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthStore();
   const {
-    draft, cliPreview, selectedLang, selectedModel,
-    isTransforming, isSubmitting, transformError, attachedRepo,
-    setDraft, setLang, removeRepo, attachRepo, transformToCli, submitPost,
+    draft, selectedLang, isSubmitting, attachedRepo,
+    setDraft, setLang, removeRepo, attachRepo, submitPost,
   } = usePostStore();
   const { prependPost } = useFeedStore();
   const { t } = useUiStore();
@@ -28,17 +27,12 @@ export default function ComposerModal({ open, onClose }: Props) {
   const [showRepoInput, setShowRepoInput] = useState(false);
 
   useEffect(() => {
-    if (open) {
-      setTimeout(() => textareaRef.current?.focus(), 50);
-    }
+    if (open) setTimeout(() => textareaRef.current?.focus(), 50);
   }, [open]);
 
-  // Escape to close
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
@@ -46,15 +40,7 @@ export default function ComposerModal({ open, onClose }: Props) {
   const handleSubmit = async () => {
     if (!isAuthenticated) { navigate('/login'); return; }
     const post = await submitPost();
-    if (post) {
-      prependPost(post);
-      onClose();
-    }
-  };
-
-  const handleTransform = async () => {
-    if (!isAuthenticated) { navigate('/login'); return; }
-    await transformToCli();
+    if (post) { prependPost(post); onClose(); }
   };
 
   const handleRepoAttach = () => {
@@ -67,8 +53,7 @@ export default function ComposerModal({ open, onClose }: Props) {
 
   if (!open) return null;
 
-  const isBusy = isTransforming || isSubmitting;
-  const noModel = !selectedModel;
+  const canPost = draft.trim().length > 0 && !isSubmitting;
 
   return (
     <div
@@ -76,45 +61,35 @@ export default function ComposerModal({ open, onClose }: Props) {
       className="fixed inset-0 z-50 flex items-start justify-center pt-[10vh] px-4"
       onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
     >
-      {/* Backdrop */}
       <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
 
-      {/* Modal */}
       <div className="relative w-full max-w-[600px] bg-[var(--bg-surface)] border border-[var(--border)] shadow-2xl shadow-black/50 flex flex-col max-h-[80vh]">
-
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)]/40">
           <span className="font-mono text-[12px] text-[var(--text-muted)]">
             <span className="text-[var(--accent-green)]">$</span> new post
           </span>
-          <button
-            onClick={onClose}
-            className="text-[var(--text-faint)] hover:text-[var(--text)] font-mono text-[11px] transition-colors"
-          >
+          <button onClick={onClose} className="text-[var(--text-faint)] hover:text-[var(--text)] font-mono text-[11px] transition-colors">
             [esc]
           </button>
         </div>
 
-        {/* Body — scrollable */}
         <div className="flex-1 overflow-y-auto">
-          {/* Textarea */}
           <div className="px-5 pt-4 pb-3">
             <textarea
               ref={textareaRef}
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); handleSubmit(); }
+                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); void handleSubmit(); }
               }}
               placeholder={t('composer.placeholder')}
               rows={5}
-              disabled={isBusy}
+              disabled={isSubmitting}
               className="w-full bg-transparent text-[var(--text)] text-[15px] leading-[1.7] resize-none outline-none placeholder:text-[var(--text-faint)]/60 disabled:opacity-40"
               style={{ fontFamily: 'var(--font-sans)' }}
             />
           </div>
 
-          {/* Repo attachment */}
           {attachedRepo && (
             <div className="mx-5 mb-3 flex items-center gap-2 bg-[var(--bg-void)] border border-[var(--border)] px-3 py-1.5 font-mono text-[11px]">
               <span className="text-[var(--accent-blue)]">{attachedRepo.owner}/{attachedRepo.name}</span>
@@ -124,22 +99,6 @@ export default function ComposerModal({ open, onClose }: Props) {
             </div>
           )}
 
-          {/* CLI preview */}
-          {cliPreview && (
-            <div className="mx-5 mb-3 bg-[var(--bg-cli)] border border-[var(--border)] px-4 py-3">
-              <span className="text-[var(--text-faint)] text-[10px] font-mono block mb-1">$</span>
-              <pre className="text-[var(--accent-green)] font-mono text-[12px] whitespace-pre-wrap">{cliPreview}</pre>
-            </div>
-          )}
-
-          {/* Error */}
-          {transformError && (
-            <p className="mx-5 mb-3 px-3 py-2 bg-[var(--color-error-bg)] text-[var(--color-error)] border border-[var(--color-error-border)] font-mono text-[11px]">
-              error: {transformError}
-            </p>
-          )}
-
-          {/* Repo input */}
           {showRepoInput && (
             <div className="px-5 pb-3 flex items-center gap-2">
               <input
@@ -160,10 +119,8 @@ export default function ComposerModal({ open, onClose }: Props) {
           )}
         </div>
 
-        {/* Footer toolbar */}
         <div className="border-t border-[var(--border)]/40 px-5 py-3 flex items-center gap-2">
-          {/* Attachment buttons */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             {!attachedRepo && (
               <button
                 onClick={() => setShowRepoInput((v) => !v)}
@@ -172,12 +129,10 @@ export default function ComposerModal({ open, onClose }: Props) {
                     ? 'text-[var(--accent-blue)] border-[var(--accent-blue)]/30 bg-[var(--accent-blue)]/5'
                     : 'text-[var(--text-faint)] border-[var(--border)] hover:text-[var(--text-muted)]'
                 }`}
-                title="Attach GitHub repo"
               >
                 repo
               </button>
             )}
-
             <select
               value={selectedLang}
               onChange={(e) => setLang(e.target.value)}
@@ -187,35 +142,13 @@ export default function ComposerModal({ open, onClose }: Props) {
             </select>
           </div>
 
-          {/* Right side actions */}
-          <div className="flex items-center gap-2 ml-auto">
-            {selectedModel && (
-              <span className="text-[var(--text-faint)] font-mono text-[10px] border border-[var(--border)] px-2 py-0.5">
-                {selectedModel}
-              </span>
-            )}
-            {noModel && (
-              <span className="text-[var(--accent-amber)]/60 font-mono text-[10px]">
-                select model →
-              </span>
-            )}
-
-            <button
-              onClick={() => void handleTransform()}
-              disabled={!draft.trim() || isBusy || noModel}
-              className="border border-[var(--border)] text-[var(--text-muted)] hover:text-[var(--text)] px-3 py-1.5 font-mono text-[11px] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              {isTransforming ? t('composer.button.transforming') : t('composer.button.transform')}
-            </button>
-
-            <button
-              onClick={() => void handleSubmit()}
-              disabled={!draft.trim() || isBusy || noModel}
-              className="bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20 px-4 py-1.5 font-mono text-[12px] hover:bg-[var(--accent-green)]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              {isSubmitting ? t('composer.button.submitting') : t('composer.button.submit')}
-            </button>
-          </div>
+          <button
+            onClick={() => void handleSubmit()}
+            disabled={!canPost}
+            className="ml-auto bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/20 px-4 py-1.5 font-mono text-[12px] hover:bg-[var(--accent-green)]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            {isSubmitting ? t('composer.button.submitting') : t('composer.button.submit')}
+          </button>
         </div>
       </div>
     </div>

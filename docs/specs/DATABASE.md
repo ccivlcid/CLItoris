@@ -3,6 +3,7 @@
 > **Source of truth** for database schema, queries, migrations, and data integrity rules.
 > SQLite with `better-sqlite3`. No ORM. Raw SQL only. Prepared statements only.
 > This file is the single source of truth for the database schema. No separate SQL file is maintained.
+> Updated: 2026-03-21 — B-plan analysis domain enhancements added (see bottom of file).
 
 ---
 
@@ -1129,8 +1130,110 @@ res.json({
 
 ---
 
+## B-plan: Analysis Domain Enhancements
+
+> Added 2026-03-21 as part of the B-plan (Repo Analysis Platform) pivot.
+
+### B1. Enhanced `analyses` table
+
+The existing `analyses` table (section 2.9) will be extended with structured result storage:
+
+```sql
+-- 020_enhance_analyses.sql (planned)
+ALTER TABLE analyses ADD COLUMN result_sections_json TEXT DEFAULT '{}';
+ALTER TABLE analyses ADD COLUMN error_message TEXT;
+ALTER TABLE analyses ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0;
+
+CREATE INDEX idx_analyses_user_created ON analyses(user_id, created_at DESC);
+CREATE INDEX idx_analyses_status ON analyses(status);
+CREATE INDEX idx_analyses_repo ON analyses(repo_owner, repo_name);
+```
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `result_sections_json` | TEXT | JSON object with structured sections: `{ summary, techStack, architecture, strengths, risks, improvements, cliView }` |
+| `error_message` | TEXT | Error details when status = 'failed' |
+| `retry_count` | INTEGER | Number of retry attempts |
+
+**Result Sections Schema:**
+```json
+{
+  "summary": "Executive summary text...",
+  "techStack": { "primary": "TypeScript", "languages": [...], "frameworks": [...] },
+  "architecture": { "type": "monorepo", "patterns": [...], "description": "..." },
+  "strengths": ["...", "..."],
+  "risks": ["...", "..."],
+  "improvements": ["...", "..."],
+  "cliView": "$ analyze --repo=... (terminal-style output)"
+}
+```
+
+### B2. `posts.analysis_id` — Link posts to analyses
+
+```sql
+-- 021_add_analysis_id_to_posts.sql (planned)
+ALTER TABLE posts ADD COLUMN analysis_id TEXT REFERENCES analyses(id) ON DELETE SET NULL;
+CREATE INDEX idx_posts_analysis_id ON posts(analysis_id) WHERE analysis_id IS NOT NULL;
+```
+
+When a user shares an analysis result, the created post references the original analysis via `analysis_id`. This enables:
+- Displaying analysis preview cards in the feed
+- Navigating from a post to the full analysis result
+- Counting how many times an analysis was shared
+
+### B3. `analysis_stars` — Star analyses directly (planned)
+
+```sql
+-- 022_create_analysis_stars.sql (planned)
+CREATE TABLE IF NOT EXISTS analysis_stars (
+  user_id      TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  analysis_id  TEXT NOT NULL REFERENCES analyses(id) ON DELETE CASCADE,
+  created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, analysis_id)
+);
+
+CREATE INDEX idx_analysis_stars_analysis ON analysis_stars(analysis_id);
+```
+
+### B4. Popular/Trending analyses query (planned)
+
+```sql
+-- Popular analyses for Home page
+SELECT a.*, u.username, u.avatar_url,
+  (SELECT COUNT(*) FROM analysis_stars WHERE analysis_id = a.id) as star_count,
+  (SELECT COUNT(*) FROM posts WHERE analysis_id = a.id) as share_count
+FROM analyses a
+JOIN users u ON a.user_id = u.id
+WHERE a.status = 'completed'
+ORDER BY star_count DESC, share_count DESC, a.created_at DESC
+LIMIT 10;
+```
+
+### B5. Future: Postgres Migration Plan
+
+SQLite is sufficient for MVP but has limitations for production SaaS:
+- No concurrent writes from multiple processes
+- No built-in full-text search ranking
+- No native JSON operators
+- Single-file, single-server only
+
+**Migration strategy (Phase B5):**
+1. Use `pgloader` or custom script to migrate data
+2. Replace `better-sqlite3` calls with `pg` (node-postgres)
+3. Convert `TEXT DEFAULT (datetime('now'))` to `TIMESTAMPTZ DEFAULT NOW()`
+4. Convert JSON TEXT columns to `JSONB`
+5. Replace FTS5 with `pg_trgm` + `tsvector`
+6. Add connection pooling (`pg-pool`)
+7. Session store → `connect-pg-simple`
+
+No code changes to client needed — only server data layer.
+
+---
+
 ## See Also
 
 - [schema-erd.md](../architecture/schema-erd.md) — Visual ERD diagram (Mermaid)
 - [API.md](./API.md) — How API endpoints map to database queries
 - [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — System data flows
+- [PRD.md](./PRD.md) — B-plan product requirements
+- [MOBILE.md](./MOBILE.md) — Mobile strategy

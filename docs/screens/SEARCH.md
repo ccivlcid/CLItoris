@@ -15,10 +15,11 @@
 ## Features
 
 - **Live search** with 300ms debounce (race-condition safe)
-- **Three result types**: Posts (full-text via FTS5), Users (username/display name match), Tags (tag string match)
+- **Four result types**: Analyses (repo name/summary match), Posts (full-text via FTS5), Users (username/display name match), Tags (tag string match)
 - **Keyboard shortcut**: `/` focuses the search input from anywhere
 - **Empty state**: Shows prompt to start typing
-- **Results display**: Posts as PostCard components, Users as profile rows, Tags as clickable badges
+- **Results display**: Analyses as AnalysisResultCard, Posts as PostCard, Users as profile rows, Tags as clickable badges
+- **B-plan**: Analyses tab is the default/first tab — search prioritizes repo analysis results
 
 ## API Endpoints
 

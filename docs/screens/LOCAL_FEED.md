@@ -1,6 +1,7 @@
 # LOCAL_FEED.md — Local Feed Screen Specification
 
-> **Source of truth** for the Local Feed screen (`/feed/local`).
+> **Source of truth** for the Local Feed screen.
+> **B-plan (2026-03-21)**: This page merges into `/feed?tab=local` as a tab within the unified Feed page. See [FEED.md](./FEED.md). This file is retained as legacy reference.
 
 ---
 
@@ -8,9 +9,9 @@
 
 | Property      | Value                                                        |
 |---------------|--------------------------------------------------------------|
-| Route         | `/feed/local`                                                |
+| Route         | `/feed?tab=local` (was `/feed/local` — merged in B-plan)    |
 | Title         | `terminal.social / feed --local`                             |
-| Description   | Shows posts only from users the authenticated user follows. Same layout as global feed but with a filtered dataset. Redirects to login if unauthenticated. |
+| Description   | **Social layer.** Shows analyses and posts only from followed users. Now a tab within the unified Feed page. |
 | Auth Required | Yes                                                          |
 
 ---

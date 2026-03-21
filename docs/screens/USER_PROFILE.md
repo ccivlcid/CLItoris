@@ -10,7 +10,7 @@
 |-----------------|--------------------------------------------------------------|
 | **Route**       | `/@:username`                                                |
 | **Title**       | `@{username} -- terminal.social`                             |
-| **Description** | Public user profile page showing identity, stats, and posts. Visitors can browse posts; authenticated users can follow/unfollow and interact with posts. |
+| **Description** | Public user profile page showing identity, stats, and content. **B-plan**: Adds "Analyses" tab showing the user's repo analysis history alongside Posts, Starred, and Repos tabs. Analyses tab is the default for profiles with analyses. |
 | **Auth Required** | No (view only). Yes for follow/unfollow and post interactions (star, reply, fork). |
 
 ---

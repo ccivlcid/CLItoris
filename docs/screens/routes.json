@@ -2,21 +2,43 @@
   "routes": [
     {
       "path": "/",
-      "page": "GlobalFeedPage",
-      "file": "packages/client/src/pages/GlobalFeedPage.tsx",
-      "title": "terminal.social / feed --global",
+      "page": "HomePage",
+      "file": "packages/client/src/pages/HomePage.tsx",
+      "title": "terminal.social — Repo Analysis Platform",
       "auth": false,
       "layout": "AppShell",
-      "spec": "docs/screens/GLOBAL_FEED.md"
+      "spec": "docs/screens/HOME.md",
+      "note": "B-plan: Hero + Analyze CTA + popular analyses (replaces GlobalFeedPage)"
     },
     {
-      "path": "/feed/local",
-      "page": "LocalFeedPage",
-      "file": "packages/client/src/pages/LocalFeedPage.tsx",
-      "title": "terminal.social / feed --local",
+      "path": "/analyze",
+      "page": "AnalyzePage",
+      "file": "packages/client/src/pages/AnalyzePage.tsx",
+      "title": "terminal.social / analyze",
       "auth": true,
       "layout": "AppShell",
-      "spec": "docs/screens/LOCAL_FEED.md"
+      "spec": "docs/screens/ANALYZE.md",
+      "note": "B-plan: Primary feature page"
+    },
+    {
+      "path": "/analysis/:id",
+      "page": "AnalysisResultPage",
+      "file": "packages/client/src/pages/AnalysisResultPage.tsx",
+      "title": "terminal.social / analysis --id=:id",
+      "auth": false,
+      "layout": "AppShell",
+      "spec": "docs/screens/ANALYSIS_RESULT.md",
+      "note": "B-plan: New — shareable analysis result detail with sections"
+    },
+    {
+      "path": "/feed",
+      "page": "FeedPage",
+      "file": "packages/client/src/pages/FeedPage.tsx",
+      "title": "terminal.social / feed",
+      "auth": false,
+      "layout": "AppShell",
+      "spec": "docs/screens/FEED.md",
+      "note": "B-plan: Merged global + local feed (was / and /feed/local)"
     },
     {
       "path": "/explore",
@@ -73,15 +95,6 @@
       "spec": "docs/screens/SETTINGS.md"
     },
     {
-      "path": "/analyze",
-      "page": "AnalyzePage",
-      "file": "packages/client/src/pages/AnalyzePage.tsx",
-      "title": "terminal.social / analyze",
-      "auth": true,
-      "layout": "AppShell",
-      "spec": "docs/screens/ANALYZE.md"
-    },
-    {
       "path": "/github",
       "page": "GitHubFeedPage",
       "file": "packages/client/src/pages/GitHubFeedPage.tsx",
@@ -107,6 +120,57 @@
       "auth": false,
       "layout": "AppShell",
       "spec": "docs/screens/SEARCH.md"
+    },
+    {
+      "path": "/leaderboard",
+      "page": "LeaderboardPage",
+      "file": "packages/client/src/pages/LeaderboardPage.tsx",
+      "title": "terminal.social / leaderboard",
+      "auth": false,
+      "layout": "AppShell"
+    },
+    {
+      "path": "/chat",
+      "page": "ChatPage",
+      "file": "packages/client/src/pages/ChatPage.tsx",
+      "title": "terminal.social / chat",
+      "auth": true,
+      "layout": "AppShell"
+    },
+    {
+      "path": "/messages",
+      "page": "MessagesPage",
+      "file": "packages/client/src/pages/MessagesPage.tsx",
+      "title": "terminal.social / messages",
+      "auth": true,
+      "layout": "AppShell"
+    },
+    {
+      "path": "/new",
+      "page": "CreatePostPage",
+      "file": "packages/client/src/pages/CreatePostPage.tsx",
+      "title": "terminal.social / new",
+      "auth": true,
+      "layout": "AppShell",
+      "note": "Post creation (social layer)"
     }
-  ]
+  ],
+  "redirects": [
+    {
+      "from": "/feed/local",
+      "to": "/feed?tab=local",
+      "note": "B-plan: local feed merged into /feed with tab"
+    }
+  ],
+  "navigation": {
+    "sidebar": {
+      "order": ["analyze", "feed", "explore", "search", "leaderboard", "github", "messages", "activity", "chat"],
+      "note": "B-plan: Analyze is first item"
+    },
+    "mobileNav": {
+      "items": ["feed", "explore", "analyze", "activity", "profile"],
+      "center": "analyze",
+      "note": "B-plan: Analyze is center action (was: create post)"
+    }
+  }
 }

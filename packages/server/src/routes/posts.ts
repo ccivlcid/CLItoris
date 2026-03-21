@@ -9,17 +9,21 @@ import type { Post, PostIntent, PostEmotion, ReactionEmoji, MediaAttachment } fr
 import { REACTION_EMOJIS } from '@clitoris/shared';
 import { createNotification, createActivity } from './notifications.js';
 
+function buildCliLine(username: string, messageRaw: string, repoOwner?: string, repoName?: string): string {
+  const tags = [...messageRaw.matchAll(/#([a-zA-Z0-9_]+)/g)].map((m) => m[1]).slice(0, 5);
+  const repo = repoOwner && repoName ? ` --repo=${repoOwner}/${repoName}` : '';
+  const tagStr = tags.length > 0 ? ` --tags=${tags.join(',')}` : '';
+  const body = messageRaw.replace(/\n+/g, ' ').slice(0, 200);
+  return `post --user=@${username}${repo}${tagStr} ¶ ${body}`;
+}
+
 const createPostSchema = z.object({
   messageRaw: z.string().min(1).max(2000),
-  messageCli: z.string().min(1).max(4000),
-  lang: z.string().length(2),
+  lang: z.string().length(2).default('en'),
   tags: z.array(z.string().max(50)).max(10).default([]),
   mentions: z.array(z.string()).max(20).default([]),
   visibility: z.enum(['public', 'private', 'unlisted']).default('public'),
-  llmModel: z.string().min(1).max(200),
   parentId: z.string().optional(),
-  intent: z.enum(['casual', 'formal', 'question', 'announcement', 'reaction']).default('casual'),
-  emotion: z.enum(['neutral', 'happy', 'surprised', 'frustrated', 'excited', 'sad', 'angry']).default('neutral'),
   repoOwner: z.string().max(100).optional(),
   repoName: z.string().max(100).optional(),
   quotedPostId: z.string().optional(),
@@ -319,7 +323,7 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
       return;
     }
 
-    const { messageRaw, messageCli, lang, tags, mentions, visibility, llmModel, parentId, intent, emotion, repoOwner, repoName, quotedPostId, mediaIds } = parsed.data;
+    const { messageRaw, lang, tags, mentions, visibility, parentId, repoOwner, repoName, quotedPostId, mediaIds } = parsed.data;
 
     if (parentId) {
       const parent = db.prepare('SELECT id, user_id FROM posts WHERE id = ?').get(parentId) as { id: string; user_id: string } | undefined;
@@ -339,11 +343,13 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
 
     const id = generateId();
     const userId = req.session.userId!;
+    const userRow = db.prepare('SELECT username FROM users WHERE id = ?').get(userId) as { username: string };
+    const messageCli = buildCliLine(userRow.username, messageRaw, repoOwner, repoName);
 
     db.prepare(`
       INSERT INTO posts (id, user_id, message_raw, message_cli, lang, tags, mentions, visibility, llm_model, parent_id, intent, emotion, quoted_post_id)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, userId, messageRaw, messageCli, lang, JSON.stringify(tags), JSON.stringify(mentions), visibility, llmModel, parentId ?? null, intent, emotion, quotedPostId ?? null);
+    `).run(id, userId, messageRaw, messageCli, lang, JSON.stringify(tags), JSON.stringify(mentions), visibility, null, parentId ?? null, 'casual', 'neutral', quotedPostId ?? null);
 
     // Notify parent post author on reply
     if (parentId) {
@@ -833,13 +839,9 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
   // ── Edit post ──
   const updatePostSchema = z.object({
     messageRaw: z.string().min(1).max(2000),
-    messageCli: z.string().min(1).max(4000),
-    lang: z.string().length(2),
+    lang: z.string().length(2).default('en'),
     tags: z.array(z.string().max(50)).max(10).default([]),
     mentions: z.array(z.string()).max(20).default([]),
-    llmModel: z.string().min(1).max(200),
-    intent: z.enum(['casual', 'formal', 'question', 'announcement', 'reaction']).default('casual'),
-    emotion: z.enum(['neutral', 'happy', 'surprised', 'frustrated', 'excited', 'sad', 'angry']).default('neutral'),
   });
 
   router.put('/:id', requireAuth, (req, res) => {
@@ -860,12 +862,14 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
       return;
     }
 
-    const { messageRaw, messageCli, lang, tags, mentions, llmModel, intent, emotion } = parsed.data;
+    const { messageRaw, lang, tags, mentions } = parsed.data;
+    const userRow2 = db.prepare('SELECT username FROM users WHERE id = ?').get(userId) as { username: string };
+    const updatedCli = buildCliLine(userRow2.username, messageRaw);
     db.prepare(`
       UPDATE posts SET message_raw = ?, message_cli = ?, lang = ?, tags = ?, mentions = ?,
-        llm_model = ?, intent = ?, emotion = ?, updated_at = datetime('now')
+        updated_at = datetime('now')
       WHERE id = ?
-    `).run(messageRaw, messageCli, lang, JSON.stringify(tags), JSON.stringify(mentions), llmModel, intent, emotion, req.params.id);
+    `).run(messageRaw, updatedCli, lang, JSON.stringify(tags), JSON.stringify(mentions), req.params.id);
 
     db.prepare('DELETE FROM translations WHERE post_id = ?').run(req.params.id);
 

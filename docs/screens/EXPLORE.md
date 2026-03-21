@@ -10,7 +10,7 @@
 |---------------|--------------------------------------------------------------|
 | Route         | `/explore`                                                   |
 | Title         | `terminal.social / explore`                                  |
-| Description   | Discovery page showing trending posts sorted by star count (not chronological). Features a trending tag cloud, "by LLM" filter tabs, and optional tag query filtering. Posts are ranked by popularity. |
+| Description   | **B-plan**: Discovery page for trending **analyses** and posts. Analysis results are prioritized over regular posts. Features trending analyses, popular repos analyzed, tag cloud, and "by LLM" filter. Items ranked by star count + share count. |
 | Auth Required | No (viewing). Yes (starring, forking, replying).             |
 
 ---

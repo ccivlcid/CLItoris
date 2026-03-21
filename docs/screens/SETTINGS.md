@@ -19,9 +19,11 @@
 ## 2. Tab Structure
 
 ```
-$ settings --tab=[profile | language | oauth | api | channel | github]
-                    ────────  ────────  ─────  ───  ───────   ──────
+$ settings --tab=[profile | language | oauth | api | channel | github | analysis]
+                    ────────  ────────  ─────  ───  ───────   ──────   ────────
 ```
+
+> B-plan: `analysis` tab planned for Phase B2 — default output type, preferred model for analysis, analysis history management.
 
 | Tab | Label | Contents | Badge |
 |-----|-------|----------|-------|

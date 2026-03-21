@@ -54,7 +54,7 @@ export default function MessagesPage() {
 
   return (
     <AppShell>
-      <div className="flex h-[calc(100vh-48px)]">
+      <div className="flex h-[calc(100dvh-48px)]">
 
         {/* ── Inbox ── */}
         <div className={`w-full sm:w-72 border-r border-[var(--border)]/20 flex flex-col sm:shrink-0 ${

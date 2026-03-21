@@ -1,8 +1,9 @@
-# LLM_INTEGRATION.md -- LLM Transformation Logic
+# LLM_INTEGRATION.md -- LLM Integration Logic
 
 > **Owner:** CLItoris Core Team
 > **Status:** Source of Truth
-> **Purpose:** Defines how CLItoris transforms natural language into CLI commands using LLM providers. Core interface, system prompt, execution modes, and provider registration live here. Provider implementations, parsing, and error handling are in split files.
+> **Purpose:** Defines how CLItoris uses LLM providers for three operations: **analyze** (repo analysis — primary), **transform** (post CLI conversion), and **translate** (tone-aware translation). Core interface, prompts, execution modes, and provider registration live here.
+> Updated: 2026-03-21 — B-plan: `analyze()` operation added as primary LLM use case.
 
 ---
 
@@ -22,7 +23,74 @@
 
 ## 1. Overview
 
-CLItoris transforms natural language messages into terminal.social CLI commands using two LLM operations:
+CLItoris uses LLMs for three operations, in priority order:
+
+### 1.0 `analyze()` — Repo analysis (B-plan PRIMARY)
+
+```
+User enters GitHub repo URL + output type + model
+       |
+       v
+Server fetches repo metadata via GitHub API
+       |
+       v
+Server clones repo (shallow, depth=1), scans structure
+       |
+       v
+LLM receives analyze prompt + repo context (file tree, key files, README, package.json)
+       |
+       v
+LLM outputs structured JSON:
+  { summary, techStack, architecture, strengths, risks, improvements }
+       |
+       v
+Server generates output:
+  - report: structured markdown with sections
+  - pptx: 5-slide terminal-style presentation
+  - video: HTML terminal animation with typewriter effect
+       |
+       v
+Result saved to DB (result_sections_json) and file system
+UI displays sectioned result with copy/share/download actions
+```
+
+**Prompt**: `packages/llm/prompts/analyze.md` (planned — currently inline in analyze route)
+
+**Output schema:**
+```json
+{
+  "summary": "Executive summary of the repository...",
+  "techStack": {
+    "primary": "TypeScript",
+    "languages": [{ "name": "TypeScript", "percentage": 87 }, ...],
+    "frameworks": ["React", "Next.js"],
+    "buildTools": ["Turbopack", "Webpack"],
+    "testing": ["Jest", "Playwright"]
+  },
+  "architecture": {
+    "type": "monorepo",
+    "description": "Turborepo-based monorepo with...",
+    "patterns": ["App Router", "Server Components", "ISR"],
+    "entryPoints": ["packages/next/src/server/next.ts"]
+  },
+  "strengths": [
+    "Comprehensive TypeScript adoption (87%)",
+    "Strong testing infrastructure"
+  ],
+  "risks": [
+    "High circular dependency count (3)",
+    "Complex build pipeline"
+  ],
+  "improvements": [
+    "Consider migrating remaining JS files to TypeScript",
+    "Add dependency graph visualization"
+  ]
+}
+```
+
+**Fallback**: On JSON parse failure, server wraps raw LLM text as `summary` and leaves other fields empty.
+
+**Cost considerations**: Repo analysis uses significantly more tokens than transform/translate. Context includes file tree, README, key config files — typically 5K-20K input tokens. Output is 1K-3K tokens. Cost tracking per analysis is planned for Phase B5 (LLM Gateway).
 
 ### 1.1 `transform()` — Metadata extraction + CLI generation
 
@@ -70,11 +138,12 @@ Translation uses the **viewer's own LLM key** — zero server cost.
 
 All prompts live in `packages/llm/prompts/` and are loaded at runtime via `readFileSync`. **Never hardcode prompt content in TypeScript** — edit the `.md` files directly.
 
-| File | Purpose | Output format |
-|------|---------|---------------|
-| `transform.md` | Metadata extraction from natural language post | JSON object |
-| `translate.md` | Tone-aware translation of post content | Plain translated text |
-| `system.md` | Legacy single-step CLI generation (retained for reference) | CLI command string |
+| File | Purpose | Output format | Priority |
+|------|---------|---------------|----------|
+| `analyze.md` | Repo analysis — structured insight generation | JSON object (sections) | **PRIMARY (B-plan)** |
+| `transform.md` | Metadata extraction from natural language post | JSON object | Secondary (social layer) |
+| `translate.md` | Tone-aware translation of post content | Plain translated text | Secondary |
+| `system.md` | Legacy single-step CLI generation (retained for reference) | CLI command string | Deprecated |
 
 ### 2.1 `transform.md` — Metadata Extraction
 
@@ -127,8 +196,37 @@ All LLM providers implement the same interface. This lives in `packages/llm/src/
 interface LlmProvider {
   name: string;
   listModels(): Promise<string[]>;
+  analyze(input: AnalyzeRequest): Promise<AnalyzeResponse>;     // B-plan PRIMARY
   transform(input: TransformRequest): Promise<TransformResponse>;
   translate(input: TranslateInput): Promise<string>;
+}
+
+interface AnalyzeRequest {
+  repoContext: {
+    owner: string;
+    name: string;
+    fileTree: string;        // directory listing
+    readme: string;          // README.md content (truncated)
+    packageJson?: string;    // package.json or equivalent
+    keyFiles: string[];      // content of important config files
+  };
+  outputType: 'report' | 'pptx' | 'video';
+  model: string;
+  lang: string;
+  focus?: 'overview' | 'architecture' | 'api' | 'security';
+}
+
+interface AnalyzeResponse {
+  sections: {
+    summary: string;
+    techStack: object;
+    architecture: object;
+    strengths: string[];
+    risks: string[];
+    improvements: string[];
+  };
+  model: string;
+  tokensUsed: number;
 }
 
 interface TransformRequest {

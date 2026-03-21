@@ -236,8 +236,110 @@ Inside the CLI panel, apply these colors to different token types:
 
 ---
 
+## B-plan: Analysis Components
+
+> Added 2026-03-21 for the Repo Analysis Platform pivot.
+
+### Analysis Result Card (Feed)
+
+Displayed in feed when a user shares an analysis result.
+
+```
+@dev1 · 2h ago                                             --analysis
+┌──────────────────────────────────────────────────────────────────┐
+│ ▶ vercel/next.js                    report · claude-sonnet      │
+│                                                                  │
+│ "Production-grade React framework with hybrid rendering          │
+│  strategies, Turborepo monorepo, and strong TypeScript adoption" │
+│                                                                  │
+│ TypeScript 87% · React · Turbopack · Monorepo                   │
+│                                                                  │
+│ ★ 42  ↗ 5 shares  · 12.3s                                      │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+| Property | Value |
+|----------|-------|
+| Border | `border border-gray-700` |
+| Background | `bg-[#0d1117]` |
+| Repo name | `text-green-400 font-mono font-bold` |
+| Summary | `text-gray-300 text-sm` (max 2 lines) |
+| Tech badges | `text-cyan-400 text-xs` inline pills |
+| Stats | `text-gray-500 text-xs` |
+
+### Analysis Result Section Card (Mobile)
+
+Individual section displayed as a card in the mobile result view.
+
+```
+┌─ Executive Summary ─────────────────┐
+│                                      │
+│  "Next.js is a production-grade     │
+│   React framework..."               │
+│                                      │
+│  [copy]  [share]                    │
+└──────────────────────────────────────┘
+```
+
+| Property | Value |
+|----------|-------|
+| Section header | `text-green-400 font-mono text-sm font-semibold` |
+| Content | `text-gray-200 text-sm font-sans` (readable, not monospace) |
+| Actions | `text-gray-500 text-xs` buttons, right-aligned |
+| Spacing | `mb-3` between cards |
+
+### Home Hero Section
+
+```
+┌──────────────────────────────────────────────┐
+│  $ analyze --repo=                           │
+│                                              │
+│  AI-powered GitHub repo analysis.            │
+│  Get structured insights in seconds.         │
+│                                              │
+│  ┌────────────────────────────────────────┐  │
+│  │ owner/repo                        [⏎] │  │
+│  └────────────────────────────────────────┘  │
+│                                              │
+│  [report]  [pptx]  [video]                  │
+│                                              │
+│  ┌────────────────────────────────────────┐  │
+│  │ $ analyze                              │  │
+│  └────────────────────────────────────────┘  │
+└──────────────────────────────────────────────┘
+```
+
+| Property | Value |
+|----------|-------|
+| Background | `bg-[#0d1117]` with subtle `border border-gray-800` |
+| Command prompt | `text-green-400 font-mono text-lg` |
+| Tagline | `text-gray-400 text-sm font-sans` |
+| Input | Full-width, `bg-[#161b22] border border-gray-700 text-green-400 font-mono` |
+| CTA button | `bg-green-500/20 border border-green-500 text-green-400 font-mono hover:bg-green-500/30` |
+| Output pills | `border border-gray-700 text-gray-300 text-xs px-3 py-1` active: `border-green-500 text-green-400` |
+
+### Analysis Progress Steps
+
+```
+> cloning repo (shallow)...              ✓ done
+> scanning files: 2,847 files found      ✓ done
+> analyzing architecture...              ░░░░░░░░░░
+> generating summary...                  pending
+```
+
+| Property | Value |
+|----------|-------|
+| Done step | `text-green-400` + `✓` |
+| Active step | `text-green-400` + pulsing `░` bar |
+| Pending step | `text-gray-500` |
+| Elapsed timer | `text-gray-500 text-xs font-mono` |
+
+---
+
 ## See Also
 
 - [DESIGN_GUIDE.md](./DESIGN_GUIDE.md) — Color system, typography, layout
 - [DESIGN_STATES.md](./DESIGN_STATES.md) — Loading, empty, and error states
 - [DESIGN_UI.md](./DESIGN_UI.md) — Forms, modals, toasts, accessibility
+- [HOME.md](../screens/HOME.md) — Home page wireframes
+- [ANALYZE.md](../screens/ANALYZE.md) — Analyze page wireframes

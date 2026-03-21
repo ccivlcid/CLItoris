@@ -925,6 +925,100 @@ This document is maintained alongside the CLItoris codebase. All implementation 
 
 ---
 
+## B-plan: Analysis Patterns
+
+> Added 2026-03-21 for the Repo Analysis Platform pivot.
+
+### Analysis Polling Pattern
+
+Analysis takes 10-60 seconds. Use polling (current) or SSE (future) to track progress.
+
+```typescript
+// File: packages/client/src/stores/analyzeStore.ts
+// Pattern: Poll until terminal state
+async function pollAnalysis(analysisId: string): Promise<void> {
+  const POLL_INTERVAL = 1500; // 1.5 seconds
+  const MAX_POLLS = 120;      // 3 minutes max
+
+  for (let i = 0; i < MAX_POLLS; i++) {
+    const res = await fetch(`/api/analyze/${analysisId}`);
+    const { data } = await res.json();
+
+    set({ currentAnalysis: data, progress: data.progress });
+
+    if (data.status === 'completed' || data.status === 'failed') {
+      return; // Terminal state — stop polling
+    }
+
+    await new Promise((r) => setTimeout(r, POLL_INTERVAL));
+  }
+
+  // Timeout — mark as failed client-side
+  set({ error: 'Analysis timed out' });
+}
+```
+
+**Key rules:**
+- Always have a max poll count to prevent infinite loops
+- Only poll while status is `pending` or `processing`
+- Stop immediately on terminal states (`completed`, `failed`)
+- Update UI progressively as steps complete
+
+### Home Page Pre-fill Pattern
+
+When user enters a repo on the Home page, pass it to the Analyze page via URL params.
+
+```typescript
+// File: packages/client/src/stores/homeStore.ts
+function goToAnalyze(): void {
+  const { repoInput, outputType } = get();
+  const params = new URLSearchParams();
+  if (repoInput) params.set('repo', repoInput);
+  if (outputType !== 'report') params.set('output', outputType);
+  navigate(`/analyze?${params.toString()}`);
+}
+
+// File: packages/client/src/pages/AnalyzePage.tsx
+// On mount, read URL params to pre-fill form
+useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const repo = params.get('repo');
+  const output = params.get('output');
+  if (repo) analyzeStore.getState().setRepoInput(repo);
+  if (output) analyzeStore.getState().setOutputType(output);
+}, []);
+```
+
+### Analysis Result Caching Pattern
+
+Avoid re-fetching completed analysis results.
+
+```typescript
+// File: packages/client/src/stores/analyzeStore.ts
+// Pattern: Cache completed results in memory
+const resultCache = new Map<string, Analysis>();
+
+async function fetchAnalysis(id: string): Promise<Analysis> {
+  const cached = resultCache.get(id);
+  if (cached && cached.status === 'completed') return cached;
+
+  const res = await fetch(`/api/analysis/${id}`);
+  const { data } = await res.json();
+
+  if (data.status === 'completed') {
+    resultCache.set(id, data); // Cache only terminal results
+  }
+  return data;
+}
+```
+
+**Key rules:**
+- Only cache results with terminal status (`completed`)
+- Never cache `pending` or `processing` — they will change
+- Cache lives in memory — cleared on page refresh (acceptable for MVP)
+
+---
+
 ## See Also
 
 - [CONVENTIONS.md](./CONVENTIONS.md) — Code style and naming conventions
@@ -932,3 +1026,4 @@ This document is maintained alongside the CLItoris codebase. All implementation 
 - [API.md](../specs/API.md) — REST API specification
 - [DATABASE.md](../specs/DATABASE.md) — Database schema and queries
 - [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — System architecture overview
+- [ANALYZE.md](../screens/ANALYZE.md) — Analyze page specification

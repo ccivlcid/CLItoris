@@ -60,7 +60,10 @@
       "Bash(find /c/project/CLItoris/docs -name *GITHUB* -o -name *github*)",
       "Bash(xargs sed:*)",
       "Bash(node_modules/.bin/vite build:*)",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "Bash(xargs basename:*)",
+      "Bash(pnpm --filter @clitoris/client exec tsc --noEmit)",
+      "Bash(pnpm --filter @clitoris/server exec tsc --noEmit)"
     ]
   }
 }

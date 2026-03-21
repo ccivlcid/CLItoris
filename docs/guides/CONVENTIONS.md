@@ -507,8 +507,44 @@ AI-generated code is **immediately rejected** if any of the following apply:
 
 ---
 
+## B-plan: Analysis-Specific Rules
+
+> Added 2026-03-21 for the Repo Analysis Platform pivot.
+
+### Analysis Code Organization
+
+| Rule | Correct | Wrong |
+|------|---------|-------|
+| Analysis components in `components/analyze/` | `AnalysisResultCard.tsx` | Mixing with feed components |
+| Home components in `components/home/` | `HeroSection.tsx` | Putting in `components/layout/` |
+| Analysis store separate from feed | `analyzeStore.ts` | Adding analysis state to `feedStore.ts` |
+| Analysis API routes in `routes/analyze.ts` | Dedicated router | Adding to `routes/posts.ts` |
+
+### Analysis Result Content Rules
+
+| Rule | Description |
+|------|-------------|
+| Section headers use monospace | `// architecture` in `font-mono text-green-400` |
+| Section body uses sans-serif | Readable text in `font-sans text-gray-200` |
+| Never render raw LLM output | Always parse structured JSON, display in sections |
+| Always show generation metadata | Model name, duration, timestamp |
+| Copy button on every section | Each section independently copyable |
+
+### Mobile-First Analysis Rules
+
+| Rule | Description |
+|------|-------------|
+| Form inputs full-width on mobile | `w-full` default, constrained on desktop |
+| Touch targets min 44px | All buttons, selectors, nav items |
+| Sticky CTA on mobile | Analysis start button fixed at bottom during scroll |
+| Bottom sheet for selectors | Model/language pickers use bottom sheet on mobile, dropdown on desktop |
+| No horizontal scroll | All content fits single column on mobile |
+
+---
+
 ## See Also
 
 - [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual design tokens and component specs
 - [TESTING.md](../testing/TESTING.md) — Testing patterns and examples
 - [PROMPTS.md](./PROMPTS.md) — Vibe coding prompt templates
+- [MOBILE.md](../specs/MOBILE.md) — Mobile strategy and responsive guidelines

@@ -13,6 +13,7 @@ dist/
 clitoris.db
 clitoris.db-journal
 clitoris.db-wal
+clitoris.db-shm
 *.sqlite
 *.sqlite3
 

@@ -1,7 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../stores/authStore.js';
-import { usePostStore } from '../../stores/postStore.js';
 import { useUiStore, type UiLang } from '../../stores/uiStore.js';
 import { api } from '../../api/client.js';
 import { toastError } from '../../stores/toastStore.js';
@@ -17,11 +16,11 @@ function shortModel(model: string): string {
 }
 
 const COMMANDS = [
-  { to: '/',            cmd: 'feed --global' },
+  { to: '/analyze',     cmd: 'analyze' },
+  { to: '/feed',        cmd: 'feed --global' },
   { to: '/feed/local',  cmd: 'feed --local' },
   { to: '/explore',     cmd: 'explore' },
   { to: '/leaderboard', cmd: 'rank --board' },
-  { to: '/analyze',     cmd: 'analyze' },
   { to: '/github',      cmd: 'gh --status' },
   { to: '/messages',    cmd: 'msg --inbox' },
   { to: '/activity',    cmd: 'log --activity' },
@@ -32,7 +31,6 @@ const COMMANDS = [
 export default function Sidebar() {
   const location = useLocation();
   const { user, isAuthenticated } = useAuthStore();
-  const { selectedModel, selectModel } = usePostStore();
   const { lang, setLang, t } = useUiStore();
   const [llmEntries, setLlmEntries] = useState<LlmEntry[]>([]);
 
@@ -93,30 +91,21 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* LLM model selector */}
+      {/* LLM providers (info only — used by Analyze) */}
       {isAuthenticated && llmEntries.length > 0 && (
         <div className="border-t border-[var(--border)]/30 py-2">
           <div className="px-4 py-1 text-[var(--text-faint)] text-[10px]">
             {t('sidebar.exportLlm')}
           </div>
-          {llmEntries.map(({ id, model }) => {
-            const isSelected = selectedModel === model;
-            return (
-              <button
-                key={id}
-                onClick={() => selectModel(model)}
-                title={`${id} — ${model}`}
-                className={`w-full text-left py-1 px-4 transition-colors ${
-                  isSelected
-                    ? 'text-[var(--accent-green)]'
-                    : 'text-[var(--text-muted)] hover:text-[var(--text)]'
-                }`}
-              >
-                {isSelected ? '▸ ' : '  '}{id}
-                <span className="text-[var(--text-faint)] ml-1">{shortModel(model)}</span>
-              </button>
-            );
-          })}
+          {llmEntries.map(({ id, model }) => (
+            <div
+              key={id}
+              title={`${id} — ${model}`}
+              className="py-1 px-4 text-[var(--text-muted)] font-mono text-[11px]"
+            >
+              ▸ {id}<span className="text-[var(--text-faint)] ml-1">{shortModel(model)}</span>
+            </div>
+          ))}
         </div>
       )}
 

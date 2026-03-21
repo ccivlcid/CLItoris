@@ -1,35 +1,142 @@
 # ARCHITECTURE.md — System Architecture
 
 > **Source of truth** for system architecture, data flows, authentication, and error handling.
+> Updated: 2026-03-21 — B-plan analysis pipeline and future Worker architecture added.
 
 ## Overall Structure
 
+### Current (MVP)
+
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                     User Browser                         │
+│              User Browser / PWA / Capacitor App          │
 │                  React 19 + Vite (SPA)                   │
+│         Home (Analyze CTA) → Analyze → Results → Feed   │
 └──────────────────────┬──────────────────────────────────┘
-                       │ HTTP/REST
+                       │ HTTP/REST + SSE (analysis progress)
                        ▼
 ┌─────────────────────────────────────────────────────────┐
 │                   Express API Server                     │
 │              (tsx — TypeScript direct execution)          │
 │                                                         │
-│  ┌─────────┐  ┌──────────┐  ┌───────────┐              │
-│  │ Routes  │  │Middleware │  │ LLM Module│              │
-│  │ /posts  │  │  auth     │  │ Anthropic  │              │
-│  │ /users  │  │  logger   │  │ OpenAI     │              │
-│  │ /llm    │  │  errors   │  │ Gemini     │              │
-│  │         │  │           │  │ Ollama     │              │
-│  └────┬────┘  └──────────┘  └─────┬─────┘              │
-│       │                           │                     │
-│       ▼                           ▼                     │
-│  ┌─────────┐              ┌─────────────┐              │
-│  │ SQLite  │              │ LLM APIs    │              │
-│  │ (local) │              │ (external)  │              │
-│  └─────────┘              └─────────────┘              │
+│  ┌──────────┐  ┌──────────┐  ┌───────────┐             │
+│  │ Routes   │  │Middleware │  │ LLM Module│             │
+│  │ /analyze │  │  auth     │  │ Anthropic  │             │
+│  │ /posts   │  │  logger   │  │ OpenAI     │             │
+│  │ /users   │  │  errors   │  │ Gemini     │             │
+│  │ /llm     │  │           │  │ Ollama     │             │
+│  └────┬─────┘  └──────────┘  └─────┬─────┘             │
+│       │                             │                    │
+│       ▼                             ▼                    │
+│  ┌─────────┐              ┌─────────────┐               │
+│  │ SQLite  │              │ LLM APIs    │               │
+│  │ (local) │              │ (external)  │               │
+│  └─────────┘              └─────────────┘               │
 └─────────────────────────────────────────────────────────┘
 ```
+
+### Future (Phase B5 — Production)
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                  Client (Web + PWA + Capacitor App)               │
+└──────────────┬──────────────────────────────────┬────────────────┘
+               │ REST API                          │ SSE (progress)
+               ▼                                   │
+┌──────────────────────────┐                       │
+│       API Server         │                       │
+│  Auth, CRUD, Feed, Users │                       │
+│  Create analysis_job     │───▶ Job Queue (Redis) │
+│  Serve results           │         │             │
+└──────────────────────────┘         │             │
+                                     ▼             │
+                              ┌──────────────┐     │
+                              │   Worker(s)  │─────┘
+                              │  Clone, Scan │
+                              │  LLM call    │
+                              │  Generate    │
+                              └──────┬───────┘
+                                     │
+                              ┌──────▼───────┐
+                              │  Postgres    │
+                              │  + Redis     │
+                              │  + Object    │
+                              │    Storage   │
+                              └──────────────┘
+```
+
+## B-plan: Analysis Pipeline
+
+> The analysis pipeline is the core of the B-plan (Repo Analysis Platform).
+
+### Current: Analysis Flow (MVP — synchronous)
+
+```
+1. User enters repo URL + selects output type + model
+2. Client → POST /api/analyze { repoOwner, repoName, outputType, llmModel, lang }
+3. Server creates analysis record (status: pending)
+4. Server starts analysis synchronously:
+   a. Fetch repo metadata via GitHub API
+   b. Clone repo (shallow, depth=1)
+   c. Scan file structure, detect languages
+   d. Call LLM with repo context → structured analysis
+   e. Generate output (report markdown / PPTX / video HTML)
+   f. Save result, update status → completed
+5. Client polls GET /api/analyze/:id every 1.5s for status
+6. On completion: display result with sections
+7. User can download, share to feed, or copy link
+```
+
+### Future: Analysis Flow (Phase B5 — Worker-based)
+
+```
+┌─────────────┐     POST /api/analyze     ┌──────────────┐
+│   Client    │ ──────────────────────────▶│  API Server  │
+│   (React)   │                            │              │
+└─────────────┘                            └──────┬───────┘
+      ▲                                           │
+      │ SSE /api/analyze/:id/progress             │ Create analysis_job
+      │                                           │ Enqueue to Job Queue
+      │                                           ▼
+      │                                    ┌──────────────┐
+      │                                    │  Job Queue   │
+      │                                    │  (BullMQ/    │
+      │                                    │   Redis)     │
+      │                                    └──────┬───────┘
+      │                                           │
+      │                                           ▼
+      │                                    ┌──────────────┐
+      │         status updates via SSE     │   Worker     │
+      │  ◀──────────────────────────────── │              │
+      │                                    │  1. Clone    │
+      │                                    │  2. Scan     │
+      │                                    │  3. LLM call │
+      │                                    │  4. Generate │
+      │                                    │  5. Save     │
+      │                                    └──────┬───────┘
+      │                                           │
+      │                                    ┌──────▼───────┐
+      │                                    │ SQLite/PG    │
+      │                                    │ + Object     │
+      │                                    │   Storage    │
+      │                                    └──────────────┘
+```
+
+**Why Worker separation matters:**
+- Analysis takes 10-60s; should not block API for fast CRUD requests
+- Worker can retry failed jobs independently
+- Multiple workers can process jobs in parallel
+- Status updates streamed via SSE without tying up API threads
+
+### Analysis Job State Machine
+
+```
+pending → processing → completed
+                    ↘ failed → (retry) → processing
+                                       → permanently_failed (after 3 retries)
+```
+
+---
 
 ## Data Flows
 
@@ -116,6 +223,18 @@ searchStore: {
 activityStore: {
   events[], cursor, hasMore, feedType
   → fetchActivity(type), fetchNextPage(), syncGithub()
+}
+
+analyzeStore: {
+  repoInput, outputType, selectedModel, lang, options
+  status, progress[], elapsedMs, currentAnalysis, error
+  recentAnalyses[], historyCursor, hasMoreHistory
+  → startAnalysis(), cancelAnalysis(), fetchHistory(), downloadResult(), postResult()
+}
+
+homeStore: {
+  repoInput, outputType, popularAnalyses, recentShared
+  → fetchPopular(), fetchRecent(), goToAnalyze()
 }
 ```
 
@@ -510,3 +629,6 @@ app.use(session({
 - [API.md](../specs/API.md) — REST API endpoint documentation
 - [ENV.md](../guides/ENV.md) — Complete environment variable reference
 - [schema-erd.md](./schema-erd.md) — Database entity relationship diagram
+- [PRD.md](../specs/PRD.md) — B-plan product requirements
+- [MOBILE.md](../specs/MOBILE.md) — Mobile/PWA/Capacitor strategy
+- [CLItoris_최종통합본_Part2](../specs/CLItoris_최종통합본_Part2_아키텍처_UIUX_로드맵.md) — Detailed architecture roadmap

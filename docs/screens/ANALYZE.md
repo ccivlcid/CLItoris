@@ -1,6 +1,7 @@
 # ANALYZE Screen Specification
 
 > **Source of truth** for the Analyze screen (`/analyze`).
+> **B-plan**: This is the **primary feature page** of the platform. Users reach it from the Home Hero CTA or the center mobile nav button.
 
 ---
 
@@ -10,8 +11,9 @@
 |-----------------|--------------------------------------------------------------|
 | **Route**       | `/analyze`                                                   |
 | **Title**       | `terminal.social / analyze`                                  |
-| **Description** | Repo analysis tool page. Users enter a GitHub repo, select output type (report, pptx, video), choose an LLM model, and start analysis. Shows real-time progress and results. Includes a history of past analyses. Standard layout with sidebar. |
+| **Description** | **Primary feature page.** Users enter a GitHub repo, select output type (report, pptx, video), choose an LLM model, and start analysis. Shows real-time progress and results. Includes a history of past analyses. Reachable from Home Hero CTA, sidebar (first item), and mobile nav (center button). |
 | **Auth Required** | Yes. Redirects to `/login` if not authenticated.            |
+| **Priority**    | **P0** — Core entry point of the platform. |
 
 ---
 
@@ -635,10 +637,32 @@ Progress is displayed as a terminal-style step list with real-time SSE updates:
 
 ---
 
+## 13. Entry Points
+
+Users reach the Analyze page from:
+
+| Source | Mechanism |
+|--------|-----------|
+| Home Hero CTA | "Analyze" button on `/` |
+| Desktop sidebar | First nav item: `$ analyze` |
+| Mobile bottom nav | Center button (Analyze icon) |
+| Analysis result page | "Re-analyze" or "Analyze another" button |
+| User profile | "Analyze a repo" prompt in empty analyses tab |
+
+After analysis completes, the user can:
+1. View result inline (current behavior)
+2. Navigate to `/analysis/:id` for full sectioned view (Phase B2)
+3. Share to feed as a post
+4. Download (report/pptx/video)
+
+---
+
 ## See Also
 
+- [HOME.md](./HOME.md) — Home page with Analyze CTA (primary entry)
+- [ANALYSIS_RESULT.md](./ANALYSIS_RESULT.md) — Analysis result detail page (Phase B2)
 - [DESIGN_GUIDE.md](../design/DESIGN_GUIDE.md) — Visual tokens, component specs, UI states
 - [API.md](../specs/API.md) — Endpoint request/response details
 - [CONVENTIONS.md](../guides/CONVENTIONS.md) — Coding rules for implementation
 - [LLM_INTEGRATION.md](../llm/LLM_INTEGRATION.md) — LLM provider details
-- [GLOBAL_FEED.md](./GLOBAL_FEED.md) — Feed where analysis results can be posted
+- [FEED.md](./FEED.md) — Feed where analysis results can be posted

@@ -266,7 +266,7 @@ function ReplyComposer({
             onKeyDown={handleKeyDown}
             placeholder={t('detail.replyPlaceholder')}
             rows={2}
-            className="flex-1 bg-transparent text-[var(--text)] text-[14px] leading-[1.6] resize-none outline-none placeholder:text-[var(--text-faint)]/40 px-3 py-3 sm:py-2.5"
+            className="flex-1 bg-transparent text-[var(--text)] text-[16px] sm:text-[14px] leading-[1.6] resize-none outline-none placeholder:text-[var(--text-faint)]/40 px-3 py-3 sm:py-2.5"
             style={{ fontFamily: 'var(--font-sans)' }}
           />
 

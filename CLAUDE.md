@@ -6,9 +6,12 @@ Guidance for AI assistants working with the CLItoris repository.
 
 ## Project Overview
 
-**CLItoris** is a terminal/CLI-themed social network service (SNS).
-Users write posts in natural language, and an LLM transforms them into CLI command format, displaying both side by side (dual-format).
-All social interactions (post, follow, fork, star) are expressed as CLI commands.
+**CLItoris** is a **Repo Analysis Platform** with a terminal/CLI aesthetic.
+Users analyze GitHub repositories using AI, and the results are transformed into structured developer insights — reports, presentations, and video walkthroughs.
+Analysis results can be shared, starred, and forked within a developer-oriented social layer.
+
+**Core principle**: **Analyze first, social second.**
+The primary value is repo analysis and insight generation. Social features (feed, star, fork, follow) serve as the distribution layer for analysis results.
 
 **Domain**: `terminal.social`
 
@@ -69,8 +72,9 @@ llm    ──→ shared
 - **UI**: Dark background (`#0d1117`), monospace font (JetBrains Mono), terminal aesthetic
 - **Colors**: Green (`#3fb950`) CLI keywords, Yellow (`#d29922`) usernames, Cyan (`#76e3ea`) hashtags, Blue (`#58a6ff`) links, Purple (`#bc8cff`) accents
 - **Surface**: `#161b22` cards/panels, `#30363d` borders, `#e6edf3` primary text, `#7d8590` muted text
-- **Layout**: Left sidebar navigation + dual-panel posts (natural language | CLI)
+- **Layout**: Left sidebar navigation, Analyze as primary entry point, dual-panel posts (natural language | CLI) in social layer
 - **Keyboard**: Vim-like shortcuts (j/k nav, s star, o open, g-chord page navigation)
+- **Mobile**: Bottom navigation with Analyze as center action, PWA-ready, future Capacitor/native app
 
 ## Development Workflow
 
@@ -107,10 +111,16 @@ pnpm dev
 ```
 
 ### Implementation Order
-1. `@clitoris/shared` — Types first (Post, User, ApiResponse)
-2. `@clitoris/server` — DB setup + API routes
-3. `@clitoris/llm` — LLM providers + transformer
-4. `@clitoris/client` — Shell layout → pages → components
+1. `@clitoris/shared` — Types first (Analysis, Post, User, ApiResponse)
+2. `@clitoris/server` — DB setup + API routes + Analysis Job pipeline
+3. `@clitoris/llm` — LLM providers + analyzer + transformer
+4. `@clitoris/client` — Shell layout → Analyze page → Result page → Social pages
+
+### Product Strategy
+- **Product**: Repo Analysis Platform (B-plan) — see `docs/specs/CLItoris_최종통합본_Part1_제품전략_공개전략.md`
+- **Architecture**: API + Worker separation planned — see `docs/specs/CLItoris_최종통합본_Part2_아키텍처_UIUX_로드맵.md`
+- **Business**: Open Core + SaaS hosting
+- **Mobile**: PWA → Capacitor (App Store) → Native (if needed) — see `docs/specs/MOBILE.md`
 
 ## Documentation Map
 
@@ -118,8 +128,8 @@ All documentation lives under `docs/` organized by category.
 
 ```
 docs/
-├── GLOSSARY.md                        # Unified terminology index (34 terms)
-├── PROGRESS.md                        # Development status and decision log
+├── GLOSSARY.md                        # Unified terminology index (analysis + social terms)
+├── PROGRESS.md                        # Development status and decision log (A-plan complete, B-plan in progress)
 ├── setup/                             # Project bootstrapping
 │   └── CONFIGS.md                     # All config files (package.json, tsconfig, vite, tailwind)
 ├── guides/                            # Development guides
@@ -143,24 +153,28 @@ docs/
 │   └── fixtures.json                  # Test fixture data
 ├── screens/                           # Page-by-page UI screen specifications
 │   ├── routes.json                    # Route definitions
-│   ├── GLOBAL_FEED.md                 # / — Main feed with composer
-│   ├── LOCAL_FEED.md                  # /feed/local — Following feed
-│   ├── EXPLORE.md                     # /explore — Trending/discover
+│   ├── HOME.md                        # / — Hero + Analyze CTA + popular analyses (primary entry)
+│   ├── ANALYZE.md                     # /analyze — Repo analysis tool (primary feature)
+│   ├── ANALYSIS_RESULT.md             # /analysis/:id — Analysis result detail with sections
+│   ├── FEED.md                        # /feed — Global + Local feed (social layer)
+│   ├── EXPLORE.md                     # /explore — Trending analyses + repos
 │   ├── POST_DETAIL.md                 # /post/:id — Single post + replies
-│   ├── USER_PROFILE.md               # /@:username — User profile
+│   ├── USER_PROFILE.md               # /@:username — User profile + analyses
 │   ├── LOGIN.md                       # /login — GitHub OAuth connect (SSH metaphor)
-│   ├── SETUP.md                       # /setup — First-time profile setup (replaces REGISTER.md)
+│   ├── SETUP.md                       # /setup — First-time profile setup
 │   ├── SETTINGS.md                    # /settings — User settings
-│   ├── ANALYZE.md                     # /analyze — Repo analysis tool (report, pptx, video)
 │   ├── GITHUB_FEED.md                 # /github — GitHub Stars, Notifications, Issues & PRs
 │   ├── ACTIVITY_FEED.md               # /activity — Activity feed (following + global)
-│   └── SEARCH.md                      # /search — Full-text search (posts, users, tags)
+│   └── SEARCH.md                      # /search — Full-text search (analyses, posts, users, tags)
 ├── specs/                             # Technical specifications
-│   ├── PRD.md                         # Product requirements document
+│   ├── PRD.md                         # Product requirements document (B-plan: Repo Analysis Platform)
+│   ├── MOBILE.md                      # Mobile strategy (PWA → Capacitor → Native roadmap)
 │   ├── DATABASE.md                    # DB schema, queries, migrations, migration files
-│   ├── API.md                         # REST API documentation (61 endpoints, error formats, rate limits)
+│   ├── API.md                         # REST API documentation (73 endpoints, error formats, rate limits)
 │   ├── api-schema.json                # OpenAPI 3.1 schema (machine-readable)
-│   └── types.ts                       # Shared type definitions
+│   ├── types.ts                       # Shared type definitions
+│   ├── CLItoris_최종통합본_Part1_제품전략_공개전략.md    # Product strategy & open-source strategy
+│   └── CLItoris_최종통합본_Part2_아키텍처_UIUX_로드맵.md # Architecture, UI/UX, tech roadmap
 ├── llm/                               # LLM integration documentation
 │   ├── LLM_INTEGRATION.md            # LLM overview, system prompt, provider interface, execution modes
 │   ├── LLM_PROVIDERS.md              # 7 provider implementations (Anthropic, OpenAI, Gemini, Ollama, etc.)
@@ -177,21 +191,25 @@ docs/
 
 **Required reading (priority order):**
 1. `CLAUDE.md` — Project summary (this file)
-2. `docs/setup/CONFIGS.md` — Config files to bootstrap the project
-3. `docs/guides/CONVENTIONS.md` — Coding rules, naming, prohibitions
-4. `docs/GLOSSARY.md` — Unified terminology index (domain-specific terms)
-5. `docs/design/DESIGN_GUIDE.md` — Visual system index (colors, typography, layout)
-6. `docs/design/DESIGN_COMPONENTS.md` — Component specifications
-7. `docs/design/DESIGN_STATES.md` — Interaction states, loading/empty/error
-8. `docs/design/DESIGN_UI.md` — Icons, responsive, accessibility, forms
-9. `docs/guides/PATTERNS.md` — Implementation patterns (optimistic updates, pagination, auth, performance)
-10. `docs/screens/*` — Page-by-page UI screen specifications
-11. `docs/llm/LLM_INTEGRATION.md` — LLM overview, system prompt, provider interface
-12. `docs/architecture/ARCHITECTURE.md` — System architecture, auth, error flows
-13. `docs/specs/DATABASE.md` — DB schema, queries, migrations
-14. `docs/specs/API.md` — REST API documentation with error formats
-15. `docs/testing/TESTING.md` — Testing overview, config, rules
-16. `docs/testing/TESTING_PATTERNS.md` — Test code examples
-17. `docs/testing/TESTING_SETUP.md` — Mocks, factories, environment setup
-18. `docs/guides/TROUBLESHOOTING.md` — Common issues & solutions
-19. `docs/guides/ENV.md` — Environment variables reference
+2. `docs/specs/CLItoris_최종통합본_Part1_제품전략_공개전략.md` — Product strategy (B-plan direction)
+3. `docs/specs/CLItoris_최종통합본_Part2_아키텍처_UIUX_로드맵.md` — Architecture & roadmap
+4. `docs/specs/PRD.md` — Product requirements (Repo Analysis Platform)
+5. `docs/specs/MOBILE.md` — Mobile strategy (PWA → Capacitor → Native)
+6. `docs/setup/CONFIGS.md` — Config files to bootstrap the project
+7. `docs/guides/CONVENTIONS.md` — Coding rules, naming, prohibitions
+8. `docs/GLOSSARY.md` — Unified terminology index (analysis + social terms)
+9. `docs/design/DESIGN_GUIDE.md` — Visual system index (colors, typography, layout)
+10. `docs/design/DESIGN_COMPONENTS.md` — Component specifications
+11. `docs/design/DESIGN_STATES.md` — Interaction states, loading/empty/error
+12. `docs/design/DESIGN_UI.md` — Icons, responsive, accessibility, forms
+13. `docs/guides/PATTERNS.md` — Implementation patterns (optimistic updates, pagination, auth, performance)
+14. `docs/screens/*` — Page-by-page UI screen specifications
+15. `docs/llm/LLM_INTEGRATION.md` — LLM overview, system prompt, provider interface
+16. `docs/architecture/ARCHITECTURE.md` — System architecture, auth, error flows
+17. `docs/specs/DATABASE.md` — DB schema, queries, migrations
+18. `docs/specs/API.md` — REST API documentation with error formats
+19. `docs/testing/TESTING.md` — Testing overview, config, rules
+20. `docs/testing/TESTING_PATTERNS.md` — Test code examples
+21. `docs/testing/TESTING_SETUP.md` — Mocks, factories, environment setup
+22. `docs/guides/TROUBLESHOOTING.md` — Common issues & solutions
+23. `docs/guides/ENV.md` — Environment variables reference
