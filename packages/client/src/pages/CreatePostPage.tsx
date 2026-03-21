@@ -1,9 +1,22 @@
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePostStore } from '../stores/postStore.js';
 import { useFeedStore } from '../stores/feedStore.js';
 import { useAuthStore } from '../stores/authStore.js';
 import { useUiStore } from '../stores/uiStore.js';
+
+function buildCliPreview(username: string, text: string, repo: { owner: string; name: string } | null, lang: string): string {
+  const tags = [...text.matchAll(/#([a-zA-Z0-9_]+)/g)].map((m) => m[1]);
+  const mentions = [...text.matchAll(/@([a-zA-Z0-9_]+)/g)].map((m) => m[1]);
+  let cmd = `post --user=@${username}`;
+  if (repo) cmd += ` --repo=${repo.owner}/${repo.name}`;
+  if (tags.length) cmd += ` --tags=${tags.join(',')}`;
+  if (mentions.length) cmd += ` --mention=${mentions.join(',')}`;
+  if (lang && lang !== 'auto') cmd += ` --lang=${lang}`;
+  const body = text.trim().replace(/\n+/g, ' ');
+  cmd += ` ¶ ${body}`;
+  return cmd;
+}
 
 const ACCEPT = 'image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime';
 
@@ -23,6 +36,12 @@ export default function CreatePostPage() {
   const [repoInput, setRepoInput] = useState('');
   const [showRepo, setShowRepo] = useState(false);
   const [posted, setPosted] = useState(false);
+  const [showCliPreview, setShowCliPreview] = useState(false);
+
+  const cliPreview = useMemo(() => {
+    if (!draft.trim() || !user) return '';
+    return buildCliPreview(user.username, draft, attachedRepo, selectedLang);
+  }, [draft, user, attachedRepo, selectedLang]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -162,7 +181,10 @@ export default function CreatePostPage() {
 
         {/* Repo input */}
         {showRepo && (
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center border border-[var(--border)]/40 bg-[var(--bg-elevated)] px-3 py-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="text-[var(--accent-blue)] shrink-0">
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+            </svg>
             <input
               type="text"
               value={repoInput}
@@ -171,12 +193,25 @@ export default function CreatePostPage() {
                 if (e.key === 'Enter') handleRepoAttach();
                 if (e.key === 'Escape') setShowRepo(false);
               }}
-              placeholder="owner/repo"
+              placeholder="owner/repo 또는 github.com/owner/repo"
               autoFocus
-              className="flex-1 bg-[var(--bg-elevated)] border border-[var(--border)]/60 text-[var(--text)] font-mono text-sm px-3 py-2 outline-none focus:border-[var(--accent-blue)]/60"
+              className="flex-1 bg-transparent text-[var(--text)] font-mono text-[13px] outline-none placeholder:text-[var(--text-faint)]/50"
             />
-            <button onClick={handleRepoAttach} className="text-[var(--accent-blue)] font-mono text-sm px-2 py-2">↵</button>
-            <button onClick={() => setShowRepo(false)} className="text-[var(--text-faint)] font-mono text-sm py-2 px-1">×</button>
+            <button onClick={handleRepoAttach} className="text-[var(--accent-blue)] font-mono text-[12px] px-2 hover:text-blue-300 transition-colors">attach ↵</button>
+            <button onClick={() => setShowRepo(false)} className="text-[var(--text-faint)] hover:text-[var(--text)] font-mono text-sm px-1">×</button>
+          </div>
+        )}
+
+        {/* CLI Preview */}
+        {cliPreview && showCliPreview && (
+          <div className="bg-[var(--bg-void)] border border-[var(--border)]/30 px-3 py-2.5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[var(--text-faint)] font-mono text-[10px] uppercase tracking-wider">CLI preview</span>
+              <div className="flex-1 h-px bg-[var(--border)]/20" />
+            </div>
+            <p className="font-mono text-[11px] text-[var(--accent-green)] break-all leading-relaxed whitespace-pre-wrap">
+              <span className="text-[var(--text-faint)]">$ </span>{cliPreview}
+            </p>
           </div>
         )}
 
@@ -240,23 +275,41 @@ export default function CreatePostPage() {
           </button>
           <input ref={fileInputRef} type="file" accept={ACCEPT} multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
 
-          {/* Repo */}
+          {/* Repo attach */}
           <button
             onClick={() => setShowRepo((v) => !v)}
-            className={`p-2.5 transition-colors rounded-full ${
+            className={`flex items-center gap-1 px-2 py-1.5 font-mono text-[11px] transition-colors ${
               showRepo || attachedRepo
-                ? 'text-[var(--accent-blue)] bg-[var(--accent-blue)]/10'
-                : 'text-[var(--text-faint)] hover:text-[var(--text-muted)] hover:bg-white/5'
+                ? 'text-[var(--accent-blue)]'
+                : 'text-[var(--text-faint)] hover:text-[var(--text-muted)]'
             }`}
             aria-label="GitHub 저장소 첨부"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
             </svg>
+            <span className="hidden sm:inline">repo</span>
           </button>
 
+          {/* CLI preview toggle */}
+          {cliPreview && (
+            <button
+              onClick={() => setShowCliPreview((v) => !v)}
+              className={`flex items-center gap-1 px-2 py-1.5 font-mono text-[11px] transition-colors ${
+                showCliPreview
+                  ? 'text-[var(--accent-green)]'
+                  : 'text-[var(--text-faint)] hover:text-[var(--text-muted)]'
+              }`}
+              aria-label="CLI 미리보기"
+            >
+              <span>{showCliPreview ? '▼' : '▶'}</span>
+              <span className="hidden sm:inline">CLI</span>
+            </button>
+          )}
+
           {/* Language — right side */}
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-1">
+            <span className="text-[var(--text-faint)] font-mono text-[10px] hidden sm:inline">lang</span>
             <select
               value={selectedLang}
               onChange={(e) => setLang(e.target.value)}

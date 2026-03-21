@@ -11,35 +11,10 @@
 
 <br/>
 
-## What is CLItoris?
-
-# Analyze any GitHub repo with AI. Share the results with developers who care.
-
-Point CLItoris at any public GitHub repository. AI breaks it down — architecture, stack, strengths, risks, improvement paths. You get a structured report, a PPTX deck, or an animated video walkthrough.
-
-Then share it. Others discover it in the feed. They discuss it, star it, fork it.
-
-**Repo analysis is the content. The social feed is the distribution.**
-
-<br/>
-
-<div align="center">
-<table>
-  <tr>
-    <td align="center"><strong>Connects<br/>with</strong></td>
-    <td align="center">🐙<br/><sub><strong>GitHub</strong><br/>OAuth · Stars<br/>Issues · PRs<br/>Webhooks</sub></td>
-    <td align="center">🟣<br/><sub><strong>Anthropic</strong><br/>Claude Sonnet<br/>Claude Haiku</sub></td>
-    <td align="center">🟢<br/><sub><strong>OpenAI</strong><br/>GPT-4o<br/>GPT-4o-mini</sub></td>
-    <td align="center">🔵<br/><sub><strong>Google</strong><br/>Gemini 2.5 Pro<br/>Gemini Flash</sub></td>
-    <td align="center">🦙<br/><sub><strong>Ollama</strong><br/>Llama · Mistral<br/>Any local model</sub></td>
-    <td align="center">🔀<br/><sub><strong>Routers</strong><br/>OpenRouter<br/>Together · Groq<br/>Cerebras</sub></td>
-    <td align="center">🤖<br/><sub><strong>AI Agents</strong><br/>OpenClaw · Dify<br/>Coze · Custom</sub></td>
-  </tr>
-</table>
-
-<em>If it has an API, it runs analysis. If it runs locally, even better. If it's an agent, chat with it.</em>
-
-</div>
+<p align="center">
+  <strong>AI repo analysis. Your agents. Developer social.</strong><br/>
+  <sub>terminal.social — the network built for people who read source code.</sub>
+</p>
 
 <br/>
 
@@ -47,10 +22,59 @@ Then share it. Others discover it in the feed. They discuss it, star it, fork it
 
 <br/>
 
-## How repo analysis works
+## Philosophy
+
+Most developer tools treat social as an afterthought. Most social networks treat developers as users, not creators.
+
+CLItoris starts from a different premise:
+
+**The most interesting thing a developer can share isn't an opinion. It's a codebase breakdown.**
+
+When you analyze a repo with AI, you generate something genuinely useful — architecture maps, risk assessments, tech stack clarity. That's real signal. That's worth sharing. That's what the feed should be full of.
+
+Everything else follows from this:
+
+- **GitHub is your identity** — not just your login. Your stars, your forks, your contribution history, your follow graph. You don't create a profile on CLItoris. You bring your GitHub and it becomes your profile.
+- **Your key, your model** — We don't proxy your AI calls or store your prompts. You bring your own API key for analysis. You choose the model. You can run the whole thing on Ollama and nothing ever leaves your machine.
+- **No algorithm** — The feed shows what people posted, in order, with no engagement optimization. The content that surfaces is the content that developers find worth sharing.
+- **CLI vocabulary everywhere** — `fork` not retweet. `star` not like. `grep` not search. `$ post --new` not compose. This isn't aesthetic. It's about speaking the right language to the right people.
+- **Open by default** — MIT license. Self-hosted on SQLite. No vendor lock-in. Run your own instance.
+
+> *"The terminal is where real work happens. The feed should be too."*
+
+<br/>
+
+---
+
+<br/>
+
+## What CLItoris does
+
+```
+$ analyze --repo=vercel/next.js     → AI breakdown: arch, stack, risks, improvements
+$ chat --agent=openrouter           → stream responses from any AI agent or model
+$ post --new                        → write a post; CLI format auto-generated, no AI key needed
+$ feed --global                     → discover what developers are analyzing and sharing
+$ explore                           → trending analyses, repos, tags
+$ gh --status                       → your GitHub universe in one place
+$ msg --inbox                       → direct messages, real-time
+$ log --activity                    → your GitHub activity as a social timeline
+$ grep                              → full-text search across posts, users, repos, tags
+$ rank --board                      → influence leaderboard
+```
+
+<br/>
+
+---
+
+<br/>
+
+## `$ analyze` — AI Repo Analysis
+
+The primary feature. Point CLItoris at any public GitHub repo.
 
 ```bash
-$ analyze --repo=vercel/next.js --output=report
+$ analyze --repo=vercel/next.js --output=report --model=claude-sonnet-4-6
 ```
 
 ```
@@ -61,15 +85,42 @@ $ analyze --repo=vercel/next.js --output=report
 > Generating insights...                   ░░░░░░░░░░  active
 ```
 
-Choose your output:
+**Three output types:**
 
 | Output | What you get |
 |--------|-------------|
-| `--output=report` | Structured markdown — stack, architecture, strengths, risks, improvements |
-| `--output=pptx` | 5-slide terminal-themed deck, ready to present |
-| `--output=video` | Animated HTML walkthrough, no ffmpeg required |
+| `--output=report` | Structured markdown: Executive Summary, Tech Stack, Architecture, Strengths, Risks, Improvements |
+| `--output=pptx` | 5-slide terminal-themed deck — ready to present to your team |
+| `--output=video` | Animated HTML walkthrough — self-contained, no ffmpeg, sharable as a file |
 
-Then review, edit your caption, and post it to the feed. Others discover it. Discussion happens.
+After analysis, review the result, edit your caption, and post it to the feed. Others discover it, discuss it, star it, fork it for their own analysis.
+
+**Repo URL shortcuts:**
+```
+--repo=vercel/next.js
+--repo=https://github.com/vercel/next.js
+```
+
+**Custom focus prompt:**
+Upload a `.md` file to guide the AI toward what you care about — security, performance, scalability, accessibility. The analysis adapts to your lens.
+
+### 9+ AI providers — your key, your model
+
+<div align="center">
+<table>
+  <tr>
+    <td align="center">🟣<br/><sub><strong>Anthropic</strong><br/>Claude Sonnet 4.6<br/>Claude Haiku 4.5</sub></td>
+    <td align="center">🟢<br/><sub><strong>OpenAI</strong><br/>GPT-4o<br/>GPT-4o-mini</sub></td>
+    <td align="center">🔵<br/><sub><strong>Google</strong><br/>Gemini 2.5 Pro<br/>Gemini Flash</sub></td>
+    <td align="center">🦙<br/><sub><strong>Ollama</strong><br/>Llama · Mistral<br/>Qwen · any local</sub></td>
+    <td align="center">🔀<br/><sub><strong>OpenRouter</strong><br/>200+ models<br/>one endpoint</sub></td>
+    <td align="center">⚡<br/><sub><strong>Groq</strong><br/>Together AI<br/>Cerebras</sub></td>
+    <td align="center">🔌<br/><sub><strong>Custom</strong><br/>Any OpenAI-compatible<br/>endpoint</sub></td>
+  </tr>
+</table>
+</div>
+
+Run with Ollama → zero data leaves your machine. Full analysis, full privacy.
 
 <br/>
 
@@ -77,25 +128,118 @@ Then review, edit your caption, and post it to the feed. Others discover it. Dis
 
 <br/>
 
-## The social layer
+## `$ chat` — Your AI Agents, Unified
 
-Analysis results become social content. The feed is where developers discover repos worth their time.
+You already use multiple AI tools. CLItoris brings them into one terminal-aesthetic interface.
 
-```
-┌─ What GitHub shows ────────────────┐  ┌─ What CLItoris shows ──────────────┐
-│                                    │  │                                    │
-│  vercel/next.js                    │  │  "Analyzed next.js — the RSC       │
-│  ★ 127k  🍴 27k                    │  │   implementation is cleaner than   │
-│  TypeScript · MIT                  │  │   I expected. Surprisingly thin    │
-│                                    │  │   abstraction layers. #nextjs"     │
-│  (that's all you get)              │  │                                    │
-└────────────────────────────────────┘  └────────────────────────────────────┘
+```bash
+$ agent --connect
 ```
 
-Posts use a CLI format that's generated automatically — no AI key required for writing:
+**Connect external AI agents:**
+
+| Agent | What it is |
+|-------|-----------|
+| **OpenClaw** | Claude-based agent with tool use and long-context support |
+| **Dify** | Visual workflow agent builder — connect your published apps |
+| **Coze** | Bytedance's agent platform with plugin ecosystem |
+| **Custom** | Any agent with an HTTP endpoint — your own, your company's |
+
+**Or connect providers directly:**
+```bash
+$ agent --provider=anthropic  --model=claude-opus-4-6
+$ agent --provider=openai     --model=gpt-4o
+$ agent --provider=gemini     --model=gemini-2.5-pro
+$ agent --provider=ollama     --model=llama3.2
+$ agent --provider=openrouter --model=<any>
+$ agent --provider=groq       --model=<any>
+```
+
+**What you get:**
+- Streaming responses — text appears as it generates
+- Persistent conversation history per agent
+- Switch between agents without losing context
+- Mobile-optimized chat interface
+
+You bring the agents. CLItoris gives them a home.
+
+<br/>
+
+---
+
+<br/>
+
+## `$ post --new` — The Composer
+
+Writing a post in CLItoris is different from any other social platform.
+
+```bash
+$ post --new
+```
+
+**As you type, the CLI format builds itself:**
+```
+$ post --user=@you --repo=vercel/next.js --tags=nextjs,architecture --lang=en ¶ Analyzed next.js...
+```
+
+This is generated live, shown as a preview below your text — so you always see exactly what the post will look like in its CLI representation. No AI key needed. The server auto-generates this format from your plaintext.
+
+**What you can attach:**
+- **GitHub repo** — type `owner/repo` or paste a full `github.com/...` URL. The repo appears as a chip; it's included in the CLI format automatically.
+- **Images & video** — upload up to 4 files. Paste from clipboard directly. Drag and drop.
+- **@mentions** — user autocomplete as you type. Mentioned users get notified.
+- **#hashtags** — inline. Tags are extracted and indexed automatically.
+- **Language** — `auto`, `en`, `ko`, `zh`, `ja`. Controls how the post is stored and translated.
+
+**How the CLI format works:**
+Every post has two representations — your natural language text and the auto-generated CLI format. Both are stored. Both are visible in the feed. The CLI format is generated by the server from your text, extracted tags, mentions, and attached repo. You never write the CLI string yourself.
+
+<br/>
+
+---
+
+<br/>
+
+## `$ feed` — What Developers Are Building
+
+The feed is where analysis results, GitHub activity, and developer thoughts surface.
+
+```bash
+$ feed --global     # Everyone's posts
+$ feed --local      # People you follow
+```
 
 ```
-post --user=@jiyeon_kim --tags=nextjs,architecture ¶ Analyzed next.js — the RSC...
+┌─ GitHub shows ──────────────────────┐  ┌─ CLItoris shows ───────────────────┐
+│  vercel/next.js                     │  │  "Analyzed next.js — RSC impl is   │
+│  ★ 127k  🍴 27k  TypeScript         │  │   cleaner than expected. Thin       │
+│                                     │  │   abstractions. Worth reading.      │
+│  (that's all you get)               │  │   #nextjs #architecture"            │
+└─────────────────────────────────────┘  └────────────────────────────────────┘
+```
+
+**Dual-format posts** — every post shows both the natural language version and the CLI version. Toggle between them.
+
+**Social actions — all using Git vocabulary:**
+
+| Action | What it does |
+|--------|-------------|
+| **Star** `s` | Bookmark the post. Author gets notified. Appears in your starred tab. |
+| **Fork** | Repost it with your own take. Creates a linked fork post. |
+| **Quote** | Quote the post and add your own commentary. |
+| **Reply** `r` | Thread-style reply. Nested conversations. |
+| **React** | 8 code-review-style reactions: `lgtm` `ship_it` `fire` `bug` `thinking` `rocket` `eyes` `heart` |
+
+**Keyboard shortcuts:**
+```
+j / k      navigate up/down
+s          star focused post
+r          reply
+o          open post detail
+g g        go to global feed
+g l        go to local feed
+g a        go to analyze
+?          show all shortcuts
 ```
 
 <br/>
@@ -104,29 +248,17 @@ post --user=@jiyeon_kim --tags=nextjs,architecture ¶ Analyzed next.js — the R
 
 <br/>
 
-## CLItoris is right for you if
+## `$ explore` — Discover
 
-- ✅ You want to **understand repos faster** — not just read READMEs
-- ✅ You want AI-generated analysis you can **share and discuss** with other developers
-- ✅ You code every day and want your **GitHub activity to have a social layer**
-- ✅ You want to **share the story behind the code** — not just the diff
-- ✅ You want a social network where **fork** means fork, **star** means star, and **identity** means GitHub
-- ✅ You hate touching the mouse — **keyboard-first navigation** (`j`/`k`/`s`/`r`/`?`)
-- ✅ You want to run LLMs **locally** with Ollama for full privacy
-- ✅ You want to **chat with AI agents** (OpenClaw, Dify, Coze) from one place
-- ✅ You want a **mobile-first** terminal social experience
+```bash
+$ explore
+```
 
-<br/>
-
-## What GitHub doesn't do — CLItoris does
-
-| GitHub | CLItoris |
-|--------|----------|
-| Shows a star count. Tells you nothing about what the repo actually does. | **AI analyzes it** — architecture, stack, strengths, risks, what to improve. |
-| Shows a green contribution grid. Nobody knows what those squares mean. | Every push, PR, and release becomes a **social post** with your commentary. |
-| PRs are for code review. Not for sharing what you learned. | Add **your voice** — what you were thinking, what broke, what you're proud of. |
-| Stars are silent. You star a repo and nothing happens socially. | Star a post and the author gets notified. Your stars become part of your social profile. |
-| No way to discuss repos outside of Issues. | **Attach repos to posts**. Analyze them with AI. Share reports as social content. |
+- **Trending analyses** — most starred/discussed analysis posts this week
+- **Trending repos** — repos most frequently analyzed on CLItoris
+- **Trending tags** — hashtags with the most activity
+- **Suggested users** — developers to follow based on your interests
+- **GitHub trending** — pull GitHub's trending repos directly, analyze any with one click
 
 <br/>
 
@@ -134,44 +266,41 @@ post --user=@jiyeon_kim --tags=nextjs,architecture ¶ Analyzed next.js — the R
 
 <br/>
 
-## GitHub activity → Social content
+## `$ gh --status` — GitHub, Deeply Integrated
 
-Your coding life automatically becomes social content. No copy-paste, no manual posting.
+CLItoris treats GitHub as infrastructure, not just an auth provider.
+
+```bash
+$ gh --status
+```
+
+**Webhook auto-posting:**
+Set up a GitHub webhook once. Every push to main, every merged PR, every release — automatically becomes a CLItoris post. Add hashtags, mention teammates, write context. Your coding life becomes a feed without manual effort.
+
+```
+push → main @ vercel/next.js            → post --type=push --repo=vercel/next.js ¶ ...
+PR merged: "Add RSC streaming support"  → post --type=pr_merge --pr=12847 ¶ ...
+Release: v15.0.0                        → post --type=release --tag=v15.0.0 ¶ ...
+```
+
+**Activity import:**
+Don't want to set up a webhook? Click "Sync GitHub" to import your recent events — pushes, PRs, releases, stars, forks — all become posts with one click.
+
+**What's inside `$ gh --status`:**
 
 <div align="center">
 <table>
 <tr>
-<td align="center" width="33%">
-<h3>⚡ Auto-Post</h3>
-Push to main, merge a PR, publish a release — CLItoris automatically posts it to your feed. Set up a webhook once, forget about it.
-</td>
-<td align="center" width="33%">
-<h3>📥 Activity Import</h3>
-Sync your recent GitHub events with one click. Pushes, PRs, releases, stars, forks — all become posts.
-</td>
-<td align="center" width="33%">
-<h3>💬 Add Your Voice</h3>
-Write what you were thinking, what you learned, what broke. No AI key required — CLI format is generated automatically.
-</td>
-</tr>
-</table>
-</div>
-
-### Full GitHub integration
-
-<div align="center">
-<table>
-<tr>
-<td align="center"><strong>🌱 Contribution<br/>Graph</strong><br/><sub>Your grass heatmap<br/>on your profile</sub></td>
-<td align="center"><strong>👥 Follow<br/>Sync</strong><br/><sub>Auto-follow GitHub<br/>friends on CLItoris</sub></td>
-<td align="center"><strong>📊 Activity<br/>Feed</strong><br/><sub>Day-grouped, collapsible<br/>events with filters</sub></td>
-<td align="center"><strong>🔔 Notifications</strong><br/><sub>GitHub notifications<br/>in-app</sub></td>
+<td align="center"><strong>🌱 Contribution<br/>Graph</strong><br/><sub>Your full heatmap on your profile.<br/>Hover any day to see what you shipped.</sub></td>
+<td align="center"><strong>👥 Follow<br/>Sync</strong><br/><sub>Auto-follow your GitHub network.<br/>People you follow on GitHub, follow here.</sub></td>
+<td align="center"><strong>🔔 Notifications</strong><br/><sub>GitHub notifications in-app.<br/>Mark read, jump to thread.</sub></td>
+<td align="center"><strong>⭐ Stars</strong><br/><sub>Browse your GitHub starred repos.<br/>Analyze any of them instantly.</sub></td>
 </tr>
 <tr>
-<td align="center"><strong>🪝 Webhook<br/>Auto-Post</strong><br/><sub>Push, merge, release<br/>→ instant post</sub></td>
-<td align="center"><strong>⭐ Stars</strong><br/><sub>Browse your<br/>GitHub starred repos</sub></td>
-<td align="center"><strong>📋 Issues &<br/>PR Reviews</strong><br/><sub>Track assigned issues<br/>and review requests</sub></td>
-<td align="center"><strong>🔑 Identity</strong><br/><sub>GitHub = CLItoris<br/>No separate account</sub></td>
+<td align="center"><strong>📋 Issues</strong><br/><sub>Issues assigned to you.<br/>Filtered by repo.</sub></td>
+<td align="center"><strong>🔍 PR Reviews</strong><br/><sub>Pull requests waiting for<br/>your review.</sub></td>
+<td align="center"><strong>🔍 Repo Search</strong><br/><sub>Search GitHub repositories.<br/>One-click analyze.</sub></td>
+<td align="center"><strong>📈 Trending</strong><br/><sub>GitHub trending repos by language.<br/>Analyze what's hot.</sub></td>
 </tr>
 </table>
 </div>
@@ -182,63 +311,185 @@ Write what you were thinking, what you learned, what broke. No AI key required �
 
 <br/>
 
-## More than analysis — a full social network
+## `$ msg --inbox` — Direct Messages
 
-<table>
-<tr>
-<td align="center" width="33%">
-<h3>📊 Repo Analysis</h3>
-Analyze any public GitHub repo with AI. Architecture reports, PPTX decks, animated HTML walkthroughs. Review before posting.
-</td>
-<td align="center" width="33%">
-<h3>🤖 9+ AI Providers</h3>
-Claude, GPT-4o, Gemini, Ollama, OpenRouter, Together, Groq, Cerebras, or any OpenAI-compatible endpoint. Your key, your model.
-</td>
-<td align="center" width="33%">
-<h3>💬 AI Agent Chat</h3>
-Connect external AI agents (OpenClaw, Dify, Coze) and chat with them directly inside CLItoris. Streaming responses.
-</td>
-</tr>
-<tr>
-<td align="center">
-<h3>🖥️ Auto CLI Format</h3>
-Every post gets a CLI representation automatically — no AI key needed. Server generates <code>post --user=@x ¶ ...</code> from your text.
-</td>
-<td align="center">
-<h3>📱 Mobile + Desktop</h3>
-Mobile: bottom nav, center <code>+</code> button for analyze/write. Desktop: sidebar navigation, modal composer, <code>$ post --new</code> in the command list.
-</td>
-<td align="center">
-<h3>📣 Activity Feed</h3>
-Day-grouped events (Today / Yesterday / This week). Consecutive GitHub events collapsed. Filter by all / social / github.
-</td>
-</tr>
-<tr>
-<td align="center">
-<h3>⌨️ Keyboard-First</h3>
-<code>j</code>/<code>k</code> navigate, <code>s</code> star, <code>r</code> reply, <code>/</code> compose. No mouse needed.
-</td>
-<td align="center">
-<h3>🌍 4 Languages</h3>
-Full UI in English, Korean, Chinese, Japanese. Write posts in any language.
-</td>
-<td align="center">
-<h3>✉️ Direct Messages</h3>
-Send private messages to any user. Real-time conversation threads. Mobile-optimized inbox.
-</td>
-</tr>
-</table>
+```bash
+$ msg --inbox
+$ msg --to=@username
+```
+
+- Private 1-on-1 conversations with any user
+- Real-time message delivery
+- Unread count badge in navigation
+- Mobile-optimized inbox and thread view
+- Conversation history persisted
 
 <br/>
 
-## Social, the developer way
+---
 
-| Instead of... | You... | Like... |
-|---------------|--------|---------|
-| Retweet | **Fork** | Forking a repo |
-| Like | **Star** | Starring a repo |
-| Quote tweet | **Quote** | Quoting a commit message |
-| React | **React** with `lgtm` `ship_it` `fire` `bug` `thinking` `rocket` `eyes` `heart` | Code review reactions |
+<br/>
+
+## `$ log --activity` — Your Timeline
+
+```bash
+$ log --activity
+```
+
+Your GitHub activity as a social timeline — not a raw event dump.
+
+- **Day-grouped** — Today / Yesterday / This week / Earlier
+- **Smart collapse** — 7 consecutive pushes to the same repo → one line with count
+- **Filter tabs** — All / Social (CLItoris posts) / GitHub (raw events)
+- **Avatar + color badges** — `push` `pr_merge` `release` `star` `fork` each have distinct visual treatment
+- **Expandable** — click any collapsed group to see each individual event
+
+<br/>
+
+---
+
+<br/>
+
+## `$ grep` — Search
+
+```bash
+$ grep "next.js architecture"
+$ grep --tag=rustlang
+$ grep --user=@username
+```
+
+Full-text search across:
+- Post content (both natural language and CLI format)
+- Usernames and display names
+- Attached repo names
+- Hashtags
+
+Powered by SQLite FTS5 — instant results, no external search service.
+
+<br/>
+
+---
+
+<br/>
+
+## `$ rank --board` — Influence
+
+```bash
+$ rank --board
+```
+
+**Influence score** is calculated from:
+- Posts published
+- Stars received on posts
+- Forks of your posts
+- Followers
+- GitHub contribution activity
+
+Leaderboard updates in real-time. Appears on your profile. Not gamified for engagement — reflects genuine developer contribution and sharing.
+
+<br/>
+
+---
+
+<br/>
+
+## User Profile — `/@username`
+
+```bash
+$ profile --user=@username
+```
+
+Every profile is a GitHub identity:
+- **Posts tab** — everything they've shared
+- **Starred tab** — posts they've starred (public)
+- **Repos tab** — their GitHub repositories with stats
+- **API tab** (self only) — manage your LLM provider keys
+- **Contribution graph** — full GitHub heatmap
+- **Influence score** — visible on profile
+- **Follow / Message** — from the profile header
+- **GitHub link** — direct link to their GitHub profile
+
+<br/>
+
+---
+
+<br/>
+
+## Settings
+
+- **Profile** — display name, bio, avatar
+- **API keys** — add/remove provider keys for Claude, GPT-4o, Gemini, Ollama, OpenRouter, custom endpoints
+- **GitHub** — webhook setup guide, sync controls
+- **AI Agents** — connect OpenClaw, Dify, Coze, or custom agent endpoints
+- **Language** — UI language: en / ko / zh / ja
+
+<br/>
+
+---
+
+<br/>
+
+## The full feature list
+
+| Command | Feature | Notes |
+|---------|---------|-------|
+| `$ analyze` | AI repo analysis | report / pptx / video output |
+| | 9+ LLM providers | Claude, GPT-4o, Gemini, Ollama, OpenRouter, Groq, Together, Cerebras, custom |
+| | Custom focus prompt | Upload .md to guide analysis direction |
+| | Share review step | Edit caption before posting to feed |
+| `$ chat` | AI agent chat | OpenClaw, Dify, Coze, custom HTTP agents |
+| | Direct provider chat | Claude, GPT-4o, Gemini, Ollama, OpenRouter, Groq |
+| | Streaming responses | SSE streaming, real-time text output |
+| `$ post --new` | Post composer | Natural language + auto CLI format |
+| | CLI live preview | See `post --user=@x ¶ ...` build as you type |
+| | GitHub repo attach | `owner/repo` or full GitHub URL |
+| | Media upload | Images + video, up to 4 files, paste from clipboard |
+| | @mention autocomplete | Type `@` → user search dropdown |
+| | #hashtag indexing | Auto-extracted, auto-indexed |
+| | Language selection | auto / en / ko / zh / ja |
+| `$ feed` | Global feed | All users' posts |
+| | Local feed | Following only |
+| | Dual-format posts | Natural language + CLI representation, toggle |
+| | Star `s` | Bookmark, notifies author |
+| | Fork | Repost with your own take |
+| | Quote | Quote post + commentary |
+| | Reply `r` | Threaded replies |
+| | React | 8 reactions: lgtm ship_it fire bug thinking rocket eyes heart |
+| | Keyboard nav | j/k navigate, s star, r reply, o open, g-chord routing, ? help |
+| `$ explore` | Trending analyses | Most starred analysis posts |
+| | Trending repos | Most analyzed repos |
+| | Trending tags | Most active hashtags |
+| | GitHub trending | Pull GitHub trending, one-click analyze |
+| | Suggested users | Recommended follows |
+| `$ gh --status` | Webhook auto-post | push / PR merge / release → instant post |
+| | Activity import | One-click sync of recent GitHub events |
+| | Contribution graph | Full heatmap on profile |
+| | Follow sync | Auto-follow GitHub network |
+| | Notifications | GitHub notifications in-app |
+| | Stars browser | Browse starred repos, analyze any |
+| | Issues | Assigned issues list |
+| | PR reviews | Pending review requests |
+| | Repo search | GitHub search + trending |
+| `$ msg --inbox` | Direct messages | Real-time, private, threaded |
+| `$ log --activity` | Activity feed | Day-grouped, smart collapse, all/social/github filter |
+| `$ grep` | Full-text search | Posts, users, repos, tags — SQLite FTS5 |
+| `$ rank --board` | Influence score + leaderboard | Posts + stars + forks + followers |
+| `/@username` | User profile | Posts / Starred / Repos / API tabs |
+| | Contribution graph | Full GitHub heatmap |
+| `/settings` | API key management | Per-provider key storage |
+| | Agent management | Connect external agents |
+| | Webhook setup | GitHub webhook guide |
+| General | GitHub OAuth identity | No separate account |
+| | 4 UI languages | en / ko / zh / ja |
+| | Mobile bottom nav | PWA-ready, App Store coming |
+| | Desktop sidebar nav | Keyboard-first |
+| | Dark terminal aesthetic | JetBrains Mono, #0d1117 base |
+| | Self-hosted | SQLite, no external DB required |
+| | Open source | MIT license |
+
+<br/>
+
+---
 
 <br/>
 
@@ -262,41 +513,41 @@ Send private messages to any user. Real-time conversation threads. Mobile-optimi
 <tr>
 <td align="center" width="50%">
 <p><strong>Profile</strong><br/><sub>Contribution graph, influence score, agent chat, messages, GitHub.</sub></p>
-<img src="docs/screens/모바일1.png" width="300" alt="CLItoris mobile: profile with contribution graph and influence" />
+<img src="docs/screens/모바일1.png" width="300" alt="CLItoris mobile: profile" />
 </td>
 <td align="center" width="50%">
 <p><strong>Agent connect</strong><br/><sub><code>$ agent --connect</code> — OpenClaw, Dify, Coze, OpenAI, Anthropic, Ollama, custom.</sub></p>
-<img src="docs/screens/모바일2.png" width="300" alt="CLItoris mobile: AI agent provider setup" />
+<img src="docs/screens/모바일2.png" width="300" alt="CLItoris mobile: agent setup" />
 </td>
 </tr>
 <tr>
 <td align="center" width="50%">
-<p><strong>Repo analysis</strong><br/><sub><code>$ analyze</code> — pick report, PPTX, or video; review before posting to feed.</sub></p>
-<img src="docs/screens/모바일3.png" width="300" alt="CLItoris mobile: analyze GitHub repository" />
+<p><strong>Repo analysis</strong><br/><sub><code>$ analyze</code> — report, PPTX, or video. Review before posting.</sub></p>
+<img src="docs/screens/모바일3.png" width="300" alt="CLItoris mobile: analyze" />
 </td>
 <td align="center" width="50%">
-<p><strong>Global feed</strong><br/><sub><code>grep</code> search, <code>--global</code> / <code>--local</code>, dual-format posts.</sub></p>
-<img src="docs/screens/모바일4.png" width="300" alt="CLItoris mobile: global feed and search" />
-</td>
-</tr>
-<tr>
-<td align="center" width="50%">
-<p><strong>New post</strong><br/><sub><code>$ post --new</code> — write freely, server auto-generates CLI format. No AI key needed.</sub></p>
-<img src="docs/screens/모바일5.png" width="300" alt="CLItoris mobile: new post composer" />
-</td>
-<td align="center" width="50%">
-<p><strong>GitHub explore</strong><br/><sub><code>$ gh search --trending</code> — trending repos, filters, search.</sub></p>
-<img src="docs/screens/모바일6.png" width="300" alt="CLItoris mobile: GitHub explore and trending" />
+<p><strong>Global feed</strong><br/><sub><code>grep</code> search, dual-format posts, star, fork, react.</sub></p>
+<img src="docs/screens/모바일4.png" width="300" alt="CLItoris mobile: feed" />
 </td>
 </tr>
 <tr>
 <td align="center" width="50%">
-<p><strong>Feed &amp; mentions</strong><br/><sub>Reply with <code>@</code> — user autocomplete on the go.</sub></p>
-<img src="docs/screens/모바일7.png" width="300" alt="CLItoris mobile: feed with mention autocomplete" />
+<p><strong>Post composer</strong><br/><sub><code>$ post --new</code> — write, attach repo, CLI preview auto-builds. No AI key needed.</sub></p>
+<img src="docs/screens/모바일5.png" width="300" alt="CLItoris mobile: composer" />
+</td>
+<td align="center" width="50%">
+<p><strong>GitHub explore</strong><br/><sub>Trending repos, one-click analyze, stars, notifications.</sub></p>
+<img src="docs/screens/모바일6.png" width="300" alt="CLItoris mobile: GitHub" />
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+<p><strong>Feed &amp; mentions</strong><br/><sub><code>@</code> autocomplete, reply threads, reactions.</sub></p>
+<img src="docs/screens/모바일7.png" width="300" alt="CLItoris mobile: feed mentions" />
 </td>
 <td align="center" width="50%">
 <p><strong>User profile</strong><br/><sub>Posts, starred, repos — follow, message, GitHub identity.</sub></p>
-<img src="docs/screens/모바일8.png" width="300" alt="CLItoris mobile: user profile and repos tab" />
+<img src="docs/screens/모바일8.png" width="300" alt="CLItoris mobile: profile" />
 </td>
 </tr>
 </table>
@@ -307,15 +558,26 @@ Send private messages to any user. Real-time conversation threads. Mobile-optimi
 
 <br/>
 
+## Who CLItoris is for
+
+- ✅ You want to **understand any repo in minutes**, not hours
+- ✅ You want to **share AI-generated analysis** with developers who care
+- ✅ You use multiple AI tools and want them **in one place**
+- ✅ You want to run **analysis locally with Ollama** — zero data leaves your machine
+- ✅ You code every day and want your **GitHub activity to have a social layer** — automatically
+- ✅ You want a network where **fork means fork**, **star means star**, and identity is GitHub
+- ✅ You hate the mouse — **keyboard-first** navigation everywhere
+- ✅ You want an **open source platform** you can self-host and own
+
 ## What CLItoris is not
 
-|  |  |
+| | |
 |--|--|
-| **Not another Twitter clone.** | No algorithmic feed. No ads. No engagement bait. Repo analysis and GitHub activity are the content. |
-| **Not a code editor.** | CLItoris is a social network, not an IDE. |
-| **Not cloud-only.** | Run LLMs locally with Ollama. Your data stays on your machine. |
-| **Not English-only.** | Write in Korean, Japanese, Chinese, or any language. |
-| **Not a closed platform.** | Open source. Self-hosted. Your data, your instance. |
+| **Not another Twitter clone** | No algorithmic feed. No ads. No engagement bait. Repo analysis and GitHub activity are the content. |
+| **Not a code editor** | Social network, not an IDE. |
+| **Not cloud-locked** | Ollama for local LLMs. Self-host the whole platform. SQLite — no managed DB required. |
+| **Not English-only** | Write in any language. UI in en / ko / zh / ja. |
+| **Not a walled garden** | MIT license. Open source. Fork it, run your own instance. |
 
 <br/>
 
@@ -325,67 +587,58 @@ Send private messages to any user. Real-time conversation threads. Mobile-optimi
 
 ## Quickstart
 
-Open source. Self-hosted. No CLItoris account required.
-
 ```bash
 git clone https://github.com/ccivlcid/CLItoris.git
 cd CLItoris
-cp .env.example .env          # Add GitHub OAuth credentials
+cp .env.example .env     # Add GitHub OAuth credentials
 pnpm install
 pnpm dev
 ```
 
-Open **http://localhost:7878** and connect with GitHub.
+Open **http://localhost:7878** → connect with GitHub.
 
-> **Requirements:** Node.js 18+, pnpm 8+, [GitHub OAuth App](https://github.com/settings/developers) (callback: `http://localhost:3771/api/auth/github/callback`)
+> **Requirements:** Node.js 18+, pnpm 8+, [GitHub OAuth App](https://github.com/settings/developers)
+> Callback URL: `http://localhost:3771/api/auth/github/callback`
 
 <br/>
 
 ## FAQ
 
-**How does GitHub activity become posts?**
-Two ways: (1) Set up a GitHub webhook — pushes, PR merges, and releases auto-post instantly. (2) Click "Sync GitHub" to import recent events manually.
-
 **Do I need an AI key?**
-For writing posts — no. CLI format is generated automatically by the server. For **repo analysis**, yes — add your API key (Anthropic, OpenAI, Gemini, or Ollama locally) in Settings → API.
+For **writing posts** — no. CLI format is generated server-side. For **repo analysis** — yes, add your key in `/@username?tab=api` (Claude, GPT-4o, Gemini, or Ollama locally). For **agent chat** — connect your provider key or an external agent endpoint.
 
-**What languages can I write in?**
-Any language. The UI itself supports English, Korean, Chinese, and Japanese.
+**How does GitHub activity become posts?**
+(1) Set up a GitHub webhook — pushes, PR merges, releases auto-post. (2) Click "Sync GitHub" to import recent events manually. Both methods produce real posts you can edit.
 
-**How is this different from Twitter/X?**
-The primary purpose is repo analysis, not microblogging. GitHub activity is the backbone. Identity is GitHub-only. Social actions use Git metaphors (fork, star). Terminal aesthetic. No algorithmic feed, no ads.
+**What AI agents can I connect?**
+OpenClaw, Dify, Coze, or any HTTP API. Also: Claude, GPT-4o, Gemini, Ollama directly. Run multiple simultaneously and switch between them in chat.
+
+**Can I analyze private repos?**
+Public repos only in the current version. Private repo analysis (with expanded OAuth scope) is planned for a future release.
 
 **Can I self-host?**
-Yes. Clone, configure `.env`, run `pnpm dev`. SQLite database — no external services required except GitHub OAuth.
+Yes. Clone, configure `.env`, `pnpm dev`. SQLite — no external services required beyond GitHub OAuth. See [CLAUDE.md](./CLAUDE.md) for the full dev guide.
 
 <br/>
 
 ## Development
 
 ```bash
-pnpm dev              # Full dev (client + server, watch mode)
-pnpm build            # Build all packages
-pnpm test             # Unit tests (Vitest)
-pnpm test:e2e         # E2E tests (Playwright)
-pnpm seed             # Load sample data
+pnpm dev        # Client + server (watch mode)
+pnpm build      # Build all packages
+pnpm test       # Vitest unit tests
+pnpm test:e2e   # Playwright E2E
+pnpm seed       # Load sample data
 ```
-
-See [CLAUDE.md](./CLAUDE.md) for the full development guide.
-
-<br/>
 
 ## Contributing
 
-We welcome contributions. Read the [project guide](./CLAUDE.md) and [conventions](./docs/guides/CONVENTIONS.md) first.
-
-<br/>
+Read [CLAUDE.md](./CLAUDE.md) and [CONVENTIONS.md](./docs/guides/CONVENTIONS.md) first.
 
 ## Community
 
-- [Discord](https://discord.gg/clitoris) — Join the community
+- [Discord](https://discord.gg/clitoris) — Community
 - [GitHub Issues](https://github.com/ccivlcid/CLItoris/issues) — Bugs and feature requests
-
-<br/>
 
 ## License
 
@@ -396,7 +649,7 @@ MIT
 ---
 
 <p align="center">
-  <sub>Understand any repo. Share what you find.</sub>
+  <sub>Understand any repo. Bring your agents. Share what you find.</sub>
 </p>
 
 <p align="center">

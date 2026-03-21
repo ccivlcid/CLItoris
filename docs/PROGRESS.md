@@ -1,7 +1,7 @@
 # PROGRESS.md — Development Status
 
 > **Source of truth** for development status, phase tracking, and decision log.
-> Last updated: 2026-03-21 (PC optimization audit)
+> Last updated: 2026-03-21 (APP_RELEASE.md — Android/iOS store release documentation)
 
 ---
 
@@ -82,6 +82,7 @@ Phase B1 entry point transition is now complete. Phase B2 and B3 are next.
 | Deep links | Planned | `terminal.social/*` → app |
 | Android Play Store | Planned | APK/AAB build + listing |
 | iOS App Store | Planned | IPA build + listing |
+| Release documentation | **Complete** | `docs/specs/APP_RELEASE.md` — full guide: Capacitor, signing, CI/CD, store submissions |
 
 ---
 
@@ -160,6 +161,9 @@ All documentation, configuration files, and project scaffolding.
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2026-03-21 | **MARKETING.md created** | Full marketing playbook: positioning, ICP, launch strategy (HN/PH/Reddit/Korean community), growth loops, SEO, metrics, budget guidance |
+| 2026-03-21 | **APP_RELEASE.md created** | Full Android + iOS release guide: Capacitor setup, keystore/cert, Fastlane CI/CD, Play Store + App Store submission steps, push notifications (FCM/APNs), deep links, Korean store listing text |
+| 2026-03-21 | **Logout moved to profile page** | Logout button shown only on own profile (`isSelf`); removed from MobileNav dropup and Sidebar |
 | 2026-03-21 | **Logout added to mobile + sidebar** | Mobile: ⏻ in + dropup; Desktop sidebar: ⏻ button next to username |
 | 2026-03-21 | **README / README_ko sync** | Rewritten to reflect B-plan: Repo Analysis Platform hero, LLM-free posting, activity feed redesign, mobile/desktop nav changes |
 | 2026-03-21 | **Post creation 500 fix** | llm_model NOT NULL constraint — removed from INSERT, uses DEFAULT 'claude-sonnet' |
