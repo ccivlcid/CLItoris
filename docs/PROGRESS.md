@@ -1,14 +1,14 @@
 # PROGRESS.md — Development Status
 
 > **Source of truth** for development status, phase tracking, and decision log.
-> Last updated: 2026-03-23 (Phase B3 — Mobile Web Completion + PWA)
+> Last updated: 2026-03-23 (Phase B4 — App Store Release)
 
 ---
 
-## Current Phase: B-plan — Phase B3 (Complete)
+## Current Phase: B-plan — Phase B4 (Complete)
 
 A-plan (SNS-focused) Phases 0–6 are complete. Product direction pivoted to B-plan (Developer SNS with Repo Analysis).
-Phase B1–B3 complete. Phase B4 (App Store Release) is next.
+Phase B1–B4 complete. Phase B5 (Backend Scaling) is next.
 
 ---
 
@@ -19,7 +19,7 @@ Phase B1–B3 complete. Phase B4 (App Store Release) is next.
 | Phase B1 | Entry Point Transition | **Complete** |
 | Phase B2 | Analysis Result Enhancement | **Complete** |
 | Phase B3 | Mobile Web Completion + PWA | **Complete** |
-| Phase B4 | App Store Release (Capacitor) | Planned |
+| Phase B4 | App Store Release (Capacitor) | **Complete** |
 | Phase B5 | Backend Scaling (Worker + Postgres) | Planned |
 | Phase B6 | Extended Features | Planned |
 
@@ -81,15 +81,19 @@ Phase B1–B3 complete. Phase B4 (App Store Release) is next.
 
 ---
 
-## Phase B4 — App Store Release (Planned)
+## Phase B4 — App Store Release (Complete)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Capacitor integration | Planned | Wrap web app as native shell |
-| Push notifications | Planned | FCM (Android) / APNs (iOS) |
-| Deep links | Planned | `terminal.social/*` → app |
-| Android Play Store | Planned | APK/AAB build + listing |
-| iOS App Store | Planned | IPA build + listing |
+| Capacitor integration | **Complete** | `@capacitor/core` + 8 plugins installed; `capacitor.config.ts` created |
+| Native plugin integration | **Complete** | `lib/native.ts` — StatusBar, SplashScreen, Haptics, Keyboard, Share, Clipboard, App |
+| Push notifications | **Complete** | Token registration API (`POST /api/notifications/push-token`); DB migration 028; native listener in `initPushNotifications` |
+| Deep links | **Complete** | `/.well-known/assetlinks.json` (Android) + `apple-app-site-association` (iOS) on server |
+| Back button handling | **Complete** | Android hardware back → history.back() or exitApp() |
+| Keyboard-aware layout | **Complete** | `--keyboard-height` CSS var updated by native Keyboard listener |
+| Cap scripts | **Complete** | `cap:sync`, `cap:android`, `cap:ios`, `cap:build` in package.json |
+| Android Play Store | Pending | Requires `keytool` signing + Play Console account ($25) |
+| iOS App Store | Pending | Requires Apple Developer account ($99/yr) + Xcode archive |
 | Release documentation | **Complete** | `docs/specs/APP_RELEASE.md` — full guide: Capacitor, signing, CI/CD, store submissions |
 
 ---
@@ -169,6 +173,8 @@ All documentation, configuration files, and project scaffolding.
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2026-03-23 | **Capacitor: dynamic import plugins** | All native plugins lazy-loaded via `import()` — zero bundle cost on web; only loads on native platform |
+| 2026-03-23 | **Rename CLItoris → Forkverse** | Fork/share-centric SNS branding; 118 files updated, 0 remaining old references |
 | 2026-03-23 | **PWA: vite-plugin-pwa + Workbox** | Auto-generated SW with cache-first for fonts/avatars, network-first for API; manifest.json with SVG icons |
 | 2026-03-23 | **Pull-to-refresh custom hook** | usePullToRefresh with touch events, resistance curve, threshold-based trigger; AppShell onRefresh prop |
 | 2026-03-23 | **Manifest: SNS not Platform** | User clarified product is "developer SNS" not "platform"; updated manifest and descriptions |

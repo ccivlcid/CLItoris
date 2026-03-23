@@ -65,6 +65,30 @@ app.get('/api/health', (_req, res) => {
   res.json({ data: { status: 'ok', timestamp: new Date().toISOString() } });
 });
 
+// Deep link verification for native apps
+app.get('/.well-known/assetlinks.json', (_req, res) => {
+  res.json([{
+    relation: ['delegate_permission/common.handle_all_urls'],
+    target: {
+      namespace: 'android_app',
+      package_name: 'social.terminal.app',
+      sha256_cert_fingerprints: [process.env.ANDROID_CERT_FINGERPRINT ?? ''],
+    },
+  }]);
+});
+
+app.get('/.well-known/apple-app-site-association', (_req, res) => {
+  res.json({
+    applinks: {
+      apps: [],
+      details: [{
+        appID: `${process.env.APPLE_TEAM_ID ?? 'TEAMID'}.social.terminal.app`,
+        paths: ['/*'],
+      }],
+    },
+  });
+});
+
 app.use(createErrorHandler(logger));
 
 const PORT = 3771;
