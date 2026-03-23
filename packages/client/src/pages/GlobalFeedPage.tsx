@@ -7,7 +7,7 @@ import { useUiStore } from '../stores/uiStore.js';
 import { useFeedStore } from '../stores/feedStore.js';
 import { api } from '../api/client.js';
 import { toastError } from '../stores/toastStore.js';
-import type { ApiResponse } from '@clitoris/shared';
+import type { ApiResponse } from '@forkverse/shared';
 
 type FeedTab = 'global' | 'local';
 

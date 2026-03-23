@@ -230,7 +230,7 @@ const ja: Record<string, string> = {
   'detail.mentionHint': '@ メンション',
 
   // Leaderboard
-  'leaderboard.subtitle': 'GitHub活動 + CLItoris活動でランク付けされた開発者',
+  'leaderboard.subtitle': 'GitHub活動 + Forkverse活動でランク付けされた開発者',
   'leaderboard.empty': 'まだスコアが計算されていません。',
   'leaderboard.emptyHint': 'プロフィールでGitHubを同期して始めましょう。',
   'leaderboard.loading': 'リーダーボード読み込み中...',
@@ -248,13 +248,13 @@ const ja: Record<string, string> = {
 
   // GitHub follow sync
   'ghSync.title': 'github フォロー',
-  'ghSync.onPlatform': 'CLItoris に {n} 人',
+  'ghSync.onPlatform': 'Forkverse に {n} 人',
   'ghSync.syncing': '同期中...',
   'ghSync.syncAll': '全て同期 ({n})',
   'ghSync.following': 'フォロー中 ({n})',
   'ghSync.followers': 'フォロワー ({n})',
-  'ghSync.onClit': 'CLItoris 上 ({n})',
-  'ghSync.notOnClit': 'CLItoris 未登録 ({n})',
+  'ghSync.onClit': 'Forkverse 上 ({n})',
+  'ghSync.notOnClit': 'Forkverse 未登録 ({n})',
   'ghSync.unfollow': 'フォロー解除',
   'ghSync.follow': 'フォロー',
   'ghSync.more': '+{n} 件',
@@ -271,7 +271,7 @@ const ja: Record<string, string> = {
   'github.featureProfile': 'プロフィール同期（アバター、紹介、リポジトリ）',
   'github.featureRepos': 'プロフィールにリポジトリ一覧を表示',
   'github.featureContrib': 'コントリビューショングラフ（草）',
-  'github.featureFollowSync': 'フォロー同期（GitHub ↔ CLItoris）',
+  'github.featureFollowSync': 'フォロー同期（GitHub ↔ Forkverse）',
   'github.featureReviews': 'PR レビューリクエスト一覧',
   'github.featureInfluence': '影響力スコアの計算',
   'github.reviewSubtitle': 'あなたのレビューを待つ PR',

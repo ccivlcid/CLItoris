@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import type { Database } from 'better-sqlite3';
 import { z } from 'zod';
-import { createProvider } from '@clitoris/llm';
+import { createProvider } from '@forkverse/llm';
 import { requireAuth } from '../middleware/auth.js';
 import { generateId } from '../lib/id.js';
 import type { Logger } from 'pino';

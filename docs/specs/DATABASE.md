@@ -13,7 +13,7 @@
 |----------|-------|
 | Engine | SQLite 3 |
 | Driver | `better-sqlite3` (synchronous API) |
-| File | `clitoris.db` (project root, gitignored) |
+| File | `forkverse.db` (project root, gitignored) |
 | Migrations | Sequential `.sql` files under `packages/server/src/db/migrations/` |
 | ID strategy | UUID v7 (text, sortable by creation time) |
 | Timestamps | ISO 8601 text via `datetime('now')` |

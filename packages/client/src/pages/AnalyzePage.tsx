@@ -5,7 +5,7 @@ import { useAuthStore } from '../stores/authStore.js';
 import { useUiStore } from '../stores/uiStore.js';
 import { api } from '../api/client.js';
 import { toastError } from '../stores/toastStore.js';
-import type { ApiResponse, Analysis, AnalysisProgress } from '@clitoris/shared';
+import type { ApiResponse, Analysis, AnalysisProgress } from '@forkverse/shared';
 
 type OutputType = 'report' | 'pptx' | 'video';
 

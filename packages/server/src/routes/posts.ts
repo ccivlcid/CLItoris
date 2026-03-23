@@ -4,9 +4,9 @@ import type { Logger } from 'pino';
 import { z } from 'zod';
 import { generateId } from '../lib/id.js';
 import { requireAuth } from '../middleware/auth.js';
-import { createProvider } from '@clitoris/llm';
-import type { Post, PostIntent, PostEmotion, ReactionEmoji, MediaAttachment } from '@clitoris/shared';
-import { REACTION_EMOJIS } from '@clitoris/shared';
+import { createProvider } from '@forkverse/llm';
+import type { Post, PostIntent, PostEmotion, ReactionEmoji, MediaAttachment } from '@forkverse/shared';
+import { REACTION_EMOJIS } from '@forkverse/shared';
 import { createNotification, createActivity } from './notifications.js';
 
 function buildCliLine(username: string, messageRaw: string, repoOwner?: string, repoName?: string): string {
@@ -388,7 +388,7 @@ export function createPostsRouter(db: Database, logger: Logger): Router {
     if (repoOwner && repoName) {
       try {
         const ghRes = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}`, {
-          headers: { 'User-Agent': 'CLItoris', Accept: 'application/vnd.github+json' },
+          headers: { 'User-Agent': 'Forkverse', Accept: 'application/vnd.github+json' },
         });
         if (ghRes.ok) {
           const ghData = await ghRes.json() as {

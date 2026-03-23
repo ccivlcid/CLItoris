@@ -7,13 +7,13 @@
 
 ## 1. Complete Variable List
 
-### Server (`@clitoris/server`)
+### Server (`@forkverse/server`)
 
 | Variable | Type | Default | Required | Description |
 |----------|------|---------|----------|-------------|
 | `PORT` | number | `3771` | No | Express server port |
 | `NODE_ENV` | string | `development` | No | `development` or `production` |
-| `DATABASE_URL` | string | `clitoris.db` | No | SQLite database file path |
+| `DATABASE_URL` | string | `forkverse.db` | No | SQLite database file path |
 | `SESSION_SECRET` | string | — | **Yes** | Express session secret (min 32 chars) |
 | `LOG_LEVEL` | string | `info` | No | Pino log level: `debug`, `info`, `warn`, `error` |
 | `CORS_ORIGIN` | string | `http://localhost:7878` | No | Allowed CORS origin |
@@ -24,7 +24,7 @@
 >
 > Locally running runtimes (Ollama on `localhost:11434`) are auto-detected and require no key.
 
-### Client (`@clitoris/client`)
+### Client (`@forkverse/client`)
 
 | Variable | Type | Default | Required | Description |
 |----------|------|---------|----------|-------------|
@@ -40,7 +40,7 @@
 # Server
 PORT=3771
 NODE_ENV=development
-DATABASE_URL=clitoris.db
+DATABASE_URL=forkverse.db
 SESSION_SECRET=replace-with-random-string-at-least-32-chars
 LOG_LEVEL=info
 CORS_ORIGIN=http://localhost:7878
@@ -79,7 +79,7 @@ VITE_API_URL=/api
 const CONFIG = {
   port: Number(process.env.PORT) || 3771,
   nodeEnv: process.env.NODE_ENV || 'development',
-  databaseUrl: process.env.DATABASE_URL || 'clitoris.db',
+  databaseUrl: process.env.DATABASE_URL || 'forkverse.db',
   sessionSecret: process.env.SESSION_SECRET,
   logLevel: process.env.LOG_LEVEL || 'info',
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:7878',

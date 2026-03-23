@@ -25,7 +25,7 @@ const logger = pino({
   ...(process.env.NODE_ENV !== 'production' ? { transport: { target: 'pino-pretty' } } : {}),
 });
 
-const DB_PATH = process.env.DATABASE_URL ?? path.join(process.cwd(), 'clitoris.db');
+const DB_PATH = process.env.DATABASE_URL ?? path.join(process.cwd(), 'forkverse.db');
 const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 const db = createDb(DB_PATH, logger);
 

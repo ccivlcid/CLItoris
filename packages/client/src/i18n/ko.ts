@@ -230,7 +230,7 @@ const ko: Record<string, string> = {
   'detail.mentionHint': '@ 멘션',
 
   // Leaderboard
-  'leaderboard.subtitle': 'GitHub 활동 + CLItoris 활동으로 순위 매긴 개발자',
+  'leaderboard.subtitle': 'GitHub 활동 + Forkverse 활동으로 순위 매긴 개발자',
   'leaderboard.empty': '아직 점수가 계산되지 않았습니다.',
   'leaderboard.emptyHint': '프로필에서 GitHub를 동기화하여 시작하세요.',
   'leaderboard.loading': '리더보드 불러오는 중...',
@@ -248,13 +248,13 @@ const ko: Record<string, string> = {
 
   // GitHub follow sync
   'ghSync.title': 'github 팔로우',
-  'ghSync.onPlatform': 'CLItoris에 {n}명',
+  'ghSync.onPlatform': 'Forkverse에 {n}명',
   'ghSync.syncing': '동기화 중...',
   'ghSync.syncAll': '전체 동기화 ({n})',
   'ghSync.following': '팔로잉 ({n})',
   'ghSync.followers': '팔로워 ({n})',
-  'ghSync.onClit': 'CLItoris 가입 ({n})',
-  'ghSync.notOnClit': 'CLItoris 미가입 ({n})',
+  'ghSync.onClit': 'Forkverse 가입 ({n})',
+  'ghSync.notOnClit': 'Forkverse 미가입 ({n})',
   'ghSync.unfollow': '언팔로우',
   'ghSync.follow': '팔로우',
   'ghSync.more': '+{n}명 더',
@@ -271,7 +271,7 @@ const ko: Record<string, string> = {
   'github.featureProfile': '프로필 동기화 (아바타, 소개, 저장소)',
   'github.featureRepos': '프로필에 저장소 목록 표시',
   'github.featureContrib': '기여 그래프 (잔디)',
-  'github.featureFollowSync': '팔로우 동기화 (GitHub ↔ CLItoris)',
+  'github.featureFollowSync': '팔로우 동기화 (GitHub ↔ Forkverse)',
   'github.featureReviews': 'PR 리뷰 요청 목록',
   'github.featureInfluence': '영향력 점수 계산',
   'github.reviewSubtitle': '내 리뷰를 기다리는 PR',

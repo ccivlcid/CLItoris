@@ -1,5 +1,5 @@
 {
-  "name": "@clitoris/client",
+  "name": "@forkverse/client",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@clitoris/shared": "workspace:*",
+    "@forkverse/shared": "workspace:*",
     "@tiptap/extension-mention": "^3.20.4",
     "@tiptap/extension-placeholder": "^3.20.4",
     "@tiptap/pm": "^3.20.4",

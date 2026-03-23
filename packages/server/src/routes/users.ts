@@ -197,7 +197,7 @@ export function createUsersRouter(db: Database): Router {
     try {
       const ghRes = await fetch(
         `https://api.github.com/users/${user.github_username}/repos?sort=stars&per_page=20&type=owner`,
-        { headers: { 'User-Agent': 'CLItoris', Accept: 'application/vnd.github+json' } },
+        { headers: { 'User-Agent': 'Forkverse', Accept: 'application/vnd.github+json' } },
       );
 
       if (!ghRes.ok) {
@@ -310,7 +310,7 @@ export function createUsersRouter(db: Database): Router {
 
     try {
       const ghRes = await fetch(`https://api.github.com/users/${user.github_username}`, {
-        headers: { 'User-Agent': 'CLItoris', Accept: 'application/vnd.github+json' },
+        headers: { 'User-Agent': 'Forkverse', Accept: 'application/vnd.github+json' },
       });
       if (!ghRes.ok) { res.status(502).json({ error: { code: 'GITHUB_ERROR', message: 'Failed to fetch GitHub profile' } }); return; }
 
@@ -323,7 +323,7 @@ export function createUsersRouter(db: Database): Router {
       // Compute top languages and star totals from repos
       const reposRes = await fetch(
         `https://api.github.com/users/${user.github_username}/repos?sort=pushed&per_page=100&type=owner`,
-        { headers: { 'User-Agent': 'CLItoris', Accept: 'application/vnd.github+json' } },
+        { headers: { 'User-Agent': 'Forkverse', Accept: 'application/vnd.github+json' } },
       );
       let topLanguages: string[] = [];
       let ghTotalStars = 0;
@@ -450,7 +450,7 @@ export function createUsersRouter(db: Database): Router {
     try {
       const ghRes = await fetch(
         `https://api.github.com/users/${user.github_username}/events?per_page=30`,
-        { headers: { 'User-Agent': 'CLItoris', Accept: 'application/vnd.github+json' } },
+        { headers: { 'User-Agent': 'Forkverse', Accept: 'application/vnd.github+json' } },
       );
       if (!ghRes.ok) { res.status(502).json({ error: { code: 'GITHUB_ERROR', message: 'Failed to fetch GitHub events' } }); return; }
 

@@ -82,7 +82,7 @@ Complete profile setup for new GitHub users.
 **Request Body:**
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| username | string | Yes | CLItoris username (3+ chars, [a-z0-9_]) |
+| username | string | Yes | Forkverse username (3+ chars, [a-z0-9_]) |
 | displayName | string | No | Display name (max 50 chars) |
 | bio | string | No | Bio text (max 300 chars) |
 
@@ -704,13 +704,13 @@ Returns the user's pinned GitHub repositories.
 {
   "data": [
     {
-      "name": "CLItoris",
+      "name": "Forkverse",
       "owner": "ccivlcid",
       "description": "CLI-themed SNS",
       "stars": 42,
       "forks": 12,
       "language": "TypeScript",
-      "url": "https://github.com/ccivlcid/CLItoris"
+      "url": "https://github.com/ccivlcid/Forkverse"
     }
   ]
 }
@@ -1092,7 +1092,7 @@ Marks a single GitHub notification thread as read.
 
 ### GET `/api/github/following`
 
-Returns the list of GitHub users the authenticated user follows, with CLItoris membership status for each.
+Returns the list of GitHub users the authenticated user follows, with Forkverse membership status for each.
 
 **Auth:** Yes (requires `read:user` scope)
 
@@ -1104,11 +1104,11 @@ Returns the list of GitHub users the authenticated user follows, with CLItoris m
       "githubLogin": "octocat",
       "avatarUrl": "https://github.com/octocat.png",
       "profileUrl": "https://github.com/octocat",
-      "clitorisUser": {
+      "forkverseUser": {
         "username": "octocat_dev",
         "displayName": "Octocat"
       },
-      "isFollowingOnClitoris": false
+      "isFollowingOnForkverse": false
     }
   ]
 }
@@ -1124,7 +1124,7 @@ Returns the list of GitHub users the authenticated user follows, with CLItoris m
 
 ### POST `/api/github/sync-follows`
 
-Bulk-follows all GitHub following users who are registered on CLItoris. Skips users already followed. Returns created and skipped counts.
+Bulk-follows all GitHub following users who are registered on Forkverse. Skips users already followed. Returns created and skipped counts.
 
 **Auth:** Yes
 
@@ -1149,7 +1149,7 @@ Bulk-follows all GitHub following users who are registered on CLItoris. Skips us
 
 ### GET `/api/github/followers`
 
-Returns the list of GitHub users who follow the authenticated user, with CLItoris membership status and mutual-follow status.
+Returns the list of GitHub users who follow the authenticated user, with Forkverse membership status and mutual-follow status.
 
 **Auth:** Yes (requires `read:user` scope)
 
@@ -1161,12 +1161,12 @@ Returns the list of GitHub users who follow the authenticated user, with CLItori
       "githubLogin": "jiyeon-kim",
       "avatarUrl": "https://github.com/jiyeon-kim.png",
       "profileUrl": "https://github.com/jiyeon-kim",
-      "clitorisUser": {
+      "forkverseUser": {
         "username": "jiyeon_dev",
         "displayName": "Jiyeon Kim"
       },
-      "isFollowingOnClitoris": true,
-      "isFollowedBackOnClitoris": false
+      "isFollowingOnForkverse": true,
+      "isFollowedBackOnForkverse": false
     }
   ]
 }
@@ -1725,9 +1725,9 @@ GET /api/posts/feed/global?cursor=2026-03-19T12:15:00Z&limit=20
 | `POST` | `/api/github/notifications/:id/mark-read` | Yes | Mark notification as read |
 | `GET` | `/api/github/contributions/:username` | Optional | GitHub contribution graph (heatmap) |
 | `GET` | `/api/github/reviews` | Yes | PR review requests |
-| `GET` | `/api/github/followers` | Yes | GitHub followers + CLItoris status |
-| `GET` | `/api/github/following` | Yes | GitHub following + CLItoris status |
-| `POST` | `/api/github/sync-follows` | Yes | Bulk-follow GitHub following on CLItoris |
+| `GET` | `/api/github/followers` | Yes | GitHub followers + Forkverse status |
+| `GET` | `/api/github/following` | Yes | GitHub following + Forkverse status |
+| `POST` | `/api/github/sync-follows` | Yes | Bulk-follow GitHub following on Forkverse |
 | **Notifications (4)** | | | |
 | `GET` | `/api/notifications` | Yes | User's notifications (paginated) |
 | `GET` | `/api/notifications/unread-count` | Yes | Unread notification count |

@@ -5,7 +5,7 @@ import { useUiStore } from '../stores/uiStore.js';
 import { useAuthStore } from '../stores/authStore.js';
 import { api } from '../api/client.js';
 import { toastError } from '../stores/toastStore.js';
-import type { ApiResponse, AnalysisWithSections, AnalysisSectionKey } from '@clitoris/shared';
+import type { ApiResponse, AnalysisWithSections, AnalysisSectionKey } from '@forkverse/shared';
 
 const SECTION_KEYS: AnalysisSectionKey[] = [
   'summary', 'techStack', 'architecture', 'strengths', 'risks', 'improvements', 'cliView',

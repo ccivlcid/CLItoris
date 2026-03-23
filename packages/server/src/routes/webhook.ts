@@ -126,12 +126,12 @@ export function createWebhookRouter(db: Database, logger: Logger): Router {
     const payload = req.body as GithubWebhookPayload;
     const senderLogin = payload.sender.login;
 
-    // Map sender to CLItoris user
-    const clitorisUser = db.prepare(
+    // Map sender to Forkverse user
+    const forkverseUser = db.prepare(
       'SELECT id FROM users WHERE github_username = ? COLLATE NOCASE'
     ).get(senderLogin) as { id: string } | undefined;
 
-    if (!clitorisUser) {
+    if (!forkverseUser) {
       res.json({ ok: true, skipped: true });
       return;
     }
@@ -147,7 +147,7 @@ export function createWebhookRouter(db: Database, logger: Logger): Router {
       db.prepare(`
         INSERT INTO posts (id, user_id, message_raw, message_cli, lang, tags, mentions, visibility, llm_model, intent, emotion)
         VALUES (?, ?, ?, ?, 'en', ?, '[]', 'public', 'custom', ?, ?)
-      `).run(postId, clitorisUser.id, post.messageRaw, post.messageCli, JSON.stringify(post.tags), post.intent, post.emotion);
+      `).run(postId, forkverseUser.id, post.messageRaw, post.messageCli, JSON.stringify(post.tags), post.intent, post.emotion);
 
       logger.info({ postId, event, sender: senderLogin }, 'Webhook post created');
       res.json({ ok: true, postId });

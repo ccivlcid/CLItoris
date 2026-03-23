@@ -1,6 +1,6 @@
 {
-  "name": "CLItoris — terminal.social",
-  "short_name": "CLItoris",
+  "name": "Forkverse — terminal.social",
+  "short_name": "Forkverse",
   "description": "CLI-themed developer SNS. Analyze repos, share insights, connect with devs.",
   "start_url": "/",
   "display": "standalone",

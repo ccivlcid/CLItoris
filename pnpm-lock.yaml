@@ -32,7 +32,7 @@ importers:
 
   packages/client:
     dependencies:
-      '@clitoris/shared':
+      '@forkverse/shared':
         specifier: workspace:*
         version: link:../shared
       '@tiptap/extension-mention':
@@ -93,7 +93,7 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.39.0
         version: 0.39.0
-      '@clitoris/shared':
+      '@forkverse/shared':
         specifier: workspace:*
         version: link:../shared
       '@google/genai':
@@ -112,10 +112,10 @@ importers:
 
   packages/server:
     dependencies:
-      '@clitoris/llm':
+      '@forkverse/llm':
         specifier: workspace:*
         version: link:../llm
-      '@clitoris/shared':
+      '@forkverse/shared':
         specifier: workspace:*
         version: link:../shared
       '@types/multer':

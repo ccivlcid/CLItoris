@@ -1,4 +1,4 @@
-// CLItoris Shared Types
+// Forkverse Shared Types
 
 // ============================================
 // User
