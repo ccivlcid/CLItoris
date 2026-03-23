@@ -150,7 +150,8 @@ docs/
 │   ├── ENV.md                         # Environment variables reference
 │   ├── I18N.md                        # Internationalization (4 languages)
 │   ├── error.md                       # Error handling guide
-│   └── TROUBLESHOOTING.md            # Common issues & solutions for local development
+│   ├── TROUBLESHOOTING.md            # Common issues & solutions for local development
+│   └── DEPLOY_MOBILE.md             # Android & iOS 배포 실전 가이드
 ├── design/                            # Visual design system
 │   ├── DESIGN_GUIDE.md               # Visual system index — colors, typography, layout
 │   ├── DESIGN_COMPONENTS.md          # Component specs (Post Card, Sidebar, Composer, etc.)
