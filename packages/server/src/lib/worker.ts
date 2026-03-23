@@ -322,9 +322,9 @@ async function processJob(db: Database, job: JobRow, logger: Logger): Promise<vo
       logger.error({ jobId: job.id, retries, err: errMsg }, 'Job permanently failed');
     } else {
       // Schedule retry with exponential backoff (2^retries seconds)
-      const backoffSec = Math.pow(2, retries);
-      db.prepare(`UPDATE analysis_jobs SET status = 'pending', retries = ?, error = ?, next_retry_at = datetime('now', '+${backoffSec} seconds') WHERE id = ?`)
-        .run(retries, errMsg, job.id);
+      const backoffSec = String(Math.pow(2, retries));
+      db.prepare("UPDATE analysis_jobs SET status = 'pending', retries = ?, error = ?, next_retry_at = datetime('now', '+' || ? || ' seconds') WHERE id = ?")
+        .run(retries, errMsg, backoffSec, job.id);
       logger.warn({ jobId: job.id, retries, backoffSec, err: errMsg }, 'Job failed, scheduling retry');
     }
   }

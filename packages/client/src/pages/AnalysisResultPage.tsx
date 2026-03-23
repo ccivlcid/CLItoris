@@ -220,7 +220,7 @@ export default function AnalysisResultPage() {
                   {analysis.user.avatarUrl && (
                     <img src={analysis.user.avatarUrl} alt="" className="w-5 h-5 rounded-full" />
                   )}
-                  <span className="font-mono text-xs text-[var(--accent-yellow)] hover:underline">
+                  <span className="font-mono text-xs text-[var(--accent-amber)] hover:underline">
                     @{analysis.user.username}
                   </span>
                 </Link>
@@ -233,8 +233,8 @@ export default function AnalysisResultPage() {
               disabled={!isAuthenticated || starring}
               className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 font-mono text-sm border transition-colors ${
                 analysis.isStarred
-                  ? 'bg-[var(--accent-yellow)]/10 text-[var(--accent-yellow)] border-[var(--accent-yellow)]/30'
-                  : 'text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--accent-yellow)] hover:border-[var(--accent-yellow)]/30'
+                  ? 'bg-[var(--accent-amber)]/10 text-[var(--accent-amber)] border-[var(--accent-amber)]/30'
+                  : 'text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--accent-amber)] hover:border-[var(--accent-amber)]/30'
               } disabled:opacity-40`}
               title={isAuthenticated ? t('analysis.star') : t('analysis.loginToStar')}
             >

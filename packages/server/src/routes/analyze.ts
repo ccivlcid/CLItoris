@@ -155,12 +155,17 @@ export function createAnalyzeRouter(db: Database, logger: Logger): Router {
 
     // Poll for updates
     const interval = setInterval(() => {
-      const current = db.prepare('SELECT status, progress_json FROM analyses WHERE id = ?').get(req.params.id) as { status: string; progress_json: string } | undefined;
-      if (!current) { clearInterval(interval); res.end(); return; }
+      try {
+        const current = db.prepare('SELECT status, progress_json FROM analyses WHERE id = ?').get(req.params.id) as { status: string; progress_json: string } | undefined;
+        if (!current) { clearInterval(interval); res.end(); return; }
 
-      send({ status: current.status, progress: JSON.parse(current.progress_json) });
+        send({ status: current.status, progress: JSON.parse(current.progress_json) });
 
-      if (current.status === 'completed' || current.status === 'failed') {
+        if (current.status === 'completed' || current.status === 'failed') {
+          clearInterval(interval);
+          res.end();
+        }
+      } catch {
         clearInterval(interval);
         res.end();
       }
@@ -241,23 +246,25 @@ export function createAnalyzeRouter(db: Database, logger: Logger): Router {
   router.get('/popular', (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 10, 50);
     const period = (req.query.period as string) ?? 'all';
-    const periodMap: Record<string, string> = {
-      day: "datetime('now', '-1 day')",
-      week: "datetime('now', '-7 days')",
-      month: "datetime('now', '-30 days')",
-      all: "'1970-01-01'",
-    };
-    const since = periodMap[period] ?? periodMap.all;
+    const daysMap: Record<string, number> = { day: 1, week: 7, month: 30, all: 0 };
+    const days = daysMap[period] ?? 0;
 
-    const rows = db.prepare(`
-      SELECT a.*, u.username, u.domain, u.display_name, u.avatar_url,
-        (SELECT COUNT(*) FROM analysis_stars WHERE analysis_id = a.id) AS star_count
-      FROM analyses a
-      JOIN users u ON u.id = a.user_id
-      WHERE a.status = 'completed' AND a.created_at >= ${since}
-      ORDER BY star_count DESC, a.created_at DESC
-      LIMIT ?
-    `).all(limit) as AnalysisWithUserRow[];
+    const query = days > 0
+      ? `SELECT a.*, u.username, u.domain, u.display_name, u.avatar_url,
+           (SELECT COUNT(*) FROM analysis_stars WHERE analysis_id = a.id) AS star_count
+         FROM analyses a JOIN users u ON u.id = a.user_id
+         WHERE a.status = 'completed' AND a.created_at >= datetime('now', '-' || ? || ' days')
+         ORDER BY star_count DESC, a.created_at DESC LIMIT ?`
+      : `SELECT a.*, u.username, u.domain, u.display_name, u.avatar_url,
+           (SELECT COUNT(*) FROM analysis_stars WHERE analysis_id = a.id) AS star_count
+         FROM analyses a JOIN users u ON u.id = a.user_id
+         WHERE a.status = 'completed'
+         ORDER BY star_count DESC, a.created_at DESC LIMIT ?`;
+
+    const rows = (days > 0
+      ? db.prepare(query).all(String(days), limit)
+      : db.prepare(query).all(limit)
+    ) as AnalysisWithUserRow[];
 
     res.json({ data: rows.map((r) => mapAnalysisWithUser(r, false)) });
   });
@@ -340,11 +347,22 @@ export function createAnalyzeRouter(db: Database, logger: Logger): Router {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).run(id, userId, aOwner, aName, bOwner, bName, parsed.data.llmModel, parsed.data.lang);
 
-    // Enqueue comparison job
-    const jobId = generateId();
-    db.prepare(`INSERT INTO analysis_jobs (id, analysis_id) VALUES (?, ?)`).run(jobId, id);
+    // Run comparison analysis for both repos in parallel
+    // Creates two separate analysis jobs, results combined by comparison ID
+    const analysisAId = generateId();
+    const analysisBId = generateId();
+    const jobAId = generateId();
+    const jobBId = generateId();
 
-    res.status(201).json({ data: { id, status: 'pending' } });
+    db.prepare(`INSERT INTO analyses (id, user_id, repo_owner, repo_name, output_type, llm_model, lang, options_json) VALUES (?, ?, ?, ?, 'report', ?, ?, ?)`)
+      .run(analysisAId, userId, aOwner, aName, parsed.data.llmModel, parsed.data.lang, JSON.stringify({ comparisonId: id }));
+    db.prepare(`INSERT INTO analyses (id, user_id, repo_owner, repo_name, output_type, llm_model, lang, options_json) VALUES (?, ?, ?, ?, 'report', ?, ?, ?)`)
+      .run(analysisBId, userId, bOwner, bName, parsed.data.llmModel, parsed.data.lang, JSON.stringify({ comparisonId: id }));
+
+    db.prepare(`INSERT INTO analysis_jobs (id, analysis_id) VALUES (?, ?)`).run(jobAId, analysisAId);
+    db.prepare(`INSERT INTO analysis_jobs (id, analysis_id) VALUES (?, ?)`).run(jobBId, analysisBId);
+
+    res.status(201).json({ data: { id, analysisAId, analysisBId, status: 'pending' } });
   });
 
   // GET /api/analyze/compare/:id — get comparison result
