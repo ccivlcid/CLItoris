@@ -1860,12 +1860,60 @@ Register a device push notification token.
 
 ### B-plan Endpoint Summary
 
-| Method | Endpoint | Auth | Purpose |
-|--------|----------|------|---------|
-| `GET` | `/api/analyze/popular` | No | Popular analyses for Home page |
-| `GET` | `/api/analysis/:id` | No | Full analysis result with sections |
-| `POST` | `/api/analysis/:id/star` | Yes | Star/unstar an analysis |
-| `POST` | `/api/notifications/register` | Yes | Register push token (Phase B4) |
+| Method | Endpoint | Auth | Phase | Purpose |
+|--------|----------|------|-------|---------|
+| `GET` | `/api/analyze/popular` | No | B2 | Popular analyses ranked by stars |
+| `GET` | `/api/analyze/detail/:id` | No | B2 | Full analysis result with structured sections |
+| `POST` | `/api/analyze/:id/star` | Yes | B2 | Star/unstar an analysis |
+| `GET` | `/api/analyze/:id/progress` | No | B5 | SSE stream for real-time analysis progress |
+| `POST` | `/api/analyze/compare` | Yes | B6 | Start side-by-side repo comparison |
+| `GET` | `/api/analyze/compare/:id` | No | B6 | Get comparison result |
+| `GET` | `/api/collections` | Yes | B6 | List user's collections |
+| `POST` | `/api/collections` | Yes | B6 | Create a collection |
+| `DELETE` | `/api/collections/:id` | Yes | B6 | Delete a collection |
+| `GET` | `/api/collections/:id/items` | Mixed | B6 | List analyses in collection (public or owner) |
+| `POST` | `/api/collections/:id/items` | Yes | B6 | Add analysis to collection |
+| `DELETE` | `/api/collections/:id/items/:analysisId` | Yes | B6 | Remove analysis from collection |
+| `POST` | `/api/notifications/push-token` | Yes | B4 | Register device push token |
+
+#### SSE Progress Streaming
+
+```
+GET /api/analyze/:id/progress
+Content-Type: text/event-stream
+
+data: {"status":"processing","progress":[{"name":"fetching repo metadata","status":"done"},{"name":"analyzing structure","status":"active"},...]}
+
+data: {"status":"completed","progress":[...]}
+```
+
+#### Comparison Analysis
+
+```json
+// POST /api/analyze/compare
+{
+  "repoA": "facebook/react",
+  "repoB": "vuejs/core",
+  "llmModel": "claude-sonnet-4-20250514",
+  "lang": "en"
+}
+// → 201 { data: { id, analysisAId, analysisBId, status: "pending" } }
+
+// GET /api/analyze/compare/:id
+// → 200 { data: { id, repoA, repoB, result: {...} | null, status, durationMs } }
+```
+
+#### Collections
+
+```json
+// POST /api/collections
+{ "name": "My best analyses", "description": "...", "isPublic": true }
+// → 201 { data: { id, name, description, isPublic, itemCount: 0 } }
+
+// POST /api/collections/:id/items
+{ "analysisId": "abc123" }
+// → 200 { data: { added: true } }
+```
 
 ---
 

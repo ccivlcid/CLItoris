@@ -37,7 +37,13 @@ pnpm workspaces monorepo.
 ```
 packages/
 ├── client/    # @forkverse/client — React frontend (Vite + Tailwind)
+│   ├── src/lib/native.ts          # Capacitor native plugin integration (lazy-loaded)
+│   ├── src/hooks/usePullToRefresh.ts  # Pull-to-refresh touch hook
+│   └── capacitor.config.ts        # Capacitor native app config
 ├── server/    # @forkverse/server — Express API server (tsx)
+│   ├── src/lib/worker.ts          # Analysis job queue worker (polling, retry, backoff)
+│   ├── src/lib/llmGateway.ts      # Centralized LLM call routing with logging
+│   └── src/lib/crypto.ts          # AES-256-GCM encryption for API keys at rest
 ├── shared/    # @forkverse/shared — Shared types, constants
 └── llm/       # @forkverse/llm — LLM provider integration (Anthropic, OpenAI, Ollama)
 docs/          # All project documentation (organized by subfolder)

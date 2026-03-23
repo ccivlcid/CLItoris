@@ -178,6 +178,13 @@ All documentation, configuration files, and project scaffolding.
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2026-03-23 | **API keys encrypted at rest** | AES-256-GCM via ENCRYPTION_KEY env var; backward-compatible (plaintext passthrough in dev) |
+| 2026-03-23 | **Fork self-fork blocked** | Added user_id check — cannot fork own post (400 BAD_REQUEST) |
+| 2026-03-23 | **Follow endpoint atomic** | Wrapped in db.transaction() to prevent race conditions on concurrent follow/unfollow |
+| 2026-03-23 | **Webhook secret enforced** | Production rejects if GITHUB_WEBHOOK_SECRET not set; dev mode warns but allows |
+| 2026-03-23 | **Media extension forced by MIME** | MIME→extension map prevents malicious file extensions (.exe uploads blocked) |
+| 2026-03-23 | **LLM timeout + error exposure** | 120s timeout on LLM, 30s on GitHub; failures visible in progress UI instead of silent fallback |
+| 2026-03-23 | **Explore feed compound cursor** | Changed from star_count-only to starCount:createdAt compound cursor |
 | 2026-03-23 | **Collections API** | Full CRUD for organizing/bookmarking analyses; public/private visibility; migration 030 |
 | 2026-03-23 | **Comparison analysis** | Side-by-side repo comparison endpoint; comparisons table; migration 031 |
 | 2026-03-23 | **Worker: SQLite-based job queue** | In-process polling worker with analysis_jobs table; can be separated into standalone process for horizontal scaling |
