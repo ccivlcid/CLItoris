@@ -146,6 +146,39 @@ export interface AnalysisStar {
 }
 
 // ============================================
+// Collections (Bookmarks)
+// ============================================
+export interface Collection {
+  id: string;
+  userId: string;
+  name: string;
+  description: string | null;
+  isPublic: boolean;
+  createdAt: string;
+  itemCount: number;
+}
+
+// ============================================
+// Comparison Analysis
+// ============================================
+export interface ComparisonResult {
+  id: string;
+  repoA: string;
+  repoB: string;
+  llmModel: string;
+  lang: string;
+  result: {
+    summary: string;
+    repoAStrengths: string;
+    repoBStrengths: string;
+    recommendation: string;
+  } | null;
+  status: string;
+  durationMs: number | null;
+  createdAt: string;
+}
+
+// ============================================
 // LLM
 // ============================================
 /** Model or CLI tool id returned by providers — values come from live APIs, not a fixed enum */

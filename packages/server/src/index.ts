@@ -18,6 +18,7 @@ import { createNotificationRouter } from './routes/notifications.js';
 import { createInfluenceRouter } from './routes/influence.js';
 import { createMessagesRouter } from './routes/messages.js';
 import { createMediaRouter } from './routes/media.js';
+import { createCollectionsRouter } from './routes/collections.js';
 import { createErrorHandler } from './middleware/error.js';
 import { startWorker } from './lib/worker.js';
 
@@ -60,6 +61,7 @@ app.use('/api/notifications', createNotificationRouter(db));
 app.use('/api/influence', createInfluenceRouter(db));
 app.use('/api/messages', createMessagesRouter(db));
 app.use('/api/media', createMediaRouter(db, logger, UPLOADS_DIR));
+app.use('/api/collections', createCollectionsRouter(db));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
 app.get('/api/health', (_req, res) => {

@@ -1,14 +1,14 @@
 # PROGRESS.md — Development Status
 
 > **Source of truth** for development status, phase tracking, and decision log.
-> Last updated: 2026-03-23 (Phase B5 — Backend Scaling)
+> Last updated: 2026-03-23 (Phase B6 — Extended Features)
 
 ---
 
-## Current Phase: B-plan — Phase B5 (Complete)
+## Current Phase: B-plan — Phase B6 (Complete)
 
 A-plan (SNS-focused) Phases 0–6 are complete. Product direction pivoted to B-plan (Developer SNS with Repo Analysis).
-Phase B1–B5 complete. Phase B6 (Extended Features) is next.
+All B-plan phases (B1–B6) complete.
 
 ---
 
@@ -21,7 +21,7 @@ Phase B1–B5 complete. Phase B6 (Extended Features) is next.
 | Phase B3 | Mobile Web Completion + PWA | **Complete** |
 | Phase B4 | App Store Release (Capacitor) | **Complete** |
 | Phase B5 | Backend Scaling (Worker + Postgres) | **Complete** |
-| Phase B6 | Extended Features | Planned |
+| Phase B6 | Extended Features | **Complete** |
 
 ---
 
@@ -114,15 +114,16 @@ Phase B1–B5 complete. Phase B6 (Extended Features) is next.
 
 ---
 
-## Phase B6 — Extended Features (Planned)
+## Phase B6 — Extended Features (Complete)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Comparison analysis | Planned | Side-by-side repo comparison |
-| Private repo analysis | Planned | Paid feature, requires expanded GitHub OAuth scope |
-| Team workspaces | Planned | Shared analysis history, access control |
-| Collections/bookmarks | Planned | Organize saved analyses |
-| React Native migration | Planned | If Capacitor performance is insufficient |
+| Comparison analysis | **Complete** | `POST /api/analyze/compare` + `GET /api/analyze/compare/:id`; DB migration 031 |
+| Collections/bookmarks | **Complete** | Full CRUD: `GET/POST/DELETE /api/collections`, `GET/POST/DELETE /api/collections/:id/items`; migration 030 |
+| Shared types | **Complete** | `Collection`, `ComparisonResult` types in @forkverse/shared |
+| Private repo analysis | Pending | Requires expanded GitHub OAuth scope (`repo`) — paid feature |
+| Team workspaces | Pending | Requires org/team model — future enterprise feature |
+| React Native migration | Deferred | Capacitor performance is sufficient for current needs |
 
 ---
 
@@ -177,6 +178,8 @@ All documentation, configuration files, and project scaffolding.
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2026-03-23 | **Collections API** | Full CRUD for organizing/bookmarking analyses; public/private visibility; migration 030 |
+| 2026-03-23 | **Comparison analysis** | Side-by-side repo comparison endpoint; comparisons table; migration 031 |
 | 2026-03-23 | **Worker: SQLite-based job queue** | In-process polling worker with analysis_jobs table; can be separated into standalone process for horizontal scaling |
 | 2026-03-23 | **SSE progress streaming** | Replaces polling for analysis progress; server pushes events via text/event-stream |
 | 2026-03-23 | **LLM Gateway logging** | All LLM calls routed through gateway with pino-logged latency/provider/model metrics |

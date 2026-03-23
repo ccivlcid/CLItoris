@@ -310,5 +310,70 @@ export function createAnalyzeRouter(db: Database, logger: Logger): Router {
     res.json({ data: { starred: !existing, starCount: count.cnt } });
   });
 
+  // POST /api/analyze/compare — start comparison analysis
+  router.post('/compare', requireAuth, (req, res) => {
+    const compareSchema = z.object({
+      repoA: z.string().min(3).max(200), // owner/name
+      repoB: z.string().min(3).max(200),
+      llmModel: z.string().min(1),
+      lang: z.string().length(2).default('en'),
+    });
+
+    const parsed = compareSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: parsed.error.message } });
+      return;
+    }
+
+    const userId = req.session.userId!;
+    const id = generateId();
+    const [aOwner, aName] = parsed.data.repoA.split('/');
+    const [bOwner, bName] = parsed.data.repoB.split('/');
+
+    if (!aOwner || !aName || !bOwner || !bName) {
+      res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Format: owner/repo' } });
+      return;
+    }
+
+    db.prepare(`
+      INSERT INTO comparisons (id, user_id, repo_a_owner, repo_a_name, repo_b_owner, repo_b_name, llm_model, lang)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, userId, aOwner, aName, bOwner, bName, parsed.data.llmModel, parsed.data.lang);
+
+    // Enqueue comparison job
+    const jobId = generateId();
+    db.prepare(`INSERT INTO analysis_jobs (id, analysis_id) VALUES (?, ?)`).run(jobId, id);
+
+    res.status(201).json({ data: { id, status: 'pending' } });
+  });
+
+  // GET /api/analyze/compare/:id — get comparison result
+  router.get('/compare/:id', (req, res) => {
+    const row = db.prepare('SELECT * FROM comparisons WHERE id = ?').get(req.params.id) as {
+      id: string; user_id: string; repo_a_owner: string; repo_a_name: string;
+      repo_b_owner: string; repo_b_name: string; llm_model: string; lang: string;
+      result_json: string | null; status: string; duration_ms: number | null; created_at: string;
+    } | undefined;
+
+    if (!row) {
+      res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Comparison not found' } });
+      return;
+    }
+
+    res.json({
+      data: {
+        id: row.id,
+        repoA: `${row.repo_a_owner}/${row.repo_a_name}`,
+        repoB: `${row.repo_b_owner}/${row.repo_b_name}`,
+        llmModel: row.llm_model,
+        lang: row.lang,
+        result: row.result_json ? JSON.parse(row.result_json) : null,
+        status: row.status,
+        durationMs: row.duration_ms,
+        createdAt: row.created_at,
+      },
+    });
+  });
+
   return router;
 }
