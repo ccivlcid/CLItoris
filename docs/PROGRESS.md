@@ -1,14 +1,14 @@
 # PROGRESS.md — Development Status
 
 > **Source of truth** for development status, phase tracking, and decision log.
-> Last updated: 2026-03-23 (Phase B2 — Analysis Result Enhancement)
+> Last updated: 2026-03-23 (Phase B3 — Mobile Web Completion + PWA)
 
 ---
 
-## Current Phase: B-plan — Phase B2 (Complete)
+## Current Phase: B-plan — Phase B3 (Complete)
 
-A-plan (SNS-focused) Phases 0–6 are complete. Product direction pivoted to B-plan (Repo Analysis Platform).
-Phase B1 entry point transition is complete. Phase B2 analysis result enhancement is complete. Phase B3 is next.
+A-plan (SNS-focused) Phases 0–6 are complete. Product direction pivoted to B-plan (Developer SNS with Repo Analysis).
+Phase B1–B3 complete. Phase B4 (App Store Release) is next.
 
 ---
 
@@ -18,7 +18,7 @@ Phase B1 entry point transition is complete. Phase B2 analysis result enhancemen
 |-------|------|--------|
 | Phase B1 | Entry Point Transition | **Complete** |
 | Phase B2 | Analysis Result Enhancement | **Complete** |
-| Phase B3 | Mobile Web Completion + PWA | Planned |
+| Phase B3 | Mobile Web Completion + PWA | **Complete** |
 | Phase B4 | App Store Release (Capacitor) | Planned |
 | Phase B5 | Backend Scaling (Worker + Postgres) | Planned |
 | Phase B6 | Extended Features | Planned |
@@ -67,14 +67,17 @@ Phase B1 entry point transition is complete. Phase B2 analysis result enhancemen
 
 ---
 
-## Phase B3 — Mobile Web Completion + PWA (Planned)
+## Phase B3 — Mobile Web Completion + PWA (Complete)
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Analyze input mobile UX | Planned | Single-column form, large touch targets |
-| Result viewing mobile | Planned | Card stack, collapsible sections |
-| PWA manifest + SW | Planned | Installable, offline shell, app icon |
-| Touch interactions | Planned | Swipe, pull-to-refresh, haptic feedback |
+| Analyze input mobile UX | **Complete** | Full-width buttons, stacked model/lang selectors, 16px font inputs, active:scale feedback |
+| Result viewing mobile | **Complete** | Section cards with bottom horizontal nav (done in B2) |
+| PWA manifest + SW | **Complete** | manifest.json, SVG icons (192/512/maskable), vite-plugin-pwa with Workbox |
+| Service Worker caching | **Complete** | Cache-first for fonts/avatars, network-first for API, 14 precached entries |
+| Apple PWA meta tags | **Complete** | apple-mobile-web-app-capable, status-bar-style, apple-touch-icon |
+| Pull-to-refresh | **Complete** | Custom hook (usePullToRefresh) + indicator in AppShell; integrated in GlobalFeedPage |
+| Touch feedback | **Complete** | active:scale-95 on buttons, active:scale-[0.98] on CTA |
 
 ---
 
@@ -166,6 +169,9 @@ All documentation, configuration files, and project scaffolding.
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2026-03-23 | **PWA: vite-plugin-pwa + Workbox** | Auto-generated SW with cache-first for fonts/avatars, network-first for API; manifest.json with SVG icons |
+| 2026-03-23 | **Pull-to-refresh custom hook** | usePullToRefresh with touch events, resistance curve, threshold-based trigger; AppShell onRefresh prop |
+| 2026-03-23 | **Manifest: SNS not Platform** | User clarified product is "developer SNS" not "platform"; updated manifest and descriptions |
 | 2026-03-23 | **Structured JSON sections from LLM** | LLM prompt requests JSON with 7 keys; fallback splits plain text into paragraphs; stored in `result_sections_json` column |
 | 2026-03-23 | **Analysis result page public** | `/analysis/:id` is public (no auth) for shareability; starring requires auth |
 | 2026-03-23 | **Section nav: sidebar + mobile bottom bar** | Desktop uses sticky sidebar; mobile uses fixed bottom horizontal scroll bar with IntersectionObserver |
