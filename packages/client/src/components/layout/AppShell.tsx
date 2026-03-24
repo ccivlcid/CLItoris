@@ -3,6 +3,7 @@ import HeaderBar from './HeaderBar.js';
 import Sidebar from './Sidebar.js';
 import MobileNav from './MobileNav.js';
 import KeyboardHelpModal from './KeyboardHelpModal.js';
+import MobileHelpModal from './MobileHelpModal.js';
 import ToastContainer from './ToastContainer.js';
 import PullToRefreshIndicator from './PullToRefreshIndicator.js';
 import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts.js';
@@ -22,6 +23,7 @@ function KeyboardShortcutsProvider({ onToggleHelp }: { onToggleHelp: () => void 
 
 export default function AppShell({ children, onRefresh }: AppShellProps) {
   const [showHelp, setShowHelp] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 640);
   const toggleHelp = useCallback(() => setShowHelp((v) => !v), []);
   const { checkSession, isAuthenticated, isLoading } = useAuthStore();
 
@@ -34,13 +36,19 @@ export default function AppShell({ children, onRefresh }: AppShellProps) {
   });
 
   useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     if (!isAuthenticated && !isLoading) {
       checkSession();
     }
   }, []);
 
   return (
-    <div className="flex flex-col h-dvh bg-[var(--bg-void)]">
+    <div className="flex flex-col h-dvh bg-[var(--bg-void)] scanline-overlay">
       <KeyboardShortcutsProvider onToggleHelp={toggleHelp} />
       <HeaderBar />
       <div className="flex flex-1 overflow-hidden">
@@ -52,7 +60,11 @@ export default function AppShell({ children, onRefresh }: AppShellProps) {
       </div>
       <MobileNav />
       <ToastContainer />
-      {showHelp && <KeyboardHelpModal onClose={() => setShowHelp(false)} />}
+      {showHelp && (
+        isMobile 
+          ? <MobileHelpModal onClose={() => setShowHelp(false)} />
+          : <KeyboardHelpModal onClose={() => setShowHelp(false)} />
+      )}
     </div>
   );
 }

@@ -19,6 +19,8 @@ const ja: Record<string, string> = {
   'feed.error.message': 'error: 接続が拒否されました',
   'feed.error.body': 'グローバルフィードを読み込めませんでした。\nサーバーがダウンしているか、接続が切れている可能性があります。',
   'feed.error.retry': '$ 再試行',
+  'feed.demoPost': 'サンプル投稿です（DBにありません）。pnpm seed か実投稿でスレッドを開けます。',
+  'feed.demoProfile': 'サンプルプロフィールです。そのユーザーはDBにいません。',
   'feed.loading': '$ loading --cursor={cursor} ...',
   'feed.loadingMore': '読み込み中...',
   'feed.local.emptyBody': 'フォロー中のユーザーの投稿はありません。\n誰かをフォローするとここに表示されます。',
@@ -43,11 +45,11 @@ const ja: Record<string, string> = {
   'composer.addKey': 'API キー追加',
 
   // Post actions
-  'post.action.reply': '↩ 返信',
-  'post.action.fork': '◇ フォーク',
-  'post.action.star': '★',
-  'post.action.unstar': '☆',
-  'post.copy': '⎘',
+  'post.action.reply': '返信',
+  'post.action.fork': 'フォーク',
+  'post.action.star': '',
+  'post.action.unstar': '',
+  'post.copy': '',
   'post.copied': 'コピー済み!',
   'post.translate': '翻訳 →{lang}',
   'post.translating': '翻訳中...',
@@ -163,6 +165,19 @@ const ja: Record<string, string> = {
   'mobile.github': 'github',
   'mobile.leaderboard': 'ランク',
 
+  // Mobile help modal
+  'mobileHelp.header': '$ help --mobile-ui',
+  'mobileHelp.dualTitle': 'デュアルパネル',
+  'mobileHelp.dualDesc': '投稿上部の natural / cli をタップして表示を切り替えます。',
+  'mobileHelp.actionsTitle': '投稿のアクション',
+  'mobileHelp.actionsDesc': '投稿下のアイコンで返信・フォーク・スターなどが使えます。',
+  'mobileHelp.navTitle': 'ナビゲーション',
+  'mobileHelp.navDesc': '下部バー：フィード、探索、中央の＋で分析・新規投稿、Activity、プロフィール。',
+  'mobileHelp.refreshTitle': '更新',
+  'mobileHelp.refreshDesc': 'フィードを下に引っ張ると最新の投稿を再読み込みします。',
+  'mobileHelp.ack': '[ OK ]',
+  'mobileHelp.closeAria': 'ヘルプを閉じる',
+
   // Messages
   'msg.inbox': '$ msg --inbox',
   'msg.loading': '読み込み中...',
@@ -193,7 +208,8 @@ const ja: Record<string, string> = {
   // Profile
   'profile.back': '← 戻る',
   'profile.notFound': 'error: 404 ユーザーが見つかりません',
-  'profile.goHome': '$ cd /',
+  'profile.notFoundHint': 'このユーザーはDBにいません。サンプルはリポジトリ直下で pnpm seed を実行するか、登録済みの @ハンドルに移動してください。',
+  'profile.goHome': '$ cd /feed',
   'profile.followers': 'フォロワー',
   'profile.following': 'フォロー中',
   'profile.posts': '投稿',

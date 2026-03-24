@@ -2,7 +2,6 @@ import { Router } from 'express';
 import type { Database } from 'better-sqlite3';
 import type { Logger } from 'pino';
 import multer from 'multer';
-import path from 'node:path';
 import { mkdirSync } from 'node:fs';
 import { generateId } from '../lib/id.js';
 import { requireAuth } from '../middleware/auth.js';

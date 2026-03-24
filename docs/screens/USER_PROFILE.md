@@ -1,6 +1,6 @@
 # USER_PROFILE Screen Specification
 
-> **Source of truth** for the User Profile screen (`/@:username`).
+> **Source of truth** for the User Profile screen (URL `/@handle`). The client route is implemented as `/:username` (segment = `@handle`); the app normalises to the bare handle for `GET /api/users/@…`.
 
 ---
 

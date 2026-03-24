@@ -16,10 +16,10 @@ function shortModel(model: string): string {
 }
 
 const COMMANDS = [
-  { to: '/analyze',     cmd: 'analyze' },
-  { to: '/new',         cmd: 'post --new' },
   { to: '/feed',        cmd: 'feed --global' },
   { to: '/feed/local',  cmd: 'feed --local' },
+  { to: '/analyze',     cmd: 'analyze' },
+  { to: '/new',         cmd: 'post --new' },
   { to: '/explore',     cmd: 'explore' },
   { to: '/leaderboard', cmd: 'rank --board' },
   { to: '/github',      cmd: 'gh --status' },

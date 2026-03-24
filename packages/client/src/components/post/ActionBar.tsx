@@ -5,6 +5,7 @@ import { useAuthStore } from '../../stores/authStore.js';
 import { useFeedStore } from '../../stores/feedStore.js';
 import { useUiStore } from '../../stores/uiStore.js';
 import { toastError } from '../../stores/toastStore.js';
+import { Icon } from '../common/Icon.js';
 import type { ApiResponse, PostReactions, ReactionEmoji } from '@forkverse/shared';
 import { REACTION_DISPLAY } from '@forkverse/shared';
 
@@ -117,39 +118,44 @@ export default function ActionBar({
   };
 
   return (
-    <div className="flex items-center gap-5 px-5 py-2.5">
+    <div className="flex items-center gap-6 px-5 py-2.5">
       {/* Reply */}
       <button
         data-testid="reply-button"
         onClick={handleReply}
-        className="font-mono text-[11px] text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
+        className="flex items-center gap-1.5 font-mono text-[11px] text-[var(--text-faint)] hover:text-[var(--accent-green)] transition-colors group"
       >
-        {t('action.reply')}{replyCount > 0 && <span className="ml-1 text-[var(--text-faint)]/60">{replyCount}</span>}
+        <Icon name="reply" className="opacity-70 group-hover:opacity-100" />
+        <span>{t('action.reply')}</span>
+        {replyCount > 0 && <span className="opacity-60">{replyCount}</span>}
       </button>
 
       {/* Fork */}
       <button
         data-testid="fork-button"
         onClick={handleFork}
-        className="font-mono text-[11px] text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
+        className="flex items-center gap-1.5 font-mono text-[11px] text-[var(--text-faint)] hover:text-[var(--accent-blue)] transition-colors group"
       >
-        {t('action.fork')}{localForkCount > 0 && <span className="ml-1 text-[var(--text-faint)]/60">{localForkCount}</span>}
+        <Icon name="fork" className="opacity-70 group-hover:opacity-100" />
+        <span>{t('action.fork')}</span>
+        {localForkCount > 0 && <span className="opacity-60">{localForkCount}</span>}
       </button>
 
       {/* Star */}
       <button
         data-testid="star-button"
         onClick={handleStar}
-        className={`font-mono text-[11px] transition-colors ${
+        className={`flex items-center gap-1.5 font-mono text-[11px] transition-colors group ${
           isStarred
-            ? 'text-[var(--accent-amber)]/80'
-            : 'text-[var(--text-faint)] hover:text-[var(--accent-amber)]/60'
+            ? 'text-[var(--accent-amber)]'
+            : 'text-[var(--text-faint)] hover:text-[var(--accent-amber)]'
         }`}
         aria-pressed={isStarred}
       >
-        {isStarred ? t('action.starred') : t('action.star')}
+        <Icon name={isStarred ? 'star-filled' : 'star'} className={isStarred ? '' : 'opacity-70 group-hover:opacity-100'} />
+        <span>{isStarred ? t('action.starred') : t('action.star')}</span>
         {starCount > 0 && (
-          <span data-testid="star-count" className="ml-1 opacity-60">{starCount}</span>
+          <span data-testid="star-count" className="opacity-60">{starCount}</span>
         )}
       </button>
 

@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useFeedStore } from '../stores/feedStore.js';
 import { useAuthStore } from '../stores/authStore.js';
 import { api } from '../api/client.js';
 
 export function useKeyboardShortcuts(onToggleHelp: () => void) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { user } = useAuthStore();
   const { posts, focusedPostId, focusNext, focusPrev, focusPost, starPost } = useFeedStore();
 
@@ -20,6 +21,8 @@ export function useKeyboardShortcuts(onToggleHelp: () => void) {
   const gTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    const isFeedPage = pathname === '/feed';
+
     const handler = (e: KeyboardEvent) => {
       // Never fire when user is typing
       const target = e.target as HTMLElement;
@@ -29,6 +32,10 @@ export function useKeyboardShortcuts(onToggleHelp: () => void) {
         target.tagName === 'SELECT' ||
         target.isContentEditable
       ) return;
+
+      if (e.isComposing) return;
+      // Keep Shift (for ? / G); block OS/browser chords
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
 
       const key = e.key;
 
@@ -55,11 +62,13 @@ export function useKeyboardShortcuts(onToggleHelp: () => void) {
       // ── Single-key shortcuts ─────────────────────────────────────────
       switch (key) {
         case 'j':
+          if (!isFeedPage) break;
           e.preventDefault();
           focusNext();
           break;
 
         case 'k':
+          if (!isFeedPage) break;
           e.preventDefault();
           focusPrev();
           break;
@@ -77,14 +86,13 @@ export function useKeyboardShortcuts(onToggleHelp: () => void) {
 
         case 'Enter':
         case 'o':
-          if (focusedPostId) {
-            e.preventDefault();
-            navigate(`/post/${focusedPostId}`);
-          }
+          if (!isFeedPage || !focusedPostId) break;
+          e.preventDefault();
+          navigate(`/post/${focusedPostId}`);
           break;
 
         case 's': {
-          if (!focusedPostId) break;
+          if (!isFeedPage || !focusedPostId) break;
           const post = posts.find((p) => p.id === focusedPostId);
           if (!post) break;
           if (!user) { navigate('/login'); break; }
@@ -95,17 +103,20 @@ export function useKeyboardShortcuts(onToggleHelp: () => void) {
         }
 
         case 'r':
-          if (focusedPostId) navigate(`/post/${focusedPostId}`);
+          if (!isFeedPage || !focusedPostId) break;
+          navigate(`/post/${focusedPostId}`);
           break;
 
         case 'u': {
-          if (!focusedPostId) break;
+          if (!isFeedPage || !focusedPostId) break;
           const post = posts.find((p) => p.id === focusedPostId);
           if (post) navigate(`/@${post.user.username}`);
           break;
         }
 
         case '/':
+          // Explore: focus search; Post detail: focus reply — page handlers own '/'
+          if (pathname === '/explore' || pathname.startsWith('/post/')) break;
           e.preventDefault();
           navigate('/new');
           break;
@@ -115,6 +126,7 @@ export function useKeyboardShortcuts(onToggleHelp: () => void) {
           break;
 
         case 'Escape':
+          if (!isFeedPage) break;
           focusPost(null);
           break;
       }
@@ -122,5 +134,5 @@ export function useKeyboardShortcuts(onToggleHelp: () => void) {
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [navigate, user, posts, focusedPostId, focusNext, focusPrev, focusPost, starPost, onToggleHelp]);
+  }, [navigate, pathname, user, posts, focusedPostId, focusNext, focusPrev, focusPost, starPost, onToggleHelp]);
 }

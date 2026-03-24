@@ -227,26 +227,36 @@ All strict options enabled explicitly so that downstream packages inherit them w
 
 Path: `packages/client/vite.config.ts`
 
+Dev server: **port `7878`** (`strictPort: true`). Proxies **`/api`** and **`/uploads`** to **`http://127.0.0.1:${PORT}`**, where `PORT` is read from the **monorepo root** `.env` via `loadEnv()` (default **`3771`**, same as `@forkverse/server`). See [ENV.md](../guides/ENV.md).
+
 ```typescript
-import { defineConfig } from "vite";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { VitePWA } from "vite-plugin-pwa";
 
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  server: {
-    port: 5173,
-    proxy: {
-      "/api": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default defineConfig(({ mode }) => {
+  const repoRoot = path.resolve(__dirname, "../..");
+  const rootEnv = loadEnv(mode, repoRoot, "");
+  const apiPort = rootEnv.PORT || "3771";
+  const apiTarget = `http://127.0.0.1:${apiPort}`;
+
+  return {
+    plugins: [react(), tailwindcss(), VitePWA({ /* … */ })],
+    server: {
+      port: 7878,
+      strictPort: true,
+      proxy: {
+        "/api": { target: apiTarget, changeOrigin: true, secure: false, cookieDomainRewrite: "localhost" },
+        "/uploads": { target: apiTarget, changeOrigin: true },
       },
     },
-  },
-  build: {
-    outDir: "dist",
-    sourcemap: true,
-  },
+    build: { outDir: "dist", sourcemap: true },
+  };
 });
 ```
 

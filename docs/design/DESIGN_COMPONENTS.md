@@ -320,19 +320,186 @@ Individual section displayed as a card in the mobile result view.
 
 ### Analysis Progress Steps
 
-```
-> cloning repo (shallow)...              ✓ done
-> scanning files: 2,847 files found      ✓ done
-> analyzing architecture...              ░░░░░░░░░░
-> generating summary...                  pending
-```
+... (existing progress steps) ...
 
+---
+
+## 8. ASCII Data Visualization (Charts)
+
+To maintain the terminal aesthetic while providing clear data insights.
+
+### ASCII Bar Chart
+Used for language distribution or file type stats.
+```
+TypeScript [####################----] 82%
+JavaScript [###---------------------] 12%
+CSS        [#-----------------------]  6%
+```
 | Property | Value |
 |----------|-------|
-| Done step | `text-green-400` + `✓` |
-| Active step | `text-green-400` + pulsing `░` bar |
-| Pending step | `text-gray-500` |
-| Elapsed timer | `text-gray-500 text-xs font-mono` |
+| Label | `text-gray-300 font-mono text-xs w-20` |
+| Bar Background | `text-gray-800` (e.g., `-` characters) |
+| Bar Foreground | `text-green-400` (e.g., `#` characters) |
+| Percentage | `text-gray-500 font-mono text-xs ml-2` |
+
+### ASCII Trend Line
+Used for activity over time.
+```
+Activity:  _./'""`--.._  (last 30d)
+```
+| Property | Value |
+|----------|-------|
+| Line | `text-green-400 font-mono` |
+
+---
+
+## 9. Global Shortcut Hint
+
+A persistent but non-intrusive prompt to guide new users.
+
+```
+[? help]
+```
+- **Position**: Fixed bottom-left (Desktop), inside Header (Mobile).
+- **Style**: `text-gray-600 hover:text-green-400 font-mono text-xs cursor-help px-2 py-1 border border-transparent hover:border-gray-800`.
+
+---
+
+## 10. Mobile View Toggle (Dual Panel)
+
+Floating control to switch between Natural and CLI views on small screens.
+
+```
+┌─────────────┐
+│ Natural CLI │
+└─────────────┘
+```
+| Property | Value |
+|----------|-------|
+| Position | `fixed bottom-6 right-6 z-40` |
+| Container | `bg-[#16213e]/90 backdrop-blur border border-gray-700 p-1 flex gap-1` |
+| Active Tab | `bg-[#4ade80]/10 text-[#4ade80] px-3 py-1 text-xs font-mono` |
+| Inactive Tab | `text-gray-500 px-3 py-1 text-xs font-mono hover:text-gray-300` |
+
+---
+
+## 11. HTOP-style High-Density Grid (Dashboard)
+
+Used for the Analysis Result Page and system-heavy views to display complex data compactly.
+
+### Dashboard Header (Metric Meters)
+```
+  Main  [##########----------] 50%    CPU  [##------------------] 10%
+  Mem   [#################---] 85%    Disk [#######-------------] 35%
+```
+- **Structure**: Multi-column grid (`grid-cols-2` or `grid-cols-3`).
+- **Bar Style**: Uses the ASCII Bar Chart logic.
+- **Coloring**: Green for safe, Amber for medium, Red for critical/high.
+
+### Main Content Area (Data Table)
+A structured list with columns, mimicking a process list.
+```
+  ID    SECTION        TYPE       SCORE   STATUS
+  001   architecture   system     [0.8]   STABLE
+  002   security       analysis   [0.4]   WARNING
+```
+| Property | Value |
+|----------|-------|
+| Header | `bg-[#4ade80] text-[#0f172a] font-bold px-2 py-0.5` (Inverted) |
+| Row Hover | `bg-[#1e293b]` (Standard hover) |
+| Active Row | `bg-[#4ade80]/20 text-[#4ade80]` |
+| Columns | Fixed widths, `font-mono`, `truncate` |
+
+### Function Key Footer (Mapping)
+... (existing function key footer) ...
+
+---
+
+## 12. System-style User Profile (Finger/Whois)
+
+Designed to look like a server user information response.
+
+### ASCII Art Avatar & Header
+```
+  ______               _
+ |  ____|             | |
+ | |__ ___  _ __ _   _| | _____ _ __ ___  ___
+ |  __/ _ \| '__| | | | |/ / _ \ '__/ __|/ _ \
+ | | | (_) | |  | |_| |   <  __/ |  \__ \  __/
+ |_|  \___/|_|   \__,_|_|\_\___|_|  |___/\___|
+
+ [ @forkverse.dev ]  ID: 1024  Joined: 2026-03-24
+```
+- **ASCII Name**: Use standard FIGlet fonts (e.g., 'Big') for the username header.
+- **Identity Bar**: `text-gray-500 font-mono text-xs` with `[]` brackets for the handle.
+
+### System Info Bio (The "Whois" Block)
+```
+ Login: @user.local          Name: Forkverse Dev
+ Directory: /home/user       Shell: /bin/zsh
+ OS: Forkverse 1.0.2         Uptime: 124d 14h
+ 
+ Project: [####################] 100% active
+ Influence: [#######-------------] 35% (Stale)
+```
+- **Key-Value Pairs**: Left-aligned labels (`text-gray-500`), right-aligned values (`text-amber-400`).
+- **Layout**: Two-column grid for compactness.
+
+### Git Log-style Activity Feed
+Replaces the standard post list with a high-density "commit history" feel.
+```
+ * 2026-03-24 [post]    Analyzed vercel/next.js (v14.2)
+ * 2026-03-23 [star]    Starred facebook/react
+ * 2026-03-22 [fork]    Forked @jiyeon_dev's vibe-coding post
+ |
+ | [view more logs...]
+```
+| Property | Value |
+|----------|-------|
+| Bullet (`*`) | `text-gray-600` |
+| Date | `text-gray-500 w-24` |
+| Action Tag | `[type]` in `text-cyan-400` |
+| Description | `text-gray-300 font-mono text-sm hover:text-white truncate` |
+| Link | Clicking the description navigates to the post/analysis. |
+
+---
+
+## 13. Dependency Tree Graph (Tree Chart)
+
+Visualizes repository structures or dependency graphs using terminal-native symbols.
+
+### Structural Symbols
+Uses Unicode box-drawing characters for connections.
+```
+  root-project
+  │
+  ├─┬ src/
+  │ │ ├── index.ts
+  │ │ └── App.tsx
+  │ │
+  │ └─┬ components/
+  │   ├── Button.tsx
+  │   └── Modal.tsx
+  │
+  └─ package.json
+```
+| Element | Character | Code |
+|---------|-----------|------|
+| Vertical Line | `│` | `\u2502` |
+| T-Junction | `├` | `\u251C` |
+| Corner | `└` | `\u2514` |
+| Horizontal | `─` | `\u2500` |
+| Node Prefix | `┬` | `\u252C` |
+
+### Interactive Highlighting
+- **Hover**: Highlight the hovered node and its direct children with a subtle background (`bg-[#1e293b]`).
+- **Path Highlighting**: When a leaf node is selected, highlight the entire path from root to node in `--accent-green`.
+- **Folding**: Nodes with children (`┬`) can be toggled. Use `▸` (collapsed) and `▾` (expanded).
+
+### Density Rules
+- **Line Height**: `1.4` (slightly more compact than body text).
+- **Indentation**: Exactly 2 characters per level.
+- **Truncation**: Long file names should truncate with `...` before the extension.
 
 ---
 

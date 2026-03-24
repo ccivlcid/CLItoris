@@ -19,6 +19,8 @@ const ko: Record<string, string> = {
   'feed.error.message': 'error: 연결이 거부되었습니다',
   'feed.error.body': '피드를 불러오지 못했습니다.\n서버가 다운되었거나 연결이 끊겼을 수 있습니다.',
   'feed.error.retry': '$ 다시 시도',
+  'feed.demoPost': '샘플 피드 카드입니다(DB에 없음). 스레드를 열려면 pnpm seed를 실행하거나 글을 작성하세요.',
+  'feed.demoProfile': '샘플 프로필입니다. 해당 사용자는 DB에 없습니다.',
   'feed.loading': '$ loading --cursor={cursor} ...',
   'feed.loadingMore': '불러오는 중...',
   'feed.local.emptyBody': '팔로우한 사람의 게시물이 없습니다.\n누군가를 팔로우하면 여기에 게시물이 표시됩니다.',
@@ -43,11 +45,11 @@ const ko: Record<string, string> = {
   'composer.addKey': 'API 키 추가',
 
   // Post actions
-  'post.action.reply': '↵ 답글',
-  'post.action.fork': '○ 포크',
-  'post.action.star': '★',
-  'post.action.unstar': '☆',
-  'post.copy': '⎘',
+  'post.action.reply': '답글',
+  'post.action.fork': '포크',
+  'post.action.star': '',
+  'post.action.unstar': '',
+  'post.copy': '',
   'post.copied': '복사됨!',
   'post.translate': '번역 →{lang}',
   'post.translating': '번역 중...',
@@ -163,6 +165,19 @@ const ko: Record<string, string> = {
   'mobile.github': 'github',
   'mobile.leaderboard': '순위',
 
+  // Mobile help modal
+  'mobileHelp.header': '$ help --mobile-ui',
+  'mobileHelp.dualTitle': '듀얼 패널',
+  'mobileHelp.dualDesc': '게시물 상단의 natural / cli 탭을 눌러 보기를 바꿀 수 있습니다.',
+  'mobileHelp.actionsTitle': '게시물 동작',
+  'mobileHelp.actionsDesc': '답글, 포크, 스타 등은 게시물 아래 아이콘으로 사용합니다.',
+  'mobileHelp.navTitle': '이동',
+  'mobileHelp.navDesc': '하단: 피드, 탐색, 가운데 + 버튼에서 분석·새 글, 활동, 프로필로 이동합니다.',
+  'mobileHelp.refreshTitle': '새로고침',
+  'mobileHelp.refreshDesc': '피드에서 아래로 당겨 최신 글을 다시 불러옵니다.',
+  'mobileHelp.ack': '[ 확인 ]',
+  'mobileHelp.closeAria': '도움말 닫기',
+
   // Messages
   'msg.inbox': '$ msg --inbox',
   'msg.loading': '불러오는 중...',
@@ -193,7 +208,8 @@ const ko: Record<string, string> = {
   // Profile
   'profile.back': '← 뒤로',
   'profile.notFound': 'error: 404 사용자를 찾을 수 없음',
-  'profile.goHome': '$ cd /',
+  'profile.notFoundHint': 'DB에 없는 계정입니다. 예시 사용자는 루트에서 pnpm seed를 실행하거나, 실제 가입한 사용자의 @이름으로 이동하세요.',
+  'profile.goHome': '$ cd /feed',
   'profile.followers': '팔로워',
   'profile.following': '팔로잉',
   'profile.posts': '게시물',

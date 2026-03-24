@@ -10,7 +10,8 @@ import { useUiStore } from '../../stores/uiStore.js';
 import { useAuthStore } from '../../stores/authStore.js';
 import { useFeedStore } from '../../stores/feedStore.js';
 import { api } from '../../api/client.js';
-import { toastError, toastSuccess } from '../../stores/toastStore.js';
+import { toast, toastError, toastSuccess } from '../../stores/toastStore.js';
+import { isFeedDemoPostId } from '../../lib/feedDemo.js';
 import type { ApiResponse } from '@forkverse/shared';
 
 interface PostCardProps {
@@ -56,6 +57,7 @@ export default function PostCard({ post, focused = false }: PostCardProps) {
     setReactions(post.reactions ?? { counts: {}, mine: [] });
   }, [post.id]);
   const { user } = post;
+  const isDemo = isFeedDemoPostId(post.id);
   const showTranslate = post.lang !== uiLang;
   const color = avatarColor(user.username);
 
@@ -81,7 +83,17 @@ export default function PostCard({ post, focused = false }: PostCardProps) {
     }
   };
 
-  const handleNavigate = () => { if (!isEditing) navigate(`/post/${post.id}`); };
+  const handleNavigate = () => {
+    if (isEditing) return;
+    if (isDemo) {
+      toast(t('feed.demoPost'));
+      return;
+    }
+    const targetPath = `/post/${post.id}`;
+    if (window.location.pathname !== targetPath) {
+      navigate(targetPath);
+    }
+  };
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleNavigate(); }
   };
@@ -95,7 +107,9 @@ export default function PostCard({ post, focused = false }: PostCardProps) {
       aria-labelledby={`post-header-${post.id}`}
       onClick={handleNavigate}
       onKeyDown={handleKeyDown}
-      className={`cursor-pointer outline-none transition-all duration-200 border-b ${
+      className={`outline-none transition-all duration-200 border-b ${
+        isDemo ? 'cursor-default' : 'cursor-pointer'
+      } ${
         focused
           ? 'border-[var(--accent-green)]/10 bg-[var(--accent-green)]/[0.02]'
           : 'border-[var(--border)]/15 hover:bg-white/[0.025]'
@@ -181,6 +195,7 @@ export default function PostCard({ post, focused = false }: PostCardProps) {
           messageRaw={post.quotedPost.messageRaw}
           messageCli={post.quotedPost.messageCli}
           user={post.quotedPost.user}
+          demo={isDemo || isFeedDemoPostId(post.quotedPost.id)}
         />
       )}
 

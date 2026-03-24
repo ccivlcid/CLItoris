@@ -19,7 +19,7 @@
 
 ### `better-sqlite3` native bindings missing (Windows)
 
-**Symptom:** Server starts but crashes with `Cannot find module '...better-sqlite3.node'` or `The specified module could not be found`.
+**Symptom:** Server crashes on startup with `Could not locate the bindings file`, `Cannot find module '...better-sqlite3.node'`, or `The specified module could not be found`. Common after `pnpm install` without a prebuilt binary for your Node ABI (e.g. Node 22 / `node-v127`), or after a Node.js upgrade.
 
 ```bash
 # Rebuild native bindings manually
@@ -29,6 +29,8 @@ npx node-gyp rebuild
 # Or from project root (finds the correct version automatically)
 pnpm --filter @forkverse/server exec node-gyp rebuild --directory node_modules/better-sqlite3
 ```
+
+**Note:** `pnpm rebuild better-sqlite3` may exit without compiling on Windows; if `build/Release/better_sqlite3.node` is still missing, use `node-gyp rebuild` as above.
 
 **Requirements:** Python 3 + Visual Studio Build Tools (Windows) or `build-essential` (Linux).
 
@@ -84,7 +86,7 @@ sqlite3 forkverse.db ".schema users"
 |---------|-------|----------|
 | `SQLITE_BUSY` | Concurrent writes | This is normal with WAL mode; retry logic handles it |
 | `FOREIGN KEY constraint failed` | Invalid reference | Check that referenced user/post exists before insert |
-| Migration errors | Schema mismatch | Delete `forkverse.db` and restart server |
+| Migration errors | Schema mismatch | Run `pnpm db:reset` (or delete `forkverse.db` + `-wal`/`-shm`) and restart server |
 
 ---
 
@@ -94,6 +96,7 @@ sqlite3 forkverse.db ".schema users"
 
 | Symptom | Cause | Solution |
 |---------|-------|----------|
+| `http proxy error: /api/...` (terminal) | Backend not listening on API port | Vite proxies `/api` → `http://127.0.0.1:$PORT` (default **3771** from repo-root `.env`). Fix the **server** first: check the `server` pane for crashes (often **better-sqlite3** on Windows — see above). Verify: open `http://127.0.0.1:3771/api/health` in a browser. |
 | Blank page on `localhost:7878` | JS error | Open browser DevTools (F12) → Console tab |
 | `VITE_API_URL` not working | Wrong prefix | Client env vars MUST start with `VITE_` |
 | CORS errors in console | Backend not running | Start server first: `pnpm dev:server` |

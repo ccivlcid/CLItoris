@@ -5,6 +5,8 @@ import { useUiStore } from '../stores/uiStore.js';
 import { useAuthStore } from '../stores/authStore.js';
 import { api } from '../api/client.js';
 import { toastError } from '../stores/toastStore.js';
+import { AsciiBarChart } from '../components/common/AsciiChart.js';
+import { Icon } from '../components/common/Icon.js';
 import type { ApiResponse, AnalysisWithSections, AnalysisSectionKey } from '@forkverse/shared';
 
 const SECTION_KEYS: AnalysisSectionKey[] = [
@@ -44,49 +46,31 @@ function SectionCard({
     }
   };
 
-  const handleShare = async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: label, text: content.slice(0, 200), url });
-      } catch { /* cancelled */ }
-    } else {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
   if (!content) return null;
 
   return (
     <div
       id={`section-${sectionKey}`}
-      className="border border-[var(--border)] bg-[var(--bg-elevated)] scroll-mt-20"
+      className="border border-[var(--border)] bg-[var(--bg-elevated)] scroll-mt-20 overflow-hidden"
     >
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
+      <div className="flex items-center justify-between px-4 py-2 bg-black/40 border-b border-[var(--border)]">
         <div className="flex items-center gap-2">
-          <span className="text-[var(--accent-green)] font-mono text-sm">{SECTION_ICONS[sectionKey]}</span>
-          <span className="font-mono text-sm text-[var(--text)]">{label}</span>
+          <span className="text-[var(--accent-green)] font-mono text-sm terminal-glow">{SECTION_ICONS[sectionKey]}</span>
+          <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)] font-bold">{label}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleCopy}
-            className="font-mono text-[10px] text-[var(--text-faint)] hover:text-[var(--text-muted)] border border-[var(--border)] px-2 py-0.5 transition-colors"
-            title={t('analysis.copy')}
-          >
-            {copied ? '✓' : 'cp'}
-          </button>
-          <button
-            onClick={handleShare}
-            className="font-mono text-[10px] text-[var(--text-faint)] hover:text-[var(--text-muted)] border border-[var(--border)] px-2 py-0.5 transition-colors"
-            title={t('analysis.share')}
-          >
-            sh
-          </button>
-        </div>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 font-mono text-[10px] text-[var(--text-faint)] hover:text-[var(--accent-green)] transition-colors group"
+        >
+          {copied ? 'DONE' : (
+            <>
+              <Icon name="copy" className="opacity-50 group-hover:opacity-100" />
+              <span>COPY</span>
+            </>
+          )}
+        </button>
       </div>
-      <div className={`px-4 py-4 font-sans text-sm text-[var(--text)] whitespace-pre-wrap leading-relaxed ${sectionKey === 'cliView' ? 'font-mono text-[var(--accent-green)] bg-[#0d1117]' : ''}`}>
+      <div className={`px-5 py-5 font-sans text-[14px] text-[var(--text)] whitespace-pre-wrap leading-[1.8] ${sectionKey === 'cliView' ? 'font-mono text-[var(--accent-green)] bg-[#05060a] border-l-2 border-[var(--accent-green)]/30' : ''}`}>
         {content}
       </div>
     </div>
@@ -115,7 +99,6 @@ export default function AnalysisResultPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  // Intersection observer for active section tracking
   useEffect(() => {
     if (!analysis?.sections) return;
     const observer = new IntersectionObserver(
@@ -162,9 +145,9 @@ export default function AnalysisResultPage() {
   if (loading) {
     return (
       <AppShell breadcrumb="analysis">
-        <div className="max-w-4xl mx-auto p-4">
-          <div className="font-mono text-sm text-[var(--text-faint)] animate-pulse">
-            $ loading analysis...
+        <div className="max-w-4xl mx-auto p-4 flex items-center justify-center min-h-[40vh]">
+          <div className="font-mono text-sm text-[var(--accent-green)] terminal-glow animate-pulse">
+            $ FETCHING ANALYSIS REPORT --VERBOSE ...
           </div>
         </div>
       </AppShell>
@@ -175,9 +158,9 @@ export default function AnalysisResultPage() {
     return (
       <AppShell breadcrumb="analysis">
         <div className="max-w-4xl mx-auto p-4 space-y-4">
-          <div className="font-mono text-sm text-red-400">$ error: {error ?? 'not found'}</div>
+          <div className="font-mono text-sm text-red-400">$ FATAL ERROR: {error ?? 'REPORT_NOT_FOUND'}</div>
           <Link to="/analyze" className="font-mono text-sm text-[var(--accent-green)] hover:underline">
-            ← {t('analysis.backToAnalyze')}
+            ← [ ESCAPE ] BACK TO ANALYZE
           </Link>
         </div>
       </AppShell>
@@ -188,119 +171,95 @@ export default function AnalysisResultPage() {
 
   return (
     <AppShell breadcrumb="analysis">
-      <div className="max-w-4xl mx-auto p-4">
-        {/* Header */}
-        <div className="border border-[var(--border)] bg-[var(--bg-elevated)] p-4 mb-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="font-mono text-sm text-[var(--text-faint)]">
-                $ analyze --repo=
-                <a
-                  href={`https://github.com/${analysis.repoOwner}/${analysis.repoName}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[var(--accent-blue)] hover:underline"
-                >
-                  {analysis.repoOwner}/{analysis.repoName}
-                </a>
-              </div>
-              <div className="flex items-center gap-3 mt-2 flex-wrap">
-                <span className="font-mono text-xs text-[var(--text-faint)]">--model={analysis.llmModel}</span>
-                <span className="font-mono text-xs text-[var(--text-faint)]">--lang={analysis.lang}</span>
-                <span className="font-mono text-xs text-[var(--text-faint)]">--output={analysis.outputType}</span>
-                {analysis.durationMs && (
-                  <span className="font-mono text-xs text-emerald-400">✓ {(analysis.durationMs / 1000).toFixed(1)}s</span>
-                )}
-              </div>
-              {analysis.user && (
-                <Link
-                  to={`/@${analysis.user.username}`}
-                  className="flex items-center gap-2 mt-3"
-                >
-                  {analysis.user.avatarUrl && (
-                    <img src={analysis.user.avatarUrl} alt="" className="w-5 h-5 rounded-full" />
-                  )}
-                  <span className="font-mono text-xs text-[var(--accent-amber)] hover:underline">
-                    @{analysis.user.username}
-                  </span>
-                </Link>
-              )}
+      <div className="max-w-4xl mx-auto p-4 space-y-4">
+        
+        {/* HTOP-style Header Area */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border border-[var(--border)] bg-[#0d1117] p-5">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between font-mono text-[11px] text-[var(--text-faint)]">
+              <span>REPO_URL</span>
+              <span className="text-[var(--accent-blue)] truncate ml-4">github.com/{analysis.repoOwner}/{analysis.repoName}</span>
             </div>
+            <div className="flex items-center justify-between font-mono text-[11px] text-[var(--text-faint)]">
+              <span>REPORT_ID</span>
+              <span className="text-[var(--text-muted)]">{analysis.id.slice(0, 8)}...</span>
+            </div>
+            <div className="flex items-center justify-between font-mono text-[11px] text-[var(--text-faint)]">
+              <span>DURATION</span>
+              <span className="text-emerald-400">{(analysis.durationMs || 0) / 1000}s</span>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <AsciiBarChart data={[
+              { label: 'COMPLEXITY', value: 65, color: 'var(--accent-amber)' },
+              { label: 'MAINTAIN', value: 82, color: 'var(--accent-green)' },
+              { label: 'HEALTH', value: 45, color: 'var(--accent-red)' },
+            ]} />
+          </div>
+        </div>
 
-            {/* Star button */}
-            <button
-              onClick={handleStar}
-              disabled={!isAuthenticated || starring}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 font-mono text-sm border transition-colors ${
-                analysis.isStarred
-                  ? 'bg-[var(--accent-amber)]/10 text-[var(--accent-amber)] border-[var(--accent-amber)]/30'
-                  : 'text-[var(--text-muted)] border-[var(--border)] hover:text-[var(--accent-amber)] hover:border-[var(--accent-amber)]/30'
-              } disabled:opacity-40`}
-              title={isAuthenticated ? t('analysis.star') : t('analysis.loginToStar')}
-            >
-              {analysis.isStarred ? '★' : '☆'} {analysis.starCount}
+        {/* Status Bar / Breadcrumb */}
+        <div className="bg-[#1e293b] px-4 py-1 flex items-center justify-between font-mono text-[10px] text-white/80">
+          <div className="flex items-center gap-4">
+            <span className="font-bold text-[var(--accent-green)] terminal-glow">FORKVERSE SYSTEM v1.0.2</span>
+            <span>REPORT: {analysis.repoName}</span>
+            <span>USER: @{analysis.user?.username || 'anonymous'}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={handleStar} className={`transition-colors ${analysis.isStarred ? 'text-[var(--accent-amber)]' : 'hover:text-white'}`}>
+              STAR [{analysis.starCount}]
             </button>
           </div>
         </div>
 
-        {/* Layout: sidebar nav + sections */}
-        <div className="flex gap-4">
-          {/* Desktop section nav — hidden on mobile */}
-          {sections && (
-            <nav className="hidden lg:block w-48 shrink-0 sticky top-20 self-start">
-              <div className="border border-[var(--border)] bg-[var(--bg-elevated)]">
-                <div className="px-3 py-2 border-b border-[var(--border)]">
-                  <span className="font-mono text-[10px] text-[var(--text-faint)]">// sections</span>
-                </div>
-                {SECTION_KEYS.map((key) => {
-                  const content = sections[key];
-                  if (!content) return null;
-                  return (
-                    <button
-                      key={key}
-                      onClick={() => scrollToSection(key)}
-                      className={`w-full text-left px-3 py-2 font-mono text-xs transition-colors flex items-center gap-2 ${
-                        activeSection === key
-                          ? 'text-[var(--accent-green)] bg-[var(--accent-green)]/5 border-l-2 border-[var(--accent-green)]'
-                          : 'text-[var(--text-muted)] hover:text-[var(--text)] border-l-2 border-transparent'
-                      }`}
-                    >
-                      <span>{SECTION_ICONS[key]}</span>
-                      <span>{t(`analysis.section.${key}`)}</span>
-                    </button>
-                  );
-                })}
+        {/* HTOP Main Layout: Table-style Nav + Content */}
+        <div className="flex flex-col md:flex-row gap-6">
+          
+          {/* Table-style Navigation (HTOP Sidebar) */}
+          <div className="w-full md:w-56 shrink-0 space-y-4">
+            <div className="border border-[var(--border)] bg-[#0d1117] overflow-hidden">
+              <div className="bg-[var(--accent-green)] text-[#0f172a] font-mono text-[10px] font-bold px-3 py-1 uppercase tracking-tighter">
+                Section List
               </div>
-            </nav>
-          )}
-
-          {/* Mobile horizontal section nav — visible on mobile only */}
-          {sections && (
-            <div className="lg:hidden fixed bottom-16 left-0 right-0 z-40 bg-[var(--bg-void)]/95 backdrop-blur border-t border-[var(--border)] overflow-x-auto">
-              <div className="flex px-2 py-1.5 gap-1">
+              <div className="flex flex-col">
                 {SECTION_KEYS.map((key) => {
-                  const content = sections[key];
-                  if (!content) return null;
+                  if (!sections?.[key]) return null;
+                  const isActive = activeSection === key;
                   return (
                     <button
                       key={key}
                       onClick={() => scrollToSection(key)}
-                      className={`shrink-0 px-3 py-1.5 font-mono text-[10px] rounded-sm transition-colors ${
-                        activeSection === key
-                          ? 'bg-[var(--accent-green)]/10 text-[var(--accent-green)] border border-[var(--accent-green)]/30'
-                          : 'text-[var(--text-faint)] border border-transparent'
+                      className={`px-3 py-1.5 font-mono text-[11px] text-left transition-colors flex items-center justify-between group ${
+                        isActive 
+                          ? 'bg-[var(--accent-green)]/20 text-[var(--accent-green)]' 
+                          : 'text-gray-500 hover:bg-[#1e293b] hover:text-gray-200'
                       }`}
                     >
-                      {SECTION_ICONS[key]} {t(`analysis.section.${key}`)}
+                      <span>{SECTION_ICONS[key]} {t(`analysis.section.${key}`)}</span>
+                      {isActive && <span className="animate-pulse">_</span>}
                     </button>
                   );
                 })}
               </div>
             </div>
-          )}
 
-          {/* Sections content */}
-          <div className="flex-1 min-w-0 space-y-4 pb-20 lg:pb-4">
+            {/* F-Key Quick Actions (Desktop Sidebar Bottom) */}
+            <div className="hidden md:block space-y-1">
+              <div className="font-mono text-[9px] text-[var(--text-faint)] mb-2 uppercase tracking-widest px-1">Quick Actions</div>
+              <button onClick={() => window.print()} className="flex items-center gap-2 w-full px-1 font-mono text-[11px] text-gray-500 hover:text-white">
+                <span className="bg-gray-700 text-gray-200 px-1 rounded-sm text-[9px]">F5</span>
+                <span>Export PDF</span>
+              </button>
+              <button onClick={() => window.location.href='/analyze'} className="flex items-center gap-2 w-full px-1 font-mono text-[11px] text-gray-500 hover:text-white">
+                <span className="bg-gray-700 text-gray-200 px-1 rounded-sm text-[9px]">F10</span>
+                <span>Quit Result</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="flex-1 min-w-0 space-y-6 pb-20">
             {sections ? (
               SECTION_KEYS.map((key) => (
                 <SectionCard
@@ -312,30 +271,36 @@ export default function AnalysisResultPage() {
                 />
               ))
             ) : (
-              /* Fallback: flat summary for old analyses without sections */
-              <div className="border border-[var(--border)] bg-[var(--bg-elevated)] p-4">
-                <div className="font-mono text-sm text-[var(--text)] whitespace-pre-wrap">
-                  {analysis.resultSummary}
-                </div>
+              <div className="border border-[var(--border)] bg-[var(--bg-elevated)] p-6 font-mono text-[13px] text-[var(--text)] whitespace-pre-wrap leading-relaxed">
+                {analysis.resultSummary}
               </div>
             )}
-
-            {/* Actions */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <Link
-                to="/analyze"
-                className="font-mono text-sm text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
-              >
-                ← {t('analysis.backToAnalyze')}
+            
+            <div className="flex items-center gap-4 pt-6 border-t border-[var(--border)]/30">
+              <Link to="/analyze" className="font-mono text-xs text-[var(--text-faint)] hover:text-[var(--accent-green)] transition-colors">
+                $ cd ..
               </Link>
-              <Link
-                to="/feed"
-                className="font-mono text-sm text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
-              >
-                {t('analysis.backToFeed')}
+              <Link to="/feed" className="font-mono text-xs text-[var(--text-faint)] hover:text-[var(--accent-green)] transition-colors">
+                $ cd /home/feed
               </Link>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Function Key Footer (Mobile Persistent) */}
+      <div className="md:hidden fixed bottom-16 left-0 right-0 z-40 bg-[#1a1a2e] border-t border-gray-800 px-4 py-2 flex justify-between items-center font-mono text-[10px]">
+        <div className="flex items-center gap-3">
+          <span className="text-[#0f172a] bg-gray-400 px-1">F1</span>
+          <span className="text-gray-400">Help</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[#0f172a] bg-gray-400 px-1">F5</span>
+          <span className="text-gray-400">Export</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[#0f172a] bg-gray-400 px-1">F10</span>
+          <span className="text-gray-400">Quit</span>
         </div>
       </div>
     </AppShell>

@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useFeedStore } from '../../stores/feedStore.js';
 import { useUiStore } from '../../stores/uiStore.js';
 import PostCard from '../post/PostCard.js';
@@ -30,13 +30,9 @@ interface FeedListProps {
 }
 
 export default function FeedList({ emptyTitle, emptySubtitle: _emptySubtitle, emptyBody }: FeedListProps = {}) {
-  const { posts, isLoading, isLoadingMore, hasMore, error, focusedPostId, fetchGlobalFeed, fetchNextPage } =
+  const { posts, isLoading, isLoadingMore, hasMore, error, focusedPostId, fetchNextPage, fetchFeed, feedEndpoint } =
     useFeedStore();
   const { t } = useUiStore();
-
-  useEffect(() => {
-    fetchGlobalFeed();
-  }, [fetchGlobalFeed]);
 
   const handleLoadMore = useCallback(() => {
     fetchNextPage();
@@ -65,7 +61,7 @@ export default function FeedList({ emptyTitle, emptySubtitle: _emptySubtitle, em
         </p>
         <button
           data-testid="feed-retry"
-          onClick={fetchGlobalFeed}
+          onClick={() => void fetchFeed(feedEndpoint)}
           className="text-[var(--accent-green)] font-mono text-[12px] hover:text-[var(--accent-green)]/80 transition-colors"
         >
           {t('feed.error.retry')}

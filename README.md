@@ -600,6 +600,8 @@ Open **http://localhost:7878** → connect with GitHub.
 > **Requirements:** Node.js 18+, pnpm 8+, [GitHub OAuth App](https://github.com/settings/developers)
 > Callback URL: `http://localhost:3771/api/auth/github/callback`
 
+**Local dev tips:** The Vite dev server proxies `/api` and `/uploads` to `http://127.0.0.1:${PORT}` using **`PORT` from the repo-root `.env`** (default **3771**, same as the API). If the browser shows **`http proxy error`**, the API is probably not listening — start the full stack with `pnpm dev` or check [TROUBLESHOOTING.md](./docs/guides/TROUBLESHOOTING.md). On **Windows**, if the server fails on `better-sqlite3`, see the same guide. Use **`pnpm seed`** for sample DB posts; the built-in global-feed demo uses handles that match the seed users so profile links from mock cards resolve.
+
 <br/>
 
 ## FAQ
@@ -629,6 +631,7 @@ pnpm build      # Build all packages
 pnpm test       # Vitest unit tests
 pnpm test:e2e   # Playwright E2E
 pnpm seed       # Load sample data
+pnpm db:reset   # Delete SQLite DB; next server start reapplies migrations
 ```
 
 ## Contributing

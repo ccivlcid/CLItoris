@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams, Navigate, Link } from 'react-router-dom';
 import AppShell from '../components/layout/AppShell.js';
 import PostCard from '../components/post/PostCard.js';
@@ -13,32 +13,25 @@ import InfluenceBadge from '../components/profile/InfluenceBadge.js';
 import InfluenceDetail from '../components/profile/InfluenceDetail.js';
 import { useInfluenceStore } from '../stores/influenceStore.js';
 import { useUiStore } from '../stores/uiStore.js';
+import { Icon } from '../components/common/Icon.js';
 
 type Tab = 'posts' | 'starred' | 'repos' | 'api';
-
 const BASE_TABS = ['posts', 'starred', 'repos'] as const;
-const SELF_BASE_TABS = ['posts', 'starred', 'repos'] as const;
 const SELF_TABS = ['api'] as const;
-const ALL_TABS: Tab[] = [...SELF_BASE_TABS, ...SELF_TABS];
-
-interface GithubRepo {
-  name: string;
-  description: string | null;
-  stars: number;
-  forks: number;
-  language: string | null;
-  url: string;
-  updatedAt: string;
-}
 
 function formatCount(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
   return String(n);
 }
 
+function profileHandleFromParam(raw: string | undefined): string {
+  if (!raw) return '';
+  return raw.startsWith('@') ? raw.slice(1) : raw;
+}
+
 export default function UserProfilePage() {
-  const { atUsername } = useParams<{ atUsername: string }>();
-  const username = atUsername?.startsWith('@') ? atUsername.slice(1) : undefined;
+  const { username: rawParam } = useParams<{ username: string }>();
+  const username = profileHandleFromParam(rawParam);
   const navigate = useNavigate();
   const { user: me, logout } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -52,9 +45,10 @@ export default function UserProfilePage() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [notFound, setNotFound] = useState(false);
-  const [repos, setRepos] = useState<GithubRepo[]>([]);
+  const [repos, setRepos] = useState<any[]>([]);
   const [isLoadingRepos, setIsLoadingRepos] = useState(false);
   const [showFollowList, setShowFollowList] = useState<'followers' | 'following' | null>(null);
+  
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [bioDraft, setBioDraft] = useState('');
   const [isSavingBio, setIsSavingBio] = useState(false);
@@ -64,17 +58,10 @@ export default function UserProfilePage() {
   const { userScore, fetchUserScore, calculateScore, isCalculating } = useInfluenceStore();
 
   const rawTab = searchParams.get('tab') as Tab | null;
-  const validTabs: Tab[] = isSelf ? ALL_TABS : [...BASE_TABS];
+  const validTabs: Tab[] = isSelf ? [...BASE_TABS, ...SELF_TABS] : [...BASE_TABS];
   const tab: Tab = rawTab && validTabs.includes(rawTab) ? rawTab : 'posts';
 
-  const handleTabChange = (t: Tab) => {
-    setSearchParams({ tab: t }, { replace: true });
-  };
-
-  // Redirect non-@ paths immediately (render-phase, no extra history entry)
-  if (!atUsername || !atUsername.startsWith('@')) {
-    return <Navigate to="/" replace />;
-  }
+  const handleTabChange = (t: Tab) => setSearchParams({ tab: t }, { replace: true });
 
   useEffect(() => {
     if (!username) return;
@@ -85,6 +72,7 @@ export default function UserProfilePage() {
         setProfile(res.data);
         setIsFollowing(res.data.isFollowing);
         setFollowerCount(res.data.followerCount);
+        setBioDraft(res.data.bio ?? '');
         setIsLoading(false);
       })
       .catch((err) => {
@@ -114,18 +102,15 @@ export default function UserProfilePage() {
   }, [username, tab]);
 
   useEffect(() => {
-    if (tab === 'repos' || (SELF_TABS as readonly string[]).includes(tab)) return;
-    setPosts([]);
-    setCursor(null);
-    setHasMore(true);
+    if (tab === 'repos' || tab === 'api') return;
+    setPosts([]); setCursor(null); setHasMore(true);
     void loadPosts(true, null);
   }, [username, tab, loadPosts]);
 
   useEffect(() => {
-    if (tab !== 'repos' || !username) return;
-    if (repos.length > 0) return;
+    if (tab !== 'repos' || !username || repos.length > 0) return;
     setIsLoadingRepos(true);
-    api.get<ApiResponse<GithubRepo[]>>(`/users/@${username}/repos`)
+    api.get<ApiResponse<any[]>>(`/users/@${username}/repos`)
       .then((res) => setRepos(res.data))
       .catch(() => toastError('Failed to load repositories'))
       .finally(() => setIsLoadingRepos(false));
@@ -146,11 +131,8 @@ export default function UserProfilePage() {
     }
   };
 
-  const followBusy = useRef(false);
   const handleFollow = async () => {
     if (!me) { navigate('/login'); return; }
-    if (followBusy.current) return;
-    followBusy.current = true;
     const next = !isFollowing;
     setIsFollowing(next);
     setFollowerCount((c) => c + (next ? 1 : -1));
@@ -159,411 +141,205 @@ export default function UserProfilePage() {
     } catch {
       setIsFollowing(!next);
       setFollowerCount((c) => c + (next ? -1 : 1));
-      toastError('Failed to update follow status');
-    } finally {
-      followBusy.current = false;
     }
   };
 
-  // ── 404 ──
+  if (!username) return <Navigate to="/feed" replace />;
+
   if (notFound) {
     return (
       <AppShell>
-        <div className="flex flex-col items-center justify-center py-24 px-6">
-          <p className="font-mono text-[14px] text-[var(--accent-green)] mb-2">$ user --lookup=@{username}</p>
-          <p className="font-mono text-[13px] text-[var(--text-faint)] mb-6">{t('profile.notFound')}</p>
+        <div className="flex flex-col items-center justify-center py-24 px-6 max-w-md mx-auto text-center">
+          <p className="text-red-400 font-mono text-sm">$ finger @{username} --not-found</p>
+          <p className="text-[var(--text-muted)] text-[13px] mt-4 leading-relaxed" style={{ fontFamily: 'var(--font-sans)' }}>
+            {t('profile.notFoundHint')}
+          </p>
           <button
-            onClick={() => navigate('/')}
-            className="font-mono text-[13px] text-[var(--accent-green)] hover:text-green-300 transition-colors"
+            type="button"
+            onClick={() => navigate('/feed')}
+            className="mt-6 text-[var(--accent-green)] font-mono text-sm hover:underline"
           >
-            {t('profile.goHome')}
+            ← {t('profile.goHome')}
           </button>
         </div>
       </AppShell>
     );
   }
 
-
-  // ── Profile ──
   return (
     <AppShell>
-      <div className="flex flex-col">
-
-        {/* ── Hero ── */}
-        {isLoading ? (
-          <div className="px-6 pt-8 pb-6 animate-pulse">
-            <div className="flex items-center gap-5">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[var(--border)]/50" />
-              <div className="space-y-3 flex-1">
-                <div className="h-5 w-40 bg-[var(--border)]/50 rounded" />
-                <div className="h-3 w-28 bg-[var(--border)]/30 rounded" />
+      <div className="max-w-4xl mx-auto px-6 sm:px-12 py-16 space-y-16">
+        
+        {/* ── Follow List Overlay (Optimized) ── */}
+        {showFollowList && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setShowFollowList(null)}>
+            <div className="w-full max-w-lg bg-[#0d1117] border border-white/10 shadow-2xl overflow-hidden animate-fade-in" onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-center px-6 py-4 bg-white/[0.02] border-b border-white/5 font-mono text-xs text-gray-500 tracking-widest">
+                <span>// NETWORK_EXPLORER: {showFollowList.toUpperCase()}</span>
+                <button onClick={() => setShowFollowList(null)} className="hover:text-white transition-colors">
+                  <Icon name="close" />
+                </button>
+              </div>
+              <div className="max-h-[70vh] overflow-y-auto p-6">
+                <GithubFollowSync defaultTab={showFollowList} />
               </div>
             </div>
           </div>
-        ) : profile ? (
-          <>
-            {/* Cover — subtle gradient bar */}
-            <div className="h-20 sm:h-28 bg-gradient-to-br from-[var(--accent-green)]/[0.06] via-transparent to-[var(--accent-purple)]/[0.04]" />
+        )}
 
-            <div className="px-5 sm:px-6">
-              {/* Avatar — overlaps cover */}
-              <div className="-mt-10 sm:-mt-12 mb-4 flex items-end gap-4 sm:gap-5">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-[3px] border-[var(--bg-void)] shrink-0 bg-[var(--bg-surface)]">
-                  {profile.githubAvatarUrl ? (
-                    <img src={profile.githubAvatarUrl} alt={profile.username} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-2xl sm:text-3xl text-[var(--text-faint)]" style={{ fontFamily: 'var(--font-sans)' }}>
-                      {profile.username[0]?.toUpperCase()}
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions — aligned with avatar */}
-                <div className="mb-1 ml-auto flex items-center gap-2">
-                  {isSelf ? (
-                    <button
-                      onClick={async () => { await logout(); navigate('/login'); }}
-                      className="font-mono text-[13px] px-4 py-2 text-[var(--text-faint)] border border-[var(--border)] hover:text-[var(--color-error)] hover:border-[var(--color-error)]/30 transition-colors"
-                    >
-                      {t('menu.logout')}
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => navigate(`/messages/${username}`)}
-                        className="font-mono text-[13px] px-4 py-2 text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--text)] hover:border-[var(--border-hover)] transition-colors"
-                        title="Send message"
-                      >
-                        msg
-                      </button>
-                      <button
-                        onClick={handleFollow}
-                        className={`font-mono text-[13px] px-5 py-2 transition-all duration-150 ${
-                          isFollowing
-                            ? 'text-[var(--text-muted)] border border-[var(--border)] hover:text-[var(--accent-red)] hover:border-[var(--accent-red)]/30'
-                            : 'text-[var(--bg-void)] bg-[var(--accent-green)] hover:bg-[var(--accent-green)]/80'
-                        }`}
-                      >
-                        {isFollowing ? t('profile.followingBtn') : t('profile.followBtn')}
-                      </button>
-                    </>
-                  )}
-                </div>
+        {/* ── 1. Identity ── */}
+        <section className="flex flex-col md:flex-row items-start justify-between gap-8">
+          <div className="flex-1 w-full space-y-6">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 bg-[#16213e] border border-white/5 rounded-full overflow-hidden grayscale shrink-0">
+                {profile?.githubAvatarUrl ? <img src={profile.githubAvatarUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-2xl text-gray-600">?</div>}
               </div>
-
-              {/* Identity */}
-              <div className="space-y-2 mb-5">
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="font-mono text-[20px] sm:text-[22px] font-bold text-[var(--text)] leading-tight">
-                    @{profile.username}
-                  </h1>
-                  {userScore && (
-                    <InfluenceBadge tier={userScore.tier} tierLabel={userScore.tierLabel} score={userScore.score} size="md" />
-                  )}
-                </div>
-
-                {profile.displayName && profile.displayName !== profile.username && (
-                  <p className="text-[15px] text-[var(--text-muted)]" style={{ fontFamily: 'var(--font-sans)' }}>
-                    {profile.displayName}
-                  </p>
-                )}
-
-                {/* Bio / Status message — inline editable for self */}
-                {isSelf ? (
-                  isEditingBio ? (
-                    <div className="max-w-lg space-y-2">
-                      <textarea
-                        value={bioDraft}
-                        onChange={(e) => setBioDraft(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                            e.preventDefault();
-                            void handleBioSave();
-                          }
-                          if (e.key === 'Escape') setIsEditingBio(false);
-                        }}
-                        placeholder={t('profile.bioPlaceholder')}
-                        maxLength={300}
-                        rows={3}
-                        autoFocus
-                        disabled={isSavingBio}
-                        className="w-full bg-[var(--bg-input)] border border-[var(--border)] focus:border-[var(--accent-green)]/30 text-[14px] text-[var(--text)] leading-relaxed px-3 py-2 resize-none outline-none transition-colors disabled:opacity-40"
-                        style={{ fontFamily: 'var(--font-sans)' }}
-                      />
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-[10px] text-[var(--text-faint)]">
-                          {bioDraft.length}/300 · ctrl+enter {t('post.save')} · esc {t('post.cancel')}
-                        </span>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setIsEditingBio(false)}
-                            className="font-mono text-[11px] text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
-                            disabled={isSavingBio}
-                          >
-                            {t('post.cancel')}
-                          </button>
-                          <button
-                            onClick={() => void handleBioSave()}
-                            disabled={isSavingBio}
-                            className="font-mono text-[11px] text-[var(--accent-green)] hover:text-green-300 disabled:opacity-40 transition-colors"
-                          >
-                            {isSavingBio ? t('post.saving') : t('post.save')}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => { setBioDraft(profile.bio ?? ''); setIsEditingBio(true); }}
-                      className="text-left max-w-lg group"
-                    >
-                      {profile.bio ? (
-                        <p className="text-[14px] text-[var(--text-muted)] leading-relaxed group-hover:text-[var(--text)] transition-colors" style={{ fontFamily: 'var(--font-sans)' }}>
-                          {profile.bio}
-                          <span className="ml-2 text-[var(--text-faint)] text-[11px] font-mono opacity-0 group-hover:opacity-100 transition-opacity">edit</span>
-                        </p>
-                      ) : (
-                        <p className="text-[14px] text-[var(--text-faint)]/40 hover:text-[var(--text-faint)] transition-colors" style={{ fontFamily: 'var(--font-sans)' }}>
-                          {t('profile.bioPlaceholder')}
-                        </p>
-                      )}
-                    </button>
-                  )
-                ) : profile.bio ? (
-                  <p className="text-[14px] text-[var(--text-muted)] leading-relaxed max-w-lg" style={{ fontFamily: 'var(--font-sans)' }}>
-                    {profile.bio}
-                  </p>
-                ) : null}
+              <div className="min-w-0">
+                <h1 className="text-3xl font-bold text-white terminal-glow tracking-tighter truncate">@{username}</h1>
+                <p className="text-base text-gray-500 font-mono mt-1">{profile?.displayName || '...'}</p>
               </div>
-
-              {/* Stats — click followers/following to expand list */}
-              <div className="flex items-center gap-5 sm:gap-6 mb-5">
-                <button
-                  onClick={() => setShowFollowList(showFollowList === 'followers' ? null : 'followers')}
-                  className={`text-[14px] transition-colors ${showFollowList === 'followers' ? 'opacity-100' : 'hover:opacity-80'}`}
-                >
-                  <span className="font-semibold text-[var(--text)]" style={{ fontFamily: 'var(--font-sans)' }}>{formatCount(followerCount)}</span>
-                  <span className="text-[var(--text-faint)] ml-1.5 text-[13px]" style={{ fontFamily: 'var(--font-sans)' }}>{t('profile.followers')}</span>
-                </button>
-                <button
-                  onClick={() => setShowFollowList(showFollowList === 'following' ? null : 'following')}
-                  className={`text-[14px] transition-colors ${showFollowList === 'following' ? 'opacity-100' : 'hover:opacity-80'}`}
-                >
-                  <span className="font-semibold text-[var(--text)]" style={{ fontFamily: 'var(--font-sans)' }}>{formatCount(profile.followingCount)}</span>
-                  <span className="text-[var(--text-faint)] ml-1.5 text-[13px]" style={{ fontFamily: 'var(--font-sans)' }}>{t('profile.following')}</span>
-                </button>
-                <span className="text-[14px]">
-                  <span className="font-semibold text-[var(--text)]" style={{ fontFamily: 'var(--font-sans)' }}>{formatCount(profile.postCount)}</span>
-                  <span className="text-[var(--text-faint)] ml-1.5 text-[13px]" style={{ fontFamily: 'var(--font-sans)' }}>{t('profile.posts')}</span>
-                </span>
-              </div>
-
-              {/* Follow list — inline expand */}
-              {showFollowList && (
-                <div className="mb-5">
-                  <GithubFollowSync defaultTab={showFollowList} />
-                </div>
-              )}
-
-              {/* GitHub + Languages */}
-              {profile.githubUsername && (
-                <div className="flex items-center gap-3 flex-wrap mb-6">
-                  <a
-                    href={profile.githubProfileUrl ?? `https://github.com/${profile.githubUsername}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[13px] text-[var(--accent-blue)]/70 hover:text-[var(--accent-blue)] font-mono transition-colors"
-                  >
-                    github.com/{profile.githubUsername}
-                  </a>
-                  {profile.topLanguages.length > 0 && (
-                    <div className="flex gap-2">
-                      {profile.topLanguages.map((lang) => (
-                        <span key={lang} className="text-[12px] text-[var(--text-faint)]/50 font-mono">{lang}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Contribution Graph */}
-              {profile.githubUsername && (
-                <div className="mb-6">
-                  <ContributionGraph githubUsername={profile.githubUsername} />
-                </div>
-              )}
-
-              {/* Influence */}
-              {userScore && (
-                <div className="mb-6">
-                  <InfluenceDetail
-                    score={userScore}
-                    isOwnProfile={isSelf}
-                    onRecalculate={calculateScore}
-                    isCalculating={isCalculating}
+            </div>
+            
+            <div className="w-full">
+              {isEditingBio ? (
+                <div className="space-y-4 animate-fade-in">
+                  <textarea 
+                    value={bioDraft} 
+                    onChange={(e) => setBioDraft(e.target.value)} 
+                    className="w-full bg-white/[0.03] border border-white/10 text-[16px] text-white p-6 focus:border-[var(--accent-green)] outline-none rounded-sm leading-relaxed" 
+                    rows={6} 
+                    autoFocus 
                   />
+                  <div className="flex justify-between items-center text-[11px] font-mono tracking-widest">
+                    <span className="text-gray-600">{bioDraft.length} / 300</span>
+                    <div className="flex gap-6">
+                      <button onClick={() => setIsEditingBio(false)} className="text-gray-500 hover:text-white">CANCEL</button>
+                      <button onClick={handleBioSave} className="text-[var(--accent-green)] font-bold">SAVE_CHANGES</button>
+                    </div>
+                  </div>
                 </div>
-              )}
-              {!userScore && isSelf && (
-                <button
-                  onClick={calculateScore}
-                  disabled={isCalculating}
-                  className="mb-6 w-full py-3 font-mono text-[13px] text-[var(--text-faint)] hover:text-[var(--accent-green)] border border-[var(--border)]/40 hover:border-[var(--accent-green)]/20 transition-colors disabled:opacity-40"
+              ) : (
+                <p 
+                  onClick={() => isSelf && setIsEditingBio(true)} 
+                  className={`text-[15px] text-gray-400 leading-relaxed max-w-2xl ${isSelf ? 'cursor-pointer hover:text-gray-300 transition-colors' : ''}`}
                 >
-                  {isCalculating ? t('profile.calculating') : t('profile.calculateInfluence')}
-                </button>
+                  {profile?.bio || (isSelf ? t('profile.bioPlaceholder') : '...')}
+                </p>
               )}
-
             </div>
-          </>
-        ) : null}
+          </div>
 
-        {/* ── Quick actions (self only) ── */}
-        {!isLoading && profile && isSelf && (
-          <div className="px-5 sm:px-6 pb-4 flex gap-2 overflow-x-auto">
-            <Link
-              to="/chat"
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 border border-[var(--border)]/40 hover:border-[var(--accent-green)]/30 font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--accent-green)] transition-colors"
-            >
-              <span>⊙</span> {t('profile.chat')}
-            </Link>
-            <Link
-              to="/messages"
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 border border-[var(--border)]/40 hover:border-[var(--accent-cyan)]/30 font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--accent-cyan)] transition-colors"
-            >
-              <span>✉</span> {t('profile.messages')}
-            </Link>
-            <Link
-              to="/github"
-              className="shrink-0 flex items-center gap-1.5 px-3 py-2 border border-[var(--border)]/40 hover:border-[var(--accent-blue)]/30 font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--accent-blue)] transition-colors"
-            >
-              <span>⑂</span> github
-            </Link>
+          <div className="flex flex-col items-end gap-4 shrink-0">
+            {userScore && <InfluenceBadge tier={userScore.tier} tierLabel={userScore.tierLabel} score={userScore.score} size="lg" />}
+            {!isSelf && (
+              <button onClick={handleFollow} className={`text-[11px] font-mono transition-colors uppercase tracking-widest ${isFollowing ? 'text-gray-600 hover:text-red-500' : 'text-[var(--accent-green)] font-bold'}`}>
+                {isFollowing ? '[ Following ]' : '[ Follow ]'}
+              </button>
+            )}
+          </div>
+        </section>
+
+        {/* ── 2. Vital Signs ── */}
+        <section className="grid grid-cols-3 border-y border-white/5 py-8 font-mono tracking-tighter">
+          <button onClick={() => setShowFollowList('followers')} className="text-center group">
+            <span className="block text-2xl text-white group-hover:text-[var(--accent-green)] transition-all">{formatCount(followerCount)}</span>
+            <span className="text-[11px] text-gray-600 uppercase tracking-widest mt-1 block">{t('profile.followers')}</span>
+          </button>
+          <button onClick={() => setShowFollowList('following')} className="text-center group border-x border-white/5">
+            <span className="block text-2xl text-white group-hover:text-[var(--accent-green)] transition-all">{formatCount(profile?.followingCount || 0)}</span>
+            <span className="text-[11px] text-gray-600 uppercase tracking-widest mt-1 block">{t('profile.following')}</span>
+          </button>
+          <div className="text-center">
+            <span className="block text-2xl text-white">{formatCount(profile?.postCount || 0)}</span>
+            <span className="text-[11px] text-gray-600 uppercase tracking-widest mt-1 block">{t('profile.posts')}</span>
+          </div>
+        </section>
+
+        {/* ── 3. Action Tools ── */}
+        <section className="flex flex-wrap gap-x-8 gap-y-3 font-mono text-[11px] text-gray-500 uppercase tracking-[0.2em]">
+          {isSelf ? (
+            <>
+              <Link to="/chat" className="hover:text-[var(--accent-green)] transition-colors">⊙ {t('profile.chat')}</Link>
+              <Link to="/messages" className="hover:text-[var(--accent-cyan)] transition-colors">✉ {t('profile.messages')}</Link>
+              {profile?.githubUsername && <a href={`https://github.com/${profile.githubUsername}`} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--accent-blue)] transition-colors">⑂ Github</a>}
+              <button onClick={async () => { await logout(); navigate('/login'); }} className="text-red-900 hover:text-red-500 transition-colors uppercase tracking-widest">∅ Logout</button>
+            </>
+          ) : (
+            <button onClick={() => navigate(`/messages/${username}`)} className="hover:text-[var(--accent-cyan)] transition-colors">✉ {t('profile.messages')}</button>
+          )}
+        </section>
+
+        {/* ── 4. Deep Insights ── */}
+        {((isSelf && profile?.githubUsername) || userScore) && (
+          <div className="space-y-12 pt-4">
+            {profile?.githubUsername && (
+              <div className="opacity-50 hover:opacity-100 transition-all duration-500 overflow-hidden">
+                <div className="font-mono text-[10px] text-gray-700 mb-4 uppercase tracking-[0.3em]">// GitHub Activity Matrix</div>
+                <ContributionGraph githubUsername={profile.githubUsername} />
+              </div>
+            )}
+
+            {userScore && (
+              <div className="bg-white/[0.01] border-l border-white/10 pl-8 py-4 transition-all hover:bg-white/[0.02]">
+                <div className="font-mono text-[10px] text-gray-700 mb-6 uppercase tracking-[0.3em]">// Influence Metrics & Authority</div>
+                <InfluenceDetail score={userScore} isOwnProfile={isSelf} onRecalculate={calculateScore} isCalculating={isCalculating} />
+              </div>
+            )}
           </div>
         )}
 
-        {/* ── Tabs ── */}
-        {!isLoading && profile && (
-          <>
-            <nav className="flex border-b border-[var(--border)]/30 px-5 sm:px-6 sticky top-0 bg-[var(--bg-void)] z-10 overflow-x-auto">
-              {(isSelf ? [...SELF_BASE_TABS, ...SELF_TABS] : BASE_TABS).map((t) => (
-                <button
-                  key={t}
-                  onClick={() => handleTabChange(t)}
-                  className={`px-4 sm:px-5 py-3 text-[13px] transition-colors relative shrink-0 ${
-                    tab === t
-                      ? 'text-[var(--text)] font-medium'
-                      : 'text-[var(--text-faint)] hover:text-[var(--text-muted)]'
-                  }`}
-                  style={{ fontFamily: 'var(--font-sans)' }}
-                >
-                  {t}
-                  {tab === t && (
-                    <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-[var(--accent-green)]" />
-                  )}
-                </button>
-              ))}
-            </nav>
+        {/* ── 5. The Feed ── */}
+        <section className="space-y-10">
+          <nav className="flex gap-8 font-mono text-[12px] tracking-[0.25em]">
+            {validTabs.map((t_key) => (
+              <button key={t_key} onClick={() => handleTabChange(t_key)} className={`transition-all ${tab === t_key ? 'text-[var(--accent-green)] font-bold' : 'text-gray-600 hover:text-gray-400'}`}>
+                {tab === t_key ? '> ' : ''}{t_key.toUpperCase()}
+              </button>
+            ))}
+          </nav>
 
-            {/* ── Tab Content ── */}
-
-            {/* Repos */}
-            {tab === 'repos' && (
-              isLoadingRepos ? (
-                <div className="animate-pulse">
-                  {Array.from({ length: 4 }, (_, i) => (
-                    <div key={i} className="h-[72px] border-b border-[var(--border)]/15" />
-                  ))}
-                </div>
-              ) : repos.length === 0 ? (
-                <div className="py-16 text-center">
-                  <p className="text-[14px] text-[var(--text-faint)]/50" style={{ fontFamily: 'var(--font-sans)' }}>{t('profile.noRepos')}</p>
-                </div>
-              ) : (
-                <div>
-                  {repos.map((repo) => {
-                    const repoOwner = repo.url.replace('https://github.com/', '').split('/')[0] ?? '';
-                    return (
-                      <div
-                        key={repo.name}
-                        className="flex items-center gap-3 px-5 sm:px-6 py-4 border-b border-[var(--border)]/10 group hover:bg-white/[0.015] transition-colors"
-                      >
-                        <a
-                          href={repo.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 min-w-0"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <span className="font-mono text-[14px] text-[var(--accent-blue)] group-hover:text-blue-300 transition-colors">{repo.name}</span>
-                            {repo.language && (
-                              <span className="text-[12px] text-[var(--text-faint)]/40 font-mono">{repo.language}</span>
-                            )}
-                          </div>
-                          {repo.description && (
-                            <p className="text-[13px] text-[var(--text-faint)]/60 truncate mt-1" style={{ fontFamily: 'var(--font-sans)' }}>{repo.description}</p>
-                          )}
+          <div className="space-y-0 border-l border-white/5">
+            {tab === 'api' && isSelf ? (
+              <div className="pl-8"><ApiTab onToast={toastSuccess} /></div>
+            ) : tab === 'repos' ? (
+              <div className="divide-y divide-white/5">
+                {repos.map((repo) => {
+                  const repoOwner = repo.url.replace('https://github.com/', '').split('/')[0] ?? '';
+                  return (
+                    <div key={repo.name} className="flex items-center gap-6 py-5 pl-8 hover:bg-white/[0.02] transition-all group">
+                      <span className="text-[11px] text-gray-700 font-mono w-24 shrink-0">{new Date(repo.updatedAt).toISOString().slice(0, 10)}</span>
+                      <div className="flex-1 min-w-0">
+                        <a href={repo.url} target="_blank" rel="noopener noreferrer" className="text-base text-gray-400 group-hover:text-white transition-colors truncate font-mono block">
+                          {repo.name} <span className="text-[11px] text-gray-700 ml-3 opacity-0 group-hover:opacity-100 transition-opacity">[{repo.language || '?'}]</span>
                         </a>
-                        <div className="flex items-center gap-3 shrink-0 font-mono text-[12px] text-[var(--text-faint)]/50">
-                          <span>★ {formatCount(repo.stars)}</span>
-                          <span>◇ {formatCount(repo.forks)}</span>
-                          {isSelf && (
-                            <Link
-                              to={`/analyze?repo=${repoOwner}/${repo.name}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-[11px] text-[var(--text-faint)] hover:text-[var(--accent-green)] transition-colors border border-[var(--border)] hover:border-[var(--accent-green)]/30 px-2 py-0.5"
-                            >
-                              analyze
-                            </Link>
-                          )}
-                        </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )
-            )}
-
-            {/* Posts / Starred */}
-            {(tab === 'posts' || tab === 'starred') && (
-              isLoadingPosts && posts.length === 0 ? (
-                <div className="animate-pulse">
-                  {Array.from({ length: 3 }, (_, i) => (
-                    <div key={i} className="h-36 border-b border-[var(--border)]/10" />
-                  ))}
-                </div>
-              ) : posts.length === 0 ? (
-                <div className="py-16 text-center">
-                  <p className="text-[14px] text-[var(--text-faint)]/50" style={{ fontFamily: 'var(--font-sans)' }}>{t('profile.noItems', { tab })}</p>
-                </div>
-              ) : (
-                <div>
-                  {posts.map((post) => (
-                    <PostCard key={post.id} post={post} />
-                  ))}
-                  {hasMore && (
-                    <button
-                      onClick={() => loadPosts(false, cursor)}
-                      disabled={isLoadingPosts}
-                      className="w-full py-5 text-[13px] text-[var(--text-faint)]/50 hover:text-[var(--text-muted)] disabled:opacity-40 transition-colors"
-                      style={{ fontFamily: 'var(--font-sans)' }}
-                    >
-                      {isLoadingPosts ? t('profile.loading') : t('profile.loadMore')}
-                    </button>
-                  )}
-                </div>
-              )
-            )}
-
-            {/* API (self only) */}
-            {tab === 'api' && isSelf && (
-              <div className="px-5 sm:px-6 py-5">
-                <ApiTab onToast={toastSuccess} />
+                      <div className="flex items-center gap-6 shrink-0">
+                        <span className="text-[11px] text-gray-700 font-mono hidden sm:block">★ {formatCount(repo.stars)}</span>
+                        {isSelf && (
+                          <Link
+                            to={`/analyze?repo=${repoOwner}/${repo.name}`}
+                            className="text-[10px] font-mono text-gray-600 hover:text-[var(--accent-green)] border border-white/10 px-3 py-1 hover:border-[var(--accent-green)]/30 transition-all uppercase"
+                          >
+                            analyze
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {posts.map((post) => <PostCard key={post.id} post={post} />)}
+                {hasMore && (
+                  <button onClick={() => loadPosts(false, cursor)} className="w-full py-12 font-mono text-[11px] text-gray-700 hover:text-gray-400 uppercase tracking-[0.4em] transition-all">
+                    [ {t('profile.loadMore')} ]
+                  </button>
+                )}
               </div>
             )}
-          </>
-        )}
-
+          </div>
+        </section>
       </div>
     </AppShell>
   );

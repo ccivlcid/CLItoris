@@ -44,9 +44,10 @@ export default function ConnectForm({ errorFromCallback }: ConnectFormProps) {
       {/* Logo */}
       <div className="mb-10 text-center">
         <p className="font-mono text-3xl font-bold tracking-tight">
-          <span className="text-white/90">{'>'}_</span>
-          <span className="text-[var(--accent-green)]">CLI</span>
-          <span className="text-white/90">toris</span>
+          <span className="text-white/90">{'>'}_ </span>
+          <span className="text-[var(--accent-green)]">⑂</span>
+          <span className="text-white/90">Fork</span>
+          <span className="text-[var(--accent-green)]">verse</span>
         </p>
         <p className="text-[var(--text-faint)] font-mono text-[11px] mt-2 tracking-wider">terminal.social</p>
       </div>

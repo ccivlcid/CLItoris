@@ -63,6 +63,7 @@ pnpm test:e2e         # Playwright E2E
 pnpm lint             # ESLint
 pnpm format           # Prettier
 pnpm seed             # Seed DB with mock users & posts (scripts/seed.ts)
+pnpm db:reset         # Remove SQLite file + WAL/SHM; restart server to migrate (scripts/reset-db.ts)
 ```
 
 ### Package Dependencies
@@ -78,9 +79,9 @@ llm    ──→ shared
 - **UI**: Dark background (`#0d1117`), monospace font (JetBrains Mono), terminal aesthetic
 - **Colors**: Green (`#3fb950`) CLI keywords, Yellow (`#d29922`) usernames, Cyan (`#76e3ea`) hashtags, Blue (`#58a6ff`) links, Purple (`#bc8cff`) accents
 - **Surface**: `#161b22` cards/panels, `#30363d` borders, `#e6edf3` primary text, `#7d8590` muted text
-- **Layout**: Left sidebar navigation, Analyze as primary entry point, dual-panel posts (natural language | CLI) in social layer
-- **Keyboard**: Vim-like shortcuts (j/k nav, s star, o open, g-chord page navigation)
-- **Mobile**: Bottom navigation with Analyze as center action, PWA-ready, future Capacitor/native app
+- **Layout**: Left sidebar navigation, Feed (global/local) listed first on desktop, then Analyze and composer; dual-panel posts (natural language | CLI) in social layer
+- **Keyboard**: Vim-like shortcuts; **j/k, s, o, r, u, Esc** apply on **`/feed` only**; `/` opens composer except on Explore and post detail; **g**-chords and **?** are global (see `useKeyboardShortcuts.ts`)
+- **Mobile**: Bottom nav (Feed, Explore, center **+** → analyze / new post, Activity, Profile); mobile **?** help uses i18n (`mobileHelp.*`); PWA + Capacitor path in [MOBILE.md](docs/specs/MOBILE.md)
 
 ## Development Workflow
 

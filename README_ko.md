@@ -600,6 +600,8 @@ pnpm dev
 > **요구사항:** Node.js 18+, pnpm 8+, [GitHub OAuth 앱](https://github.com/settings/developers)
 > 콜백 URL: `http://localhost:3771/api/auth/github/callback`
 
+**로컬 개발 팁:** Vite 개발 서버는 `/api`, `/uploads`를 **저장소 루트 `.env`의 `PORT`**(기본 **3771**, API와 동일)로 `http://127.0.0.1:${PORT}`에 프록시합니다. 브라우저에 **`http proxy error`**가 나오면 API가 안 떠 있는 경우가 많습니다 — `pnpm dev`로 전체를 띄우거나 [TROUBLESHOOTING.md](./docs/guides/TROUBLESHOOTING.md)를 확인하세요. **Windows**에서 `better-sqlite3` 때문에 서버가 실패하면 같은 문서를 참고하세요. DB에 샘플 포스트를 넣으려면 **`pnpm seed`**를 사용하세요. 내장 글로벌 피드 데모 카드의 프로필 링크는 시드 유저 핸들과 맞춰 두었습니다.
+
 <br/>
 
 ## FAQ
@@ -629,6 +631,7 @@ pnpm build      # 전체 패키지 빌드
 pnpm test       # Vitest 유닛 테스트
 pnpm test:e2e   # Playwright E2E
 pnpm seed       # 샘플 데이터 로드
+pnpm db:reset   # SQLite DB 삭제 후 다음 서버 기동 시 마이그레이션으로 재생성
 ```
 
 ## 기여하기

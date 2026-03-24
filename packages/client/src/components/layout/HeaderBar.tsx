@@ -117,14 +117,14 @@ export default function HeaderBar() {
           </Link>
         )}
 
-        {/* Keyboard help — desktop only */}
+        {/* Keyboard help — improve discoverability */}
         <button
           onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: '?' }))}
-          className="hidden sm:inline-block font-mono text-[11px] text-[var(--text-muted)] hover:text-[var(--text)] transition-colors"
+          className="font-mono text-[11px] text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors px-1 sm:px-2 py-1 border border-transparent hover:border-[var(--border)]/30 rounded-sm"
           aria-label="Keyboard shortcuts"
           title="Keyboard shortcuts (?)"
         >
-          [?]
+          [? help]
         </button>
       </div>
     </header>

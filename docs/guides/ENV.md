@@ -33,6 +33,8 @@
 |----------|------|---------|----------|-------------|
 | `VITE_API_URL` | string | `/api` | No | API base URL (Vite prefix required) |
 
+> **Dev proxy:** `packages/client/vite.config.ts` loads the **repo root** `.env` and proxies `/api` and `/uploads` to `http://127.0.0.1:${PORT}` (default `3771`). If you change `PORT`, keep server and client dev in sync.
+
 > Note: Client env vars MUST start with `VITE_` to be exposed by Vite.
 
 ---

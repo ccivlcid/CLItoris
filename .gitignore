@@ -10,6 +10,7 @@ dist/
 .env.*.local
 
 # Database
+clitoris.db*
 forkverse.db
 forkverse.db-journal
 forkverse.db-wal

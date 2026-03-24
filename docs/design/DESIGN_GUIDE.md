@@ -200,6 +200,75 @@ The visual hierarchy must reflect the product priority:
 
 ---
 
+## 5. Terminal Visual Texture & FX
+
+To achieve a true "Social Terminal" feel, the UI employs subtle CRT-inspired visual effects.
+
+### 5.1 CRT Scanlines
+A fixed overlay providing horizontal lines across the entire viewport.
+- **Style**: `linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03))`
+- **Usage**: Applied to a `::after` pseudo-element on the main layout container.
+- **Opacity**: `0.05` to `0.08` (must be extremely subtle).
+
+### 5.2 Font Glow (Green Text Only)
+Monospace green text (`--accent-green`) should have a slight outer glow to simulate old CRT phosphors.
+- **Style**: `text-shadow: 0 0 4px rgba(74, 222, 128, 0.4);`
+- **Application**: Applied only to CLI commands, prompts, and headers. Never apply to natural language body text.
+
+### 5.3 Film Grain / Noise
+A static or slightly animated noise texture to break up large flat background areas.
+- **Style**: A high-frequency, low-opacity noise PNG or SVG.
+- **Usage**: Applied as a background-image to the `body`.
+
+### 5.4 Screen Flicker (Interaction Only)
+A very fast, subtle opacity flicker when a major action occurs (e.g., submitting an analysis).
+- **Duration**: `100ms`
+- **Effect**: `opacity: 0.95` to `1.0` (simulates power draw on a real tube).
+
+---
+
+## 6. Social Identity & System Personas
+
+User profiles are treated as "System Entities" rather than traditional social media profiles.
+
+### 6.1 ASCII Art Branded Headers
+Every user profile should have an ASCII art representation of their name or a default "User Avatar" made of characters.
+- **Rule**: Minimum 5 lines high, maximum 10 lines.
+- **Font**: Monospace only.
+
+### 6.2 The "Finger" Protocol Experience
+When visiting a profile, the initial load should feel like the result of a `finger @username` command.
+- Information should be grouped into **System blocks**: Login, Directory, Shell, Activity.
+
+### 6.3 Activity as "Commit Logs"
+User social activity (posts, stars, forks) is visualized as a `git log`.
+- Use a vertical pipe (`|`) and asterisk (`*`) to connect events chronologically.
+
+---
+
+## 7. Export & Print Theme (Analysis Reports)
+
+When exporting analysis results to PPT or PDF, the visual system adapts for high readability and professional presentation while retaining the "Terminal" brand identity.
+
+### 7.1 High-Contrast Mode (Ink-Saving)
+- **Background**: Reverts to **Solid White** (`#FFFFFF`) or very Light Gray (`#F8F9FA`).
+- **Text**: Monospace green (`--accent-green`) is replaced by a high-contrast **Dark Green** (`#065F46`).
+- **CLI Panels**: Retain a dark background (`#1A1A1A`) to stand out, but with 100% white text for extreme clarity.
+- **Rules**: Remove all scanlines, noise, and glow effects for print.
+
+### 7.2 Slide Layout Rules (16:9 Aspect Ratio)
+- **Grid**: Use a 12-column grid for PPT slide layouts.
+- **Information Density**: Maximum **3 sections per slide**.
+- **Terminal Window Frame**: Wrap each section or the entire slide in a 1px solid black border with a "Window Bar" (`_ [] X`) at the top to maintain the OS/CLI aesthetic.
+- **Section Headers**: Use `// architecture` or `// executive-summary` with a light-gray background block behind the text.
+
+### 7.3 Font Optimization for Print
+- **Mono**: Switch to **JetBrains Mono** exclusively (highly legible in print).
+- **Sans**: Switch to **Inter** for all body text results.
+- **Sizes**: Minimum 12pt for body text on slides; 14pt for headers.
+
+---
+
 ## See Also
 
 - [tokens.json](./tokens.json) — Machine-readable design tokens (colors, typography, spacing, breakpoints, animations)

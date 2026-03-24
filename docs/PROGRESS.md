@@ -1,7 +1,7 @@
 # PROGRESS.md — Development Status
 
 > **Source of truth** for development status, phase tracking, and decision log.
-> Last updated: 2026-03-23 (Phase B6 — Extended Features)
+> Last updated: 2026-03-24 (repo sync: docs + client + server)
 
 ---
 
@@ -31,7 +31,7 @@ All B-plan phases (B1–B6) complete.
 |---------|--------|-------|
 | Home page removed | **Complete** | Removed HomePage; `/` redirects to `/feed` |
 | Feed route migration | **Complete** | GlobalFeed at `/feed`; `/` → `/feed` redirect |
-| Navigation restructure | **Complete** | Sidebar: analyze first; logo → `/feed` |
+| Navigation restructure | **Complete** | Sidebar: feed first on desktop; logo → `/feed` |
 | Mobile nav center = dropup | **Complete** | Center button opens analyze / write post options |
 | Header `+ post` removed | **Complete** | Replaced with mobile dropup |
 | AnalyzePage i18n | **Complete** | All strings use `t()` across 4 languages |
@@ -178,6 +178,9 @@ All documentation, configuration files, and project scaffolding.
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2026-03-24 | **Git sync to `main`** | Single `chore` commit for docs + client + server; `.env` not committed (secrets); stray `clitoris.db*` ignored via `.gitignore` |
+| 2026-03-24 | **TROUBLESHOOTING: better-sqlite3 Windows** | Documented `Could not locate the bindings file`, Node ABI mismatch, and that `pnpm rebuild` may not compile — use `node-gyp rebuild` in package path |
+| 2026-03-24 | **Server `tsc` build fix** | `llmGateway` `intent`/`emotion` aligned with `@forkverse/llm` `PostIntent`/`PostEmotion`; removed unused `path` import in `media.ts` |
 | 2026-03-23 | **API keys encrypted at rest** | AES-256-GCM via ENCRYPTION_KEY env var; backward-compatible (plaintext passthrough in dev) |
 | 2026-03-23 | **Fork self-fork blocked** | Added user_id check — cannot fork own post (400 BAD_REQUEST) |
 | 2026-03-23 | **Follow endpoint atomic** | Wrapped in db.transaction() to prevent race conditions on concurrent follow/unfollow |
@@ -191,7 +194,17 @@ All documentation, configuration files, and project scaffolding.
 | 2026-03-23 | **SSE progress streaming** | Replaces polling for analysis progress; server pushes events via text/event-stream |
 | 2026-03-23 | **LLM Gateway logging** | All LLM calls routed through gateway with pino-logged latency/provider/model metrics |
 | 2026-03-23 | **Capacitor: dynamic import plugins** | All native plugins lazy-loaded via `import()` — zero bundle cost on web; only loads on native platform |
-| 2026-03-23 | **Rename CLItoris → Forkverse** | Fork/share-centric SNS branding; 118 files updated, 0 remaining old references |
+| 2026-03-25 | **Mobile help i18n** | `MobileHelpModal` uses `t()`; `mobileHelp.*` keys in en/ko/zh/ja |
+| 2026-03-25 | **Vite dev API proxy** | `vite.config.ts` uses `loadEnv` from repo root + `PORT`; target `127.0.0.1` for `/api` and `/uploads`; TROUBLESHOOTING + ENV.md for `http proxy error` |
+| 2026-03-25 | **Docs sync (ports & tooling)** | CONFIGS.md Vite section; `architecture.json` client port `7878`; Playwright `baseURL`/`webServer` → `7878`; TESTING.md; I18N `mobileHelp.*`; routes/USER_PROFILE route note; README local tips; CLAUDE keyboard/mobile lines |
+| 2026-03-24 | **GLOBAL_FEED_MOCK users = seed handles** | Mock cards use `jiyeon_kim`, `0xmitsuki`, `arjun_io`, `lena_dev`, `hex_cowboy` so `/@…` works after `pnpm seed`; profile 404 adds `profile.notFoundHint`; `goHome` → `/feed` |
+| 2026-03-24 | **Feed → profile / post navigation** | Route `/:username` for `/@handle` (RR7); `UserProfilePage` normalizes param; demo `mock-*` posts skip navigation + toast; `FeedList` no longer overwrites tab fetch; fix `atUsername` guard |
+| 2026-03-24 | **Desktop sidebar: feed first** | `Sidebar` `COMMANDS` order: `feed --global` / `feed --local` before `analyze` / `post --new` so PC hub matches feed-centric nav |
+| 2026-03-24 | **Keyboard shortcuts** | Removed duplicate j/k/… listener on `GlobalFeedPage`; `useKeyboardShortcuts` scoped j/k/s/o/r/u/Esc to `/feed`, skip `/` on explore + post detail, ignore ctrl/meta/alt + IME composing |
+| 2026-03-24 | **`pnpm db:reset`** | `scripts/reset-db.ts` removes SQLite + WAL/SHM/journal using `.env` `DATABASE_URL` (resolved vs `packages/server/`); docs + README |
+| 2026-03-24 | **Login page logo** | `ConnectForm` logo aligned with `HeaderBar`: `⑂` + Fork/verse accent colors |
+| 2026-03-24 | **Legacy DB filename in local `.env`** | `DATABASE_URL` aligned with `.env.example` (`forkverse.db`); decision log wording updated |
+| 2026-03-23 | **Rebrand to Forkverse** | Fork/share-centric SNS branding; prior codename retired repo-wide (bulk rename, 118 files) |
 | 2026-03-23 | **PWA: vite-plugin-pwa + Workbox** | Auto-generated SW with cache-first for fonts/avatars, network-first for API; manifest.json with SVG icons |
 | 2026-03-23 | **Pull-to-refresh custom hook** | usePullToRefresh with touch events, resistance curve, threshold-based trigger; AppShell onRefresh prop |
 | 2026-03-23 | **Manifest: SNS not Platform** | User clarified product is "developer SNS" not "platform"; updated manifest and descriptions |

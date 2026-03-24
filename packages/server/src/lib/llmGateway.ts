@@ -5,7 +5,7 @@
  * MVP: Logs to pino. Production: writes to llm_requests table + metrics.
  */
 import type { Logger } from 'pino';
-import { createProvider } from '@forkverse/llm';
+import { createProvider, type PostEmotion, type PostIntent } from '@forkverse/llm';
 
 interface GatewayRequest {
   provider: string;
@@ -14,8 +14,8 @@ interface GatewayRequest {
   message: string;
   sourceLang?: string;
   targetLang?: string;
-  intent?: string;
-  emotion?: string;
+  intent?: PostIntent;
+  emotion?: PostEmotion;
 }
 
 interface GatewayResponse {

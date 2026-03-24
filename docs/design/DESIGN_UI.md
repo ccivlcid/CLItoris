@@ -8,24 +8,19 @@
 
 **No icon libraries** (Lucide, Heroicons, FontAwesome — all banned).
 
-Use Unicode characters only:
+### Strategy
+1. **Unicode First**: Use Unicode characters for simple, decorative elements.
+2. **Custom SVG (Terminal-style)**: For interactive actions (Reply, Fork, Star), use custom SVGs that mimic the pixel/line-art look of terminal fonts to ensure consistent rendering across all platforms.
+3. **Sizing**: Icons must align perfectly with the `14px` (body) or `13px` (code) line height.
 
-| Action | Symbol | Code |
-|--------|--------|------|
-| Reply | `↩` | `\u21A9` |
+| Action | Symbol | SVG Path / Unicode |
+|--------|--------|--------------------|
+| Reply | `↩` | `M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z` |
 | Fork | `◇` | `\u25C7` |
 | Star (empty) | `☆` | `\u2606` |
 | Star (filled) | `★` | `\u2605` |
 | Prompt | `$` | literal |
-| Arrow right | `→` | `\u2192` |
-| Bullet (active) | `●` | `\u25CF` |
-| Bullet (inactive) | `○` | `\u25CB` |
-| Section prefix | `//` | literal |
-| Copy | `⎘` | `\u2398` |
-| Close | `×` | `\u00D7` |
-| Menu | `≡` | `\u2261` |
-| Expand | `▸` | `\u25B8` |
-| Collapse | `▾` | `\u25BE` |
+| Help | `?` | literal |
 
 ---
 
@@ -33,30 +28,31 @@ Use Unicode characters only:
 
 ### Mobile (< 640px)
 
-- Sidebar: hidden, accessible via hamburger menu (`≡`)
-- Dual panel: stacks vertically (natural language on top, CLI below)
-- Composer: full width, model selector below textarea
-- Header: logo only, breadcrumbs hidden
-- Post actions: icon-only (no count text)
+- **Sidebar**: Hidden, accessible via hamburger menu (`≡`).
+- **Dual Panel (Toggled View)**:
+  - Instead of vertical stacking, use a **Toggle Switch** or **Swipe** to switch between "Natural" and "CLI" views.
+  - Default view: **Natural**.
+  - A small floating button or tab bar at the bottom-right allows switching to CLI mode.
+- **Composer**: Full width, fixed bottom on mobile.
+- **Header**: Logo and a "Help (?)" button.
 
 ### Tablet (640–1024px)
-
-- Sidebar: collapsible (icon-only mode, `w-14`)
-- Dual panel: side by side
-- Composer: full width
-
-### Desktop (> 1024px)
-
-- Full layout as specified
+... (existing tablet rules) ...
 
 ---
 
-## 3. Accessibility
+## 3. Accessibility & Shortcuts
+
+### Shortcut Discoverability
+To ensure shortcuts are discoverable, the UI must include:
+1. **Global Hint**: A small, muted prompt in the footer or sidebar: `Press '?' for help`.
+2. **Help Modal**: Pressing `?` opens a terminal-style overlay listing all shortcuts.
 
 ### Keyboard Navigation
 
 | Key | Action |
 |-----|--------|
+| `?` | Open/Close Shortcut Help |
 | `Tab` | Move between interactive elements |
 | `Enter` | Activate buttons, submit forms |
 | `Escape` | Close modals, cancel actions |

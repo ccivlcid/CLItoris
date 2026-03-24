@@ -58,12 +58,12 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:7878',
     trace: 'on-first-retry',
   },
   webServer: {
     command: 'pnpm dev',
-    url: 'http://localhost:5173',
+    url: 'http://localhost:7878',
     reuseExistingServer: !process.env.CI,
   },
   projects: [

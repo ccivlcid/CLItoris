@@ -19,6 +19,8 @@ const en: Record<string, string> = {
   'feed.error.message': 'error: connection refused',
   'feed.error.body': 'Failed to load the global feed.\nThe server might be down or\nyour connection is interrupted.',
   'feed.error.retry': '$ retry',
+  'feed.demoPost': 'Sample feed card — not in your database. Run pnpm seed or create a post to open threads.',
+  'feed.demoProfile': 'Sample profile — that user is not in your database.',
   'feed.loading': '$ loading --cursor={cursor} ...',
   'feed.loadingMore': 'loading...',
   'feed.local.emptyBody': 'No posts from people you follow.\nFollow someone to see their posts here.',
@@ -43,11 +45,11 @@ const en: Record<string, string> = {
   'composer.addKey': 'add API key',
 
   // Post actions
-  'post.action.reply': '↵ reply',
-  'post.action.fork': '○ fork',
-  'post.action.star': '★',
-  'post.action.unstar': '☆',
-  'post.copy': '⎘',
+  'post.action.reply': 'reply',
+  'post.action.fork': 'fork',
+  'post.action.star': '',
+  'post.action.unstar': '',
+  'post.copy': '',
   'post.copied': 'copied!',
   'post.translate': 'translate →{lang}',
   'post.translating': 'translating...',
@@ -163,6 +165,19 @@ const en: Record<string, string> = {
   'mobile.github': 'github',
   'mobile.leaderboard': 'rank',
 
+  // Mobile help modal (? on small screens)
+  'mobileHelp.header': '$ help --mobile-ui',
+  'mobileHelp.dualTitle': 'Dual panel',
+  'mobileHelp.dualDesc': 'Tap “natural” or “cli” at the top of a post to switch views.',
+  'mobileHelp.actionsTitle': 'Post actions',
+  'mobileHelp.actionsDesc': 'Use the icons under a post to reply, fork, or star.',
+  'mobileHelp.navTitle': 'Navigation',
+  'mobileHelp.navDesc': 'Bottom bar: Feed, Explore, center + opens analyze or new post, Activity, and Profile.',
+  'mobileHelp.refreshTitle': 'Refresh',
+  'mobileHelp.refreshDesc': 'Pull down on the feed to reload the latest posts.',
+  'mobileHelp.ack': '[ OK ]',
+  'mobileHelp.closeAria': 'Close help',
+
   // Messages
   'msg.inbox': '$ msg --inbox',
   'msg.loading': 'loading...',
@@ -193,7 +208,8 @@ const en: Record<string, string> = {
   // Profile
   'profile.back': '← back',
   'profile.notFound': 'error: 404 user not found',
-  'profile.goHome': '$ cd /',
+  'profile.notFoundHint': 'This handle is not in your database. Run pnpm seed for sample users, or use the @name from someone who has signed up.',
+  'profile.goHome': '$ cd /feed',
   'profile.followers': 'followers',
   'profile.following': 'following',
   'profile.posts': 'posts',

@@ -78,8 +78,8 @@ const router = createBrowserRouter([
   { path: '/chat', element: <ChatPage /> },
   { path: '/messages', element: <MessagesPage /> },
   { path: '/messages/:username', element: <MessagesPage /> },
-  // Dynamic /:atUsername must be LAST — catches /@username paths
-  { path: '/:atUsername', element: <UserProfilePage /> },
+  // @handle is a single path segment (e.g. /@octocat). Must stay after all static /single-segment routes.
+  { path: '/:username', element: <UserProfilePage /> },
   { path: '*', element: <Navigate to="/" replace /> },
 ]);
 

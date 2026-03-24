@@ -19,6 +19,8 @@ const zh: Record<string, string> = {
   'feed.error.message': 'error: 连接被拒绝',
   'feed.error.body': '无法加载全局动态。\n服务器可能已关闭或连接中断。',
   'feed.error.retry': '$ 重试',
+  'feed.demoPost': '示例动态 — 不在你的数据库中。运行 pnpm seed 或发布帖子以打开详情。',
+  'feed.demoProfile': '示例资料 — 该用户不在你的数据库中。',
   'feed.loading': '$ loading --cursor={cursor} ...',
   'feed.loadingMore': '加载中...',
   'feed.local.emptyBody': '没有关注用户的帖子。\n关注某人即可在此查看。',
@@ -43,11 +45,11 @@ const zh: Record<string, string> = {
   'composer.addKey': '添加 API 密钥',
 
   // Post actions
-  'post.action.reply': '↩ 回复',
-  'post.action.fork': '◇ 分叉',
-  'post.action.star': '★',
-  'post.action.unstar': '☆',
-  'post.copy': '⎘',
+  'post.action.reply': '回复',
+  'post.action.fork': '分叉',
+  'post.action.star': '',
+  'post.action.unstar': '',
+  'post.copy': '',
   'post.copied': '已复制!',
   'post.translate': '翻译 →{lang}',
   'post.translating': '翻译中...',
@@ -163,6 +165,19 @@ const zh: Record<string, string> = {
   'mobile.github': 'github',
   'mobile.leaderboard': '排名',
 
+  // Mobile help modal
+  'mobileHelp.header': '$ help --mobile-ui',
+  'mobileHelp.dualTitle': '双栏视图',
+  'mobileHelp.dualDesc': '在帖子顶部点击 natural 或 cli 切换自然语言 / 命令行视图。',
+  'mobileHelp.actionsTitle': '帖子操作',
+  'mobileHelp.actionsDesc': '使用帖子下方的图标回复、分叉或加星。',
+  'mobileHelp.navTitle': '导航',
+  'mobileHelp.navDesc': '底栏：动态、发现、中间 + 可打开分析或发帖、活动、个人资料。',
+  'mobileHelp.refreshTitle': '刷新',
+  'mobileHelp.refreshDesc': '在动态页面向下拉动即可刷新最新内容。',
+  'mobileHelp.ack': '[ 知道了 ]',
+  'mobileHelp.closeAria': '关闭帮助',
+
   // Messages
   'msg.inbox': '$ msg --inbox',
   'msg.loading': '加载中...',
@@ -193,7 +208,8 @@ const zh: Record<string, string> = {
   // Profile
   'profile.back': '← 返回',
   'profile.notFound': 'error: 404 未找到用户',
-  'profile.goHome': '$ cd /',
+  'profile.notFoundHint': '数据库中无此用户。可在项目根目录运行 pnpm seed 导入示例用户，或使用已注册用户的 @昵称。',
+  'profile.goHome': '$ cd /feed',
   'profile.followers': '粉丝',
   'profile.following': '关注',
   'profile.posts': '帖子',

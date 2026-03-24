@@ -65,7 +65,8 @@
       "title": "@:username -- terminal.social",
       "auth": false,
       "layout": "AppShell",
-      "spec": "docs/screens/USER_PROFILE.md"
+      "spec": "docs/screens/USER_PROFILE.md",
+      "note": "Browser URL is /@handle (one segment). React Router uses path `/:username`; param value includes the leading `@`, stripped before `GET /api/users/@…`."
     },
     {
       "path": "/login",

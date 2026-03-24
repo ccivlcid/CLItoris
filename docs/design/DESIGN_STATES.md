@@ -58,6 +58,20 @@ Opacity transitions allowed for loading states only
 .cursor-blink {
   animation: blink 1s step-end infinite;
 }
+
+@keyframes flicker {
+  0% { opacity: 1; }
+  10% { opacity: 0.95; }
+  20% { opacity: 1; }
+  30% { opacity: 0.98; }
+  40% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* Apply to the main app container on major events */
+.screen-flicker {
+  animation: flicker 0.15s ease-in-out;
+}
 ```
 
 ---
@@ -107,8 +121,26 @@ Each `██` block is a `<div>` with `animate-pulse bg-gray-700/50 rounded` app
 
 ### Single Post Loading
 
-- Display a **full-width skeleton card** matching the single post view layout
-- Include skeleton placeholders for the action bar and any reply section below
+... (existing single post loading) ...
+
+### 4.2 Streaming Text Loading (Analysis)
+
+Used when the AI is analyzing a repository. This replaces or augments the simple pulsing skeleton to provide real-time feedback.
+
+```
+> fetching repo metadata...         [DONE]
+> analyzing src/index.ts...         [ACTIVE]
+> extracting architecture...        [PENDING]
+```
+
+**Specifications:**
+- **Terminal Style**: Each line appears one by one or scrolls upward.
+- **Status Indicators**:
+  - `[DONE]`: `text-green-400`
+  - `[ACTIVE]`: `text-amber-400` with a pulsing `_` cursor.
+  - `[PENDING]`: `text-gray-600`
+- **Animation**: Use a "Typewriter" effect for the active line to simulate real-time output.
+- **Container**: `bg-[#0d1117] border border-gray-800 p-4 font-mono text-xs overflow-hidden h-32`.
 
 ---
 
